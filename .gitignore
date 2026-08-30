@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js and build output
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+
+# Environment and secrets
+.env*
+!.env.example
+
+# Generated database client
+src/generated/prisma/
+
+# Test and coverage output
+coverage/
+playwright-report/
+test-results/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editors and operating systems
+.idea/
+.DS_Store
