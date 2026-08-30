@@ -1,0 +1,12 @@
+.next/
+build/
+coverage/
+node_modules/
+out/
+src/generated/prisma/
+next-env.d.ts
+pnpm-lock.yaml
+
+# Preserve long-form project documents without formatter churn.
+IMPLEMENTATION_PLAN.md
+bilingual_news_english_learning_plan.md

@@ -125,7 +125,7 @@ These are the working defaults. Items marked **Open** must be resolved before th
 | Processing | Sequential jobs are acceptable initially | Accepted | A dedicated queue is premature for MVP volume. |
 | Search | Not a Reader Release requirement | Accepted | It does not block validation of the core reader. |
 | Search at launch | PostgreSQL full-text search | Accepted | Search is in the product MVP; a separate search service is unnecessary initially. |
-| Prisma workflow | Select and pin a supported Prisma Migrate workflow before M2 | Open | The concrete generator/configuration must match the compatible pinned major. |
+| Prisma workflow | Prisma ORM 7.10.0 with `prisma-client`, `prisma.config.ts`, and the PostgreSQL driver adapter | Accepted | ADR-001 pins the stable M2 generator, runtime, migration, and seeding workflow. |
 | News provider | One licensed RSS/API provider | Open | Licensing must be confirmed before ingestion work. |
 | AI provider/model | Structured-output-capable provider | Open | Must be selected before AI transformation. |
 | Dictionary fallback | Dictionary API or LLM fallback | Open | Must be selected before contextual lookup integration. |
@@ -678,7 +678,7 @@ newslingo/
 ├── prettier.config.mjs
 ├── prisma.config.ts
 ├── tsconfig.json
-└── vitest.config.ts
+└── vitest.config.mts
 ```
 
 Small unit tests should be colocated with pure modules/components. Database integration tests and browser journeys remain under `tests/`.
@@ -770,7 +770,7 @@ start the application
 
 The exact commands will be added to the repository README during bootstrap. The setup must not require news, AI, dictionary, auth, or cron credentials for the Reader Release.
 
-Before M2 installs Prisma, record a short ADR that selects a currently supported, compatible Prisma generator/configuration and Migrate workflow. Pin that choice in `package.json` and the lockfile. If the chosen workflow differs from the proposed `schema.prisma`/`prisma.config.ts` layout, update this plan and the script names before implementing the schema.
+Before M2 installs Prisma, record a short ADR that selects a currently supported, compatible Prisma generator/configuration and Migrate workflow. The ADR names exact versions; M2 adds those versions to `package.json` and the lockfile when it implements the database layer. If the chosen workflow differs from the proposed `schema.prisma`/`prisma.config.ts` layout, update this plan and the script names before implementing the schema.
 
 ---
 
@@ -847,7 +847,7 @@ Turn the remaining launch-sensitive choices into explicit decisions before they 
   - job frequency
   - active-content and archive policy
 - [x] Confirm PostgreSQL full-text search as Launch MVP scope.
-- [ ] Select and document the compatible Prisma workflow before M2.
+- [x] Select and document the compatible Prisma workflow before M2.
 - [ ] Define the production CEFR assignment mix and shortage-filling rule.
 - [ ] Define mandatory finished-article difficulty verification.
 - [ ] Define the moderation cadence, maximum draft backlog, and public-freshness SLA.
@@ -896,14 +896,15 @@ Create a reproducible, strict, minimal application foundation while preserving t
   - Tailwind CSS
   - ESLint
   - `@/*` import alias
-- [ ] Pin the compatible Node and pnpm toolchain.
-- [ ] Commit exactly one dependency lockfile.
-- [ ] Add formatting and typecheck commands.
-- [ ] Configure Vitest for pure unit tests and add one smoke test.
-- [ ] Add server/client boundary conventions.
-- [ ] Add phase-aware environment configuration that builds without database credentials in M1.
-- [ ] Record the Prisma workflow ADR that M2 will implement and pin.
-- [ ] Add a minimal health-check or render smoke path through the homepage.
+- [x] Pin the compatible Node and pnpm toolchain.
+- [x] Commit exactly one dependency lockfile.
+- [x] Add formatting and typecheck commands.
+- [x] Configure Vitest for pure unit tests and add one smoke test.
+- [x] Add server/client boundary conventions.
+- [x] Add phase-aware environment configuration that builds without database credentials in M1.
+- [x] Record the Prisma workflow ADR that M2 will implement and pin.
+- [x] Add a minimal GitHub Actions quality workflow.
+- [x] Add a minimal health-check or render smoke path through the homepage.
 - [x] Add a short README with local bootstrap commands.
 
 ### Implementation notes
@@ -1976,6 +1977,7 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-08-30 | Add later-phase tables in their owning migrations. | Avoid a large speculative Migration 001. |
 | 2026-08-30 | Include PostgreSQL full-text search in the Launch MVP. | Search ships before launch without a separate search service. |
 | 2026-08-30 | Use Vitest/React Testing Library and Playwright/axe. | Test tooling and CI phases are concrete. |
+| 2026-08-30 | Use Prisma ORM 7.10.0 with the `prisma-client` generator and PostgreSQL driver adapter in M2. | The stable v7 workflow is pinned in ADR-001; an upgrade to v8 requires a deliberate review. |
 
 ### Open decisions
 
@@ -1988,7 +1990,6 @@ Learning-product analytics such as article completion and words clicked can be a
 | Admin authentication | Before M5 | Simple, secure admin-only auth; no general user model yet. |
 | Hosting and managed PostgreSQL | Before M8/M9 | Choose based on operational simplicity and regional needs. |
 | Scheduler | Before M8 | Vercel Cron for simple hosting alignment or Trigger.dev for richer runs. |
-| Prisma generator/configuration and Migrate workflow | Before M2 | Pin a supported compatible workflow and document it in an ADR. |
 | CEFR assignment mix and verification rule | Before M7 | Fill inventory deficits, then classify every finished article independently. |
 | Moderation cadence and freshness SLA | Before M8 | Define review windows, backlog ceiling, and public freshness target. |
 | Active-content archival duration | Before M8 | Preserve source lineage; archive rather than delete. |
