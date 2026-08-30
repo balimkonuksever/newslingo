@@ -879,8 +879,8 @@ Create a reproducible, strict, minimal application foundation while preserving t
 
 ### Work items
 
-- [ ] Initialize Git in the project root.
-- [ ] Create a root `.gitignore` covering:
+- [x] Initialize Git in the project root.
+- [x] Create a root `.gitignore` covering:
   - `.idea/`
   - `.next/`
   - `node_modules/`
@@ -888,8 +888,8 @@ Create a reproducible, strict, minimal application foundation while preserving t
   - environment files except `.env.example`
   - coverage and browser-test output
   - editor/OS artifacts
-- [ ] Scaffold Next.js without overwriting the existing Markdown files.
-- [ ] Enable:
+- [x] Scaffold Next.js without overwriting the existing Markdown files.
+- [x] Enable:
   - App Router
   - `src/` layout
   - strict TypeScript
@@ -904,7 +904,7 @@ Create a reproducible, strict, minimal application foundation while preserving t
 - [ ] Add phase-aware environment configuration that builds without database credentials in M1.
 - [ ] Record the Prisma workflow ADR that M2 will implement and pin.
 - [ ] Add a minimal health-check or render smoke path through the homepage.
-- [ ] Add a short README with local bootstrap commands.
+- [x] Add a short README with local bootstrap commands.
 
 ### Implementation notes
 
