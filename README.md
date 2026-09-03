@@ -19,6 +19,7 @@ The project is currently in **Reader Release Slice 1**: establishing the Next.js
 
 - Node.js 24.7.0 (see `.node-version`)
 - pnpm 11.19.0 (enforced by `packageManager`)
+- Docker Desktop with Docker Compose
 
 ## Local development
 
@@ -28,10 +29,16 @@ Install dependencies:
 pnpm install --frozen-lockfile
 ```
 
-Create an optional local environment file. M1 has no secrets and defaults to the same local URL when this file is absent:
+Copy the safe local-development configuration. These credentials are only for the Docker database on your Mac:
 
 ```bash
 cp .env.example .env.local
+```
+
+Start PostgreSQL and wait for it to become healthy:
+
+```bash
+pnpm db:up
 ```
 
 Start the development server:
@@ -41,6 +48,23 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+## Local PostgreSQL
+
+Docker Compose runs PostgreSQL 18 on `127.0.0.1:5432` with development-only credentials. It provisions two isolated databases on the first start:
+
+- `newslingo` for local application development
+- `newslingo_test` for integration tests
+
+Useful commands:
+
+```bash
+pnpm db:up
+pnpm db:logs
+pnpm db:down
+```
+
+Database data persists in the Docker volume named `newslingo_postgres_data`. `docker compose down -v` permanently deletes that local data and should only be used for an intentional reset. Initialization scripts run only when the volume is empty.
 
 ## Verification
 
@@ -64,7 +88,7 @@ GitHub Actions runs the same formatting, linting, typechecking, test, and produc
 
 ## Environment boundary
 
-Environment values are parsed in `src/lib/env.ts`. M1 intentionally requires no database credentials; `NEXT_PUBLIC_SITE_URL` defaults to `http://localhost:3000`. Privileged integrations belong under `src/server/` and must remain inaccessible to Client Components.
+The public site URL is parsed in `src/lib/env.ts`; the Prisma setup step will extend that boundary to the database URLs. The committed `.env.example` contains safe development defaults, while real secrets belong only in ignored local environment files. Privileged integrations belong under `src/server/` and must remain inaccessible to Client Components.
 
 ## Project documents
 

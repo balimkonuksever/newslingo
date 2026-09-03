@@ -91,7 +91,7 @@ Locally available tooling:
 
 Known setup constraints:
 
-- The Docker daemon is currently stopped and must be started before local PostgreSQL can run.
+- Docker Desktop must be running before local PostgreSQL can start.
 - No local PostgreSQL client/server is installed; Prisma and the containerized database will provide the required development workflow.
 - The project root is not empty, so scaffolding must preserve the existing product-plan Markdown file.
 - Dependency installation may require network permission.
@@ -669,7 +669,7 @@ newslingo/
 ├── .env.example
 ├── .gitignore
 ├── .node-version
-├── docker-compose.yml
+├── compose.yaml
 ├── eslint.config.mjs
 ├── next.config.ts
 ├── package.json
@@ -941,13 +941,13 @@ M1 complete. Docker Desktop must be running locally, or a development PostgreSQL
 ### Work items
 
 - [ ] Install and pin the Prisma workflow selected by the M1 ADR.
-- [ ] Add Docker Compose PostgreSQL with:
+- [x] Add Docker Compose PostgreSQL with:
   - pinned PostgreSQL major version
   - named data volume
   - health check
   - development-only credentials
-- [ ] Provision and document an isolated `newslingo_test` database and `TEST_DATABASE_URL`.
-- [ ] Add `.env.example` and local database documentation.
+- [x] Provision and document an isolated `newslingo_test` database and `TEST_DATABASE_URL`.
+- [x] Add `.env.example` and local database documentation.
 - [ ] Configure Prisma and a server-only client singleton.
 - [ ] Implement Migration 001:
   - `Difficulty`
