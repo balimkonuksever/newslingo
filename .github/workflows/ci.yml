@@ -14,7 +14,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  DATABASE_URL: postgresql://newslingo:newslingo_dev_only@127.0.0.1:5432/newslingo?schema=public
   NEXT_TELEMETRY_DISABLED: "1"
+  TEST_DATABASE_URL: postgresql://newslingo:newslingo_dev_only@127.0.0.1:5432/newslingo_test?schema=public
 
 jobs:
   quality:
@@ -39,11 +41,30 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Check database schema formatting
+        run: pnpm db:format && git diff --exit-code -- prisma/schema.prisma
+
+      - name: Validate database schema
+        run: pnpm db:validate
+
+      - name: Generate database client
+        run: pnpm db:generate
+
+      - name: Start PostgreSQL
+        run: pnpm db:up
+
+      - name: Apply migrations to the isolated test database
+        run: pnpm db:migrate:test
+
       - name: Typecheck
         run: pnpm typecheck
 
       - name: Test
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
         run: pnpm test
 
       - name: Build
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
         run: pnpm build

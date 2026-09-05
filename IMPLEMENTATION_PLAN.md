@@ -741,10 +741,12 @@ test:e2e:ui
 db:up
 db:down
 db:logs
+db:format
 db:validate
 db:generate
 db:migrate
 db:migrate:deploy
+db:migrate:test
 db:seed
 db:seed:reference
 db:seed:demo
@@ -940,7 +942,7 @@ M1 complete. Docker Desktop must be running locally, or a development PostgreSQL
 
 ### Work items
 
-- [ ] Install and pin the Prisma workflow selected by the M1 ADR.
+- [x] Install and pin the Prisma workflow selected by the M1 ADR.
 - [x] Add Docker Compose PostgreSQL with:
   - pinned PostgreSQL major version
   - named data volume
@@ -948,14 +950,14 @@ M1 complete. Docker Desktop must be running locally, or a development PostgreSQL
   - development-only credentials
 - [x] Provision and document an isolated `newslingo_test` database and `TEST_DATABASE_URL`.
 - [x] Add `.env.example` and local database documentation.
-- [ ] Configure Prisma and a server-only client singleton.
-- [ ] Implement Migration 001:
+- [x] Configure Prisma and a server-only client singleton.
+- [x] Implement Migration 001:
   - `Difficulty`
   - `ArticleStatus`
   - `Category`
   - `Article`
   - `ArticleParagraph`
-- [ ] Add uniqueness, foreign-key, ordering, and lifecycle constraints.
+- [x] Add uniqueness, foreign-key, ordering, and lifecycle constraints.
 - [ ] Add pure helpers for:
   - reading-time calculation
   - slug handling

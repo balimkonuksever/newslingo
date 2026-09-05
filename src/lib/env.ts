@@ -2,6 +2,8 @@ import "server-only";
 
 import { z } from "zod";
 
+import { parsePostgresUrl, validateTestDatabaseUrls } from "@/lib/database-env";
+
 const environmentSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
@@ -25,3 +27,19 @@ if (!result.success) {
 }
 
 export const env = Object.freeze(result.data);
+
+export function getDatabaseEnv() {
+  const databaseUrl = parsePostgresUrl(
+    "DATABASE_URL",
+    process.env.DATABASE_URL,
+  );
+
+  return Object.freeze({ DATABASE_URL: databaseUrl });
+}
+
+export function getTestDatabaseEnv() {
+  return validateTestDatabaseUrls({
+    databaseUrl: process.env.DATABASE_URL,
+    testDatabaseUrl: process.env.TEST_DATABASE_URL,
+  });
+}

@@ -2,7 +2,7 @@
 
 Newslingo is a bilingual news-reading application for Turkish speakers learning English. It combines current-news discovery with aligned English/Turkish paragraphs, contextual vocabulary, and natural multi-word expressions.
 
-The project is currently in **Reader Release Slice 1**: establishing the Next.js application foundation before database and reader-feature development begins.
+The project is currently in **Reader Release Slice 1**. The Next.js foundation and reader-core PostgreSQL/Prisma migrations are in place; deterministic seed content and reader features come next.
 
 ## Stack
 
@@ -10,6 +10,7 @@ The project is currently in **Reader Release Slice 1**: establishing the Next.js
 - React
 - TypeScript in strict mode
 - Tailwind CSS
+- PostgreSQL 18 and Prisma ORM 7
 - ESLint
 - Prettier
 - Vitest and React Testing Library
@@ -41,6 +42,12 @@ Start PostgreSQL and wait for it to become healthy:
 pnpm db:up
 ```
 
+Apply the committed database migrations:
+
+```bash
+pnpm db:migrate
+```
+
 Start the development server:
 
 ```bash
@@ -60,9 +67,18 @@ Useful commands:
 
 ```bash
 pnpm db:up
+pnpm db:validate
+pnpm db:generate
+pnpm db:migrate
+pnpm db:migrate:test
+pnpm db:studio
 pnpm db:logs
 pnpm db:down
 ```
+
+The committed reader-core migrations create the `Category`, `Article`, and `ArticleParagraph` tables plus their enums, relationships, indexes, and safety constraints. These tables are intentionally empty at this stage. The next M2 slice adds deterministic categories and demo article/paragraph pairs; live news fetching is a later ingestion step.
+
+`pnpm db:migrate:test` applies committed migrations only to the isolated test database. Its guard refuses a URL that does not clearly name a separate test database.
 
 Database data persists in the Docker volume named `newslingo_postgres_data`. `docker compose down -v` permanently deletes that local data and should only be used for an intentional reset. Initialization scripts run only when the volume is empty.
 
@@ -88,7 +104,7 @@ GitHub Actions runs the same formatting, linting, typechecking, test, and produc
 
 ## Environment boundary
 
-The public site URL is parsed in `src/lib/env.ts`; the Prisma setup step will extend that boundary to the database URLs. The committed `.env.example` contains safe development defaults, while real secrets belong only in ignored local environment files. Privileged integrations belong under `src/server/` and must remain inaccessible to Client Components.
+The public site URL and database URLs are validated through the environment boundary under `src/lib/`. Database values are read lazily, so static builds do not require a live database; importing the server-only Prisma client does. The committed `.env.example` contains safe development defaults, while real secrets belong only in ignored local environment files. Privileged integrations belong under `src/server/` and must remain inaccessible to Client Components.
 
 ## Project documents
 

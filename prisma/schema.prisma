@@ -1,0 +1,79 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Difficulty {
+  A2
+  B1
+  B2
+  C1
+}
+
+enum ArticleStatus {
+  FETCHED
+  PROCESSING
+  DRAFT
+  PUBLISHED
+  FAILED
+  ARCHIVED
+}
+
+model Category {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  name         String
+  description  String?
+  displayOrder Int
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  articles     Article[]
+
+  @@index([isActive, displayOrder])
+}
+
+model Article {
+  id                 String             @id @default(cuid())
+  slug               String             @unique
+  title              String
+  shortSummary       String?
+  categoryId         String
+  difficulty         Difficulty
+  status             ArticleStatus      @default(DRAFT)
+  sourceName         String
+  sourceUrl          String             @unique
+  sourceImageUrl     String?
+  imageAttribution   String?
+  sourcePublishedAt  DateTime
+  publishedOnSiteAt  DateTime?
+  wordCount          Int
+  readingTimeMinutes Int
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  category           Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  paragraphs         ArticleParagraph[]
+
+  @@index([categoryId, status, sourcePublishedAt])
+  @@index([status, publishedOnSiteAt])
+  @@index([difficulty, status])
+}
+
+model ArticleParagraph {
+  id        String   @id @default(cuid())
+  articleId String
+  order     Int
+  english   String
+  turkish   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, order])
+}

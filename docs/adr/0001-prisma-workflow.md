@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-30
+- Last amended: 2026-09-03
 - Owners: Newslingo engineering
 
 ## Context
@@ -20,7 +21,7 @@ All first-party Prisma packages will use the same exact version:
 - `@prisma/client@7.10.0` as a runtime dependency
 - `@prisma/adapter-pg@7.10.0` as a runtime dependency
 
-M2 will also add `pg` and `dotenv` at runtime, plus `tsx` and `@types/pg` for development. It will enable package ESM as required by the selected Prisma workflow. The frozen pnpm lockfile remains the reproducibility boundary.
+M2 will also add `pg` at runtime, plus `tsx` and `@types/pg` for development. The existing `@next/env` dependency loads the same `.env*` precedence for Prisma tooling that Next.js uses; a separate `dotenv` dependency is unnecessary. The default import is deliberate because `@next/env` 16.3.3 ships CommonJS and native ESM tooling cannot use its named export directly. The explicit development-mode argument makes local CLI commands select development files when `NODE_ENV` is unset, while `NODE_ENV=test` and `NODE_ENV=production` keep their own precedence. M2 enables package ESM as required by the selected Prisma workflow. The frozen pnpm lockfile remains the reproducibility boundary.
 
 Do not install `prisma@latest`. A Prisma 8 upgrade requires a separate ADR or an explicit amendment to this one after a final, non-prerelease v8 release and a migration spike.
 
@@ -48,21 +49,25 @@ The legacy `prisma-client-js` generator will not be used. Generation will be exp
 M2 will add `prisma.config.ts`:
 
 ```ts
-import "dotenv/config";
-
+import nextEnv from "@next/env";
 import { defineConfig } from "prisma/config";
+
+const { loadEnvConfig } = nextEnv;
+
+loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: "tsx prisma/seed.ts",
   },
   datasource: {
     url: process.env.DATABASE_URL ?? "",
   },
 });
 ```
+
+The seed command is added to `migrations.seed` alongside the guarded reference and demo seed implementations, rather than pointing Prisma at a nonexistent or no-op seed entry point.
 
 The database URL belongs in Prisma config, not the schema datasource block. An adapter does not belong in Prisma config. If a future hosted database requires a pooler, the CLI will receive a separate direct connection URL while the application runtime keeps its pooled URL.
 
