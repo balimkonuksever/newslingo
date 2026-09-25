@@ -40,3 +40,7 @@ yarn-error.log*
 # Editors and operating systems
 .idea/
 .DS_Store
+
+# Agent loaders: local symlinks into my-agent-configs, never committed
+/AGENTS.md
+/CLAUDE.md
