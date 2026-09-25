@@ -1,7 +1,7 @@
 # Newslingo Implementation Plan
 
 > Status: Working draft  
-> Last updated: 2026-08-30  
+> Last updated: 2026-09-25  
 > Product specification: `bilingual_news_english_learning_plan.md`  
 > Immediate target: seeded bilingual Reader Release  
 > Launch target: automated ingestion and draft generation with moderated publication
@@ -71,15 +71,15 @@ The experience should feel like a high-quality news reader with learning built i
 
 ## 3. Current repository baseline
 
-As of 2026-08-30, the workspace contains:
+As of 2026-09-25, M1 and M2 are complete. The repository contains:
 
-- `bilingual_news_english_learning_plan.md`
-- `.idea` project metadata
-- no Git repository
-- no application scaffold
-- no package manifest or lockfile
-- no database configuration or schema
-- no tests or CI configuration
+- the Next.js/TypeScript/Tailwind scaffold with pinned Node and pnpm, one lockfile, and lint, format, typecheck, Vitest, and build commands
+- Docker Compose PostgreSQL 18 with isolated `newslingo` and `newslingo_test` databases
+- Prisma ORM 7.10.0 (ADR-001), the reader-core migrations, and a server-only client
+- idempotent reference provisioning for the six categories and a local-only demo seed of six bilingual articles
+- server-only queries for the homepage, categories, and articles
+- unit tests, database integration tests, and a GitHub Actions workflow that runs both
+- only the default `create-next-app` homepage; no reader UI yet
 - no deployment configuration
 
 Locally available tooling:
@@ -92,8 +92,7 @@ Locally available tooling:
 Known setup constraints:
 
 - Docker Desktop must be running before local PostgreSQL can start.
-- No local PostgreSQL client/server is installed; Prisma and the containerized database will provide the required development workflow.
-- The project root is not empty, so scaffolding must preserve the existing product-plan Markdown file.
+- No local PostgreSQL client/server is installed; Prisma and the containerized database provide the development workflow.
 - Dependency installation may require network permission.
 
 ---
@@ -607,16 +606,18 @@ newslingo/
 ├── prisma/
 │   ├── migrations/
 │   ├── fixtures/
-│   │   └── articles.ts
+│   │   └── articles.ts           # development/test demo articles
 │   ├── reference/
 │   │   ├── categories.ts
 │   │   └── expressions.ts       # added in M4
 │   ├── schema.prisma
-│   ├── seed-demo.ts
-│   └── seed-reference.ts
+│   ├── seed.ts                   # CLI: reference | demo | all
+│   └── seeders.ts                # seeding logic shared with tests
 ├── public/
 │   └── images/
 │       └── seed/                 # owned/licensed local assets only
+├── scripts/
+│   └── with-test-database.ts     # guarded runner for test-database commands
 ├── src/
 │   ├── app/
 │   │   ├── article/[slug]/
@@ -651,9 +652,11 @@ newslingo/
 │   ├── generated/prisma/         # generated and ignored
 │   ├── jobs/                     # scheduled orchestration later
 │   ├── lib/
+│   │   ├── database-env.ts
 │   │   ├── dates.ts
 │   │   ├── env.ts
-│   │   └── reading-time.ts
+│   │   ├── reading-time.ts
+│   │   └── slug.ts
 │   └── server/
 │       ├── articles/queries.ts
 │       ├── categories/queries.ts
@@ -750,13 +753,14 @@ db:migrate:test
 db:seed
 db:seed:reference
 db:seed:demo
+db:seed:test
 db:reset
 db:studio
 ```
 
 `postinstall` may generate the Prisma client. CI still calls generation explicitly so the dependency is visible.
 
-`db:seed:reference` provisions only production-safe categories and approved expression libraries. `db:seed:demo` adds development/test articles and must refuse production. The convenience `db:seed` command may run both locally but is never used by production deployment.
+`db:seed:reference` provisions only production-safe categories and approved expression libraries. `db:seed:demo` adds development/test articles and must refuse production; it runs only when `NODE_ENV` is not `production` and the database host is local. The convenience `db:seed` command may run both locally but is never used by production deployment. `db:seed:test`, `db:migrate:test`, and `test:integration` reach the isolated test database only through the guard in `scripts/with-test-database.ts`. `db:reset` is not added yet.
 
 ### 10.3 Local setup target
 
@@ -958,24 +962,24 @@ M1 complete. Docker Desktop must be running locally, or a development PostgreSQL
   - `Article`
   - `ArticleParagraph`
 - [x] Add uniqueness, foreign-key, ordering, and lifecycle constraints.
-- [ ] Add pure helpers for:
+- [x] Add pure helpers for:
   - reading-time calculation
   - slug handling
   - date formatting
-- [ ] Create idempotent production-safe reference provisioning for the six categories.
-- [ ] Create a separate development/test demo seed for:
+- [x] Create idempotent production-safe reference provisioning for the six categories.
+- [x] Create a separate development/test demo seed for:
   - at least six articles, one per category
   - multiple EN/TR paragraph pairs per article
   - all four CEFR levels across the dataset
   - Turkish diacritics, long titles, and varied paragraph lengths
-- [ ] Mark all demo articles clearly as development/test fixtures and make the demo command refuse production environments.
-- [ ] Use safe, local placeholder art or omit images.
-- [ ] Add server-only queries for:
+- [x] Mark all demo articles clearly as development/test fixtures and make the demo command refuse production environments.
+- [x] Use safe, local placeholder art or omit images. Demo articles omit images.
+- [x] Add server-only queries for:
   - featured/latest articles
   - categories and article counts
   - articles by category slug
   - article by slug with ordered paragraphs
-- [ ] Add database integration tests.
+- [x] Add database integration tests.
 
 ### Seed-content quality rules
 
@@ -1707,7 +1711,7 @@ The M1 build order applies only while the application is database-free.
 3. Set `DATABASE_URL` and `TEST_DATABASE_URL` before Prisma configuration is evaluated.
 4. Generate the Prisma client and validate the schema.
 5. Apply migrations to the empty test database.
-6. Provision reference data, load demo test fixtures, and run database integration tests.
+6. Run the database integration tests, which reset the test database and create their own data, then provision reference data and load the demo fixtures.
 7. Create the production build only after the seeded test database is ready.
 
 **M3 browser pipeline additions**
@@ -1980,6 +1984,11 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-08-30 | Include PostgreSQL full-text search in the Launch MVP. | Search ships before launch without a separate search service. |
 | 2026-08-30 | Use Vitest/React Testing Library and Playwright/axe. | Test tooling and CI phases are concrete. |
 | 2026-08-30 | Use Prisma ORM 7.10.0 with the `prisma-client` generator and PostgreSQL driver adapter in M2. | The stable v7 workflow is pinned in ADR-001; an upgrade to v8 requires a deliberate review. |
+| 2026-09-25 | Estimate reading time from English word count at one assumed learner pace of 150 words per minute. | Estimates are consistent across levels. The pace is an assumption to revisit once real reading data exists. |
+| 2026-09-25 | Show dates as en-GB calendar dates in `Europe/Istanbul` time. | Server and browser render identical dates for the Turkish-speaking audience. |
+| 2026-09-25 | An article is public only when it is `PUBLISHED` and its category is active. | Deactivating a category hides its articles from every public query, not only from navigation. |
+| 2026-09-25 | Feature the most recently published article on the homepage. | No editorial featured flag exists until moderation adds one. |
+| 2026-09-25 | Run database integration tests separately from unit tests, only through the guarded test-database runner. | `pnpm test` needs no database; `pnpm test:integration` empties the isolated test database before each test and refuses any other database. |
 
 ### Open decisions
 
@@ -2099,15 +2108,14 @@ Gate: complete Reader Release definition of done passes.
 
 ## 22. Immediate next actions
 
-The next implementation session should execute only Reader Release Slice 1 unless scope is explicitly changed:
+Slices 1–3 are complete, and with them M1 and M2. The next implementation session should execute Reader Release Slice 4 unless scope is explicitly changed:
 
-1. Preserve both Markdown documents.
-2. Initialize Git and root ignore rules.
-3. Scaffold the compatible Next.js/TypeScript/Tailwind application with pnpm.
-4. Pin the toolchain and dependency lockfile.
-5. Add lint, format, typecheck, test, and build command foundations.
-6. Record the supported Prisma workflow ADR for M2 without installing the database layer yet.
-7. Verify a clean development start and production build.
-8. Update this plan's checkboxes and decision log with any deviations.
+1. Establish the M3 design tokens and responsive typography.
+2. Build the shared layout: site header, category navigation, and footer.
+3. Build article cards and category sections on the existing server-only queries.
+4. Replace the `create-next-app` homepage with the featured, latest, and category sections, plus validated URL-backed category, difficulty, reading-time, and date filters.
+5. Add the category page with its 404, empty, and loading states.
+6. Add Playwright and axe, then the home → category journey on desktop and mobile.
+7. Update this plan's checkboxes and decision log with any deviations.
 
-After Slice 1 passes, proceed to PostgreSQL and the reader-core schema. Do not begin live news, AI, auth, or dictionary integration during the Reader Release bootstrap.
+Do not begin live news, AI, auth, or dictionary integration during the Reader Release.

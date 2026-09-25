@@ -50,19 +50,25 @@ jobs:
       - name: Generate database client
         run: pnpm db:generate
 
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
       - name: Start PostgreSQL
         run: pnpm db:up
 
       - name: Apply migrations to the isolated test database
         run: pnpm db:migrate:test
 
-      - name: Typecheck
-        run: pnpm typecheck
+      # These commands swap in TEST_DATABASE_URL themselves after a safety
+      # guard, so DATABASE_URL must keep naming the application database here.
+      - name: Database integration tests
+        run: pnpm test:integration
 
-      - name: Test
-        env:
-          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
-        run: pnpm test
+      - name: Seed the isolated test database
+        run: pnpm db:seed:test
 
       - name: Build
         env:
