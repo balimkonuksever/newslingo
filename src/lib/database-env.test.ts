@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { parsePostgresUrl, validateTestDatabaseUrls } from "./database-env";
+import {
+  assertDemoSeedAllowed,
+  parsePostgresUrl,
+  requireTestDatabaseUrl,
+  validateTestDatabaseUrls,
+} from "./database-env";
 
 describe("parsePostgresUrl", () => {
   it("accepts PostgreSQL connection URLs", () => {
@@ -57,5 +62,59 @@ describe("validateTestDatabaseUrls", () => {
           "postgresql://another-user:another-password@127.0.0.1:5432/newslingo?schema=test",
       }),
     ).toThrow("must not point to the application database");
+  });
+});
+
+describe("requireTestDatabaseUrl", () => {
+  it("accepts a URL whose database name has a test token", () => {
+    const url =
+      "postgresql://newslingo:local-only@127.0.0.1:5432/newslingo_test?schema=public";
+
+    expect(requireTestDatabaseUrl("DATABASE_URL", url)).toBe(url);
+  });
+
+  it("rejects the development database and names the variable", () => {
+    expect(() =>
+      requireTestDatabaseUrl(
+        "DATABASE_URL",
+        "postgresql://newslingo:local-only@127.0.0.1:5432/newslingo?schema=test",
+      ),
+    ).toThrow(
+      "DATABASE_URL must identify a database with a distinct `test` name token",
+    );
+  });
+});
+
+describe("assertDemoSeedAllowed", () => {
+  it.each([
+    "postgresql://newslingo:local-only@127.0.0.1:5432/newslingo",
+    "postgresql://newslingo:local-only@localhost:5432/newslingo_test",
+    "postgresql://newslingo:local-only@[::1]:5432/newslingo",
+  ])("allows a local database: %s", (databaseUrl) => {
+    expect(() =>
+      assertDemoSeedAllowed({ nodeEnv: "development", databaseUrl }),
+    ).not.toThrow();
+    expect(() =>
+      assertDemoSeedAllowed({ nodeEnv: undefined, databaseUrl }),
+    ).not.toThrow();
+  });
+
+  it("refuses when NODE_ENV is production, even for a local database", () => {
+    expect(() =>
+      assertDemoSeedAllowed({
+        nodeEnv: "production",
+        databaseUrl:
+          "postgresql://newslingo:local-only@127.0.0.1:5432/newslingo",
+      }),
+    ).toThrow("NODE_ENV is production");
+  });
+
+  it("refuses a database on another host", () => {
+    expect(() =>
+      assertDemoSeedAllowed({
+        nodeEnv: "development",
+        databaseUrl: "postgresql://app:secret@db.example.com:5432/newslingo",
+      }),
+    ).toThrow('non-local database (host "db.example.com")');
   });
 });

@@ -2,7 +2,13 @@
 
 Newslingo is a bilingual news-reading application for Turkish speakers learning English. It combines current-news discovery with aligned English/Turkish paragraphs, contextual vocabulary, and natural multi-word expressions.
 
-The project is currently in **Reader Release Slice 1**. The Next.js foundation and reader-core PostgreSQL/Prisma migrations are in place; deterministic seed content and reader features come next.
+The **Reader Release** (milestones M1–M3) is in place. It runs entirely on PostgreSQL seed data and includes:
+
+- an editorial homepage with shareable filters for category, level, reading time, and date
+- category pages
+- a bilingual reader that alternates English paragraphs with their Turkish translations, with controls to hide the translation and change the text size
+
+Contextual vocabulary, moderation, licensed news ingestion, and AI adaptation are later milestones.
 
 ## Stack
 
@@ -14,6 +20,7 @@ The project is currently in **Reader Release Slice 1**. The Next.js foundation a
 - ESLint
 - Prettier
 - Vitest and React Testing Library
+- Playwright and axe for browser and accessibility tests
 - pnpm
 
 ## Prerequisites
@@ -21,6 +28,7 @@ The project is currently in **Reader Release Slice 1**. The Next.js foundation a
 - Node.js 24.7.0 (see `.node-version`)
 - pnpm 11.19.0 (enforced by `packageManager`)
 - Docker Desktop with Docker Compose
+- Google Chrome, for the browser tests
 
 ## Local development
 
@@ -48,6 +56,12 @@ Apply the committed database migrations:
 pnpm db:migrate
 ```
 
+Load the six categories and the demo articles:
+
+```bash
+pnpm db:seed
+```
+
 Start the development server:
 
 ```bash
@@ -71,16 +85,31 @@ pnpm db:validate
 pnpm db:generate
 pnpm db:migrate
 pnpm db:migrate:test
+pnpm db:seed
+pnpm db:reset:test
 pnpm db:studio
 pnpm db:logs
 pnpm db:down
 ```
 
-The committed reader-core migrations create the `Category`, `Article`, and `ArticleParagraph` tables plus their enums, relationships, indexes, and safety constraints. These tables are intentionally empty at this stage. The next M2 slice adds deterministic categories and demo article/paragraph pairs; live news fetching is a later ingestion step.
-
-`pnpm db:migrate:test` applies committed migrations only to the isolated test database. Its guard refuses a URL that does not clearly name a separate test database.
+The committed reader-core migrations create the `Category`, `Article`, and `ArticleParagraph` tables plus their enums, relationships, indexes, and safety constraints.
 
 Database data persists in the Docker volume named `newslingo_postgres_data`. `docker compose down -v` permanently deletes that local data and should only be used for an intentional reset. Initialization scripts run only when the volume is empty.
+
+## Seed data
+
+Seeding is split by what is safe where:
+
+| Command                  | Writes                                                                          | Where it may run                                                         |
+| ------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `pnpm db:seed:reference` | The six launch categories from `prisma/reference/categories.ts`                 | Anywhere, including production. Idempotent upsert by slug.               |
+| `pnpm db:seed:demo`      | Six demo articles with EN/TR paragraph pairs from `prisma/fixtures/articles.ts` | Local databases only. Refuses `NODE_ENV=production` and non-local hosts. |
+| `pnpm db:seed`           | Both, via `prisma db seed`                                                      | Local development.                                                       |
+| `pnpm db:reset:test`     | Empties the isolated test database, then loads both                             | Local and CI. The browser tests run it automatically.                    |
+
+Every seed command is idempotent: rerunning it updates rows in place and never duplicates them. The demo articles are original, invented educational fixtures attributed to "Newslingo demo fixture" with URLs on the reserved `demo.newslingo.example` domain, so they cannot be mistaken for real or ingested news. Their CEFR levels are the author's intent, not verified labels, so they must not be used as evaluation data. Live news fetching is a later milestone.
+
+Commands whose names end in `:test`, `pnpm test:integration`, and `pnpm test:e2e` run through `scripts/with-test-database.ts`. It points `DATABASE_URL` at `TEST_DATABASE_URL` only after checking that the two are different databases and that the test database's name contains a distinct `test` token.
 
 ## Verification
 
@@ -92,6 +121,22 @@ pnpm test
 pnpm build
 ```
 
+`pnpm test` runs the unit and component tests, which need no database. Database integration tests run against the isolated test database, which they empty before each test:
+
+```bash
+pnpm db:up
+pnpm db:migrate:test
+pnpm test:integration
+```
+
+Browser tests run Playwright in your installed Google Chrome, on a desktop and a phone viewport, including axe accessibility scans. They reset the test database to the demo dataset, build the app, and serve it on port 3100:
+
+```bash
+pnpm test:e2e
+```
+
+`pnpm test:e2e:ui` opens the same tests in Playwright's interactive UI.
+
 Useful fix/watch commands:
 
 ```bash
@@ -100,11 +145,11 @@ pnpm lint:fix
 pnpm test:watch
 ```
 
-GitHub Actions runs the same formatting, linting, typechecking, test, and production-build gates for pull requests and pushes to `main`.
+GitHub Actions runs the same gates for pull requests and pushes to `main`: formatting, linting, schema checks, typechecking, unit tests, database integration tests, a production build, and the browser and accessibility tests. When the browser tests fail, their traces and screenshots are uploaded as a workflow artifact.
 
 ## Environment boundary
 
-The public site URL and database URLs are validated through the environment boundary under `src/lib/`. Database values are read lazily, so static builds do not require a live database; importing the server-only Prisma client does. The committed `.env.example` contains safe development defaults, while real secrets belong only in ignored local environment files. Privileged integrations belong under `src/server/` and must remain inaccessible to Client Components.
+The public site URL and database URLs are validated through the environment boundary under `src/lib/`. Database values are read lazily. Pages read PostgreSQL on every request, so `pnpm build` needs a valid `DATABASE_URL` but no running database. The committed `.env.example` contains safe development defaults, while real secrets belong only in ignored local environment files. Privileged integrations belong under `src/server/` and must remain inaccessible to Client Components.
 
 ## Project documents
 

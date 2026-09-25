@@ -16,8 +16,11 @@
     "format:check": "prettier --check .",
     "format:write": "prettier --write .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --project unit",
+    "test:watch": "vitest --project unit",
+    "test:integration": "tsx scripts/with-test-database.ts vitest run --project integration",
+    "test:e2e": "tsx scripts/with-test-database.ts playwright test",
+    "test:e2e:ui": "tsx scripts/with-test-database.ts playwright test --ui",
     "postinstall": "prisma generate --no-hints",
     "db:up": "docker compose up -d --wait postgres",
     "db:down": "docker compose down",
@@ -27,7 +30,11 @@
     "db:generate": "prisma generate --no-hints",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
-    "db:migrate:test": "tsx scripts/migrate-test-database.ts",
+    "db:migrate:test": "tsx scripts/with-test-database.ts prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:seed:reference": "tsx prisma/seed.ts reference",
+    "db:seed:demo": "tsx prisma/seed.ts demo",
+    "db:reset:test": "tsx scripts/with-test-database.ts tsx scripts/reset-test-database.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
@@ -41,7 +48,9 @@
     "zod": "^4.5.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@next/env": "16.3.3",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^7.0.1",

@@ -1,26 +1,103 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+ * Design tokens. Every text colour below meets WCAG AA contrast (4.5:1) on
+ * the paper and surface colours, and on its own badge background.
+ */
+@theme {
+  --color-paper: #faf8f4;
+  --color-surface: #ffffff;
+  --color-ink: #1c1917;
+  --color-ink-muted: #57534e;
+  --color-rule: #e7e3dc;
+  --color-rule-strong: #cfc9bf;
+
+  --color-brand: #b42318;
+  --color-focus: #1d4ed8;
+
+  /* Category accents: always shown next to the category's name, never alone. */
+  --color-category-ai: #6d28d9;
+  --color-category-technology: #1d4ed8;
+  --color-category-world: #0f766e;
+  --color-category-business: #b45309;
+  --color-category-entertainment: #be123c;
+  --color-category-beauty: #a21caf;
+  --color-category-default: #57534e;
+
+  /* CEFR level badges: text colour on a tinted surface. */
+  --color-level-a2: #047857;
+  --color-level-a2-surface: #ecfdf5;
+  --color-level-b1: #1d4ed8;
+  --color-level-b1-surface: #eff6ff;
+  --color-level-b2: #6d28d9;
+  --color-level-b2-surface: #f5f3ff;
+  --color-level-c1: #b42318;
+  --color-level-c1-surface: #fef3f2;
+
+  --container-reader: 42rem;
+  --container-page: 72rem;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/*
+ * The bilingual reader. Text sizes are rem-based so browser zoom and text
+ * scaling still apply on top of the reader's own size setting.
+ */
+@layer components {
+  .reader {
+    --reader-english-size: 1.25rem;
+    --reader-turkish-size: 1.0625rem;
+    /* The reader keeps its own place (reading-anchor.ts). Native scroll
+       anchoring would compete with it, and Safari lacks it anyway. */
+    overflow-anchor: none;
+  }
+
+  .reader[data-text-size="small"] {
+    --reader-english-size: 1.125rem;
+    --reader-turkish-size: 1rem;
+  }
+
+  .reader[data-text-size="large"] {
+    --reader-english-size: 1.4375rem;
+    --reader-turkish-size: 1.1875rem;
+  }
+
+  .reader-english {
+    font-family: var(--font-serif);
+    font-size: var(--reader-english-size);
+    line-height: 1.65;
+  }
+
+  .reader-turkish {
+    font-size: var(--reader-turkish-size);
+    line-height: 1.65;
+    color: var(--color-ink-muted);
+  }
+}
+
+/*
+ * Tailwind's layers are real cascade layers, where a later layer wins over any
+ * specificity. This rule sits in the utilities layer so that it overrides the
+ * `grid` utility on the Turkish rows.
+ */
+@layer utilities {
+  .reader[data-translation="hidden"] [data-lang="tr"] {
+    display: none;
+  }
 }
