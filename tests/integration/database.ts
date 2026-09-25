@@ -2,6 +2,8 @@ import type { Prisma } from "@/generated/prisma/client";
 import { requireTestDatabaseUrl } from "@/lib/database-env";
 import { db } from "@/server/db/client";
 
+import { emptyDatabase } from "../support/empty-database";
+
 /**
  * Empties every application table, leaving the migration history intact.
  * Refuses to run unless DATABASE_URL names a test database.
@@ -9,20 +11,7 @@ import { db } from "@/server/db/client";
 export async function resetDatabase() {
   requireTestDatabaseUrl("DATABASE_URL", process.env.DATABASE_URL);
 
-  const tables = await db.$queryRaw<Array<{ tablename: string }>>`
-    SELECT tablename FROM pg_tables
-    WHERE schemaname = current_schema() AND tablename <> '_prisma_migrations'
-  `;
-
-  if (tables.length === 0) {
-    return;
-  }
-
-  const tableList = tables
-    .map(({ tablename }) => `"${tablename.replaceAll('"', '""')}"`)
-    .join(", ");
-
-  await db.$executeRawUnsafe(`TRUNCATE TABLE ${tableList} CASCADE`);
+  await emptyDatabase(db);
 }
 
 let sequence = 0;

@@ -18,6 +18,15 @@ export function countWords(text: string): number {
   return words.length;
 }
 
+/** Reading-time bands offered as a homepage filter, in whole minutes. */
+export const READING_TIME_BANDS = {
+  short: { label: "Up to 3 minutes", minMinutes: 1, maxMinutes: 3 },
+  medium: { label: "4 to 5 minutes", minMinutes: 4, maxMinutes: 5 },
+  long: { label: "6 minutes or more", minMinutes: 6, maxMinutes: null },
+} as const;
+
+export type ReadingTimeBand = keyof typeof READING_TIME_BANDS;
+
 /** Whole minutes needed to read `wordCount` English words, never below one. */
 export function estimateReadingMinutes(wordCount: number): number {
   if (!Number.isInteger(wordCount) || wordCount < 0) {

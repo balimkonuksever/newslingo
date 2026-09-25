@@ -71,15 +71,15 @@ The experience should feel like a high-quality news reader with learning built i
 
 ## 3. Current repository baseline
 
-As of 2026-09-25, M1 and M2 are complete. The repository contains:
+As of 2026-09-25, M1–M3 are complete, which makes up the Reader Release. The repository contains:
 
 - the Next.js/TypeScript/Tailwind scaffold with pinned Node and pnpm, one lockfile, and lint, format, typecheck, Vitest, and build commands
 - Docker Compose PostgreSQL 18 with isolated `newslingo` and `newslingo_test` databases
 - Prisma ORM 7.10.0 (ADR-001), the reader-core migrations, and a server-only client
 - idempotent reference provisioning for the six categories and a local-only demo seed of six bilingual articles
-- server-only queries for the homepage, categories, and articles
-- unit tests, database integration tests, and a GitHub Actions workflow that runs both
-- only the default `create-next-app` homepage; no reader UI yet
+- server-only queries for the homepage, filters, categories, and articles
+- the editorial homepage with URL-backed filters, category pages, and the bilingual article reader
+- unit, component, database integration, and Playwright browser and accessibility tests, all run by GitHub Actions
 - no deployment configuration
 
 Locally available tooling:
@@ -617,44 +617,53 @@ newslingo/
 │   └── images/
 │       └── seed/                 # owned/licensed local assets only
 ├── scripts/
+│   ├── reset-test-database.ts    # empty the test database, reload demo data
 │   └── with-test-database.ts     # guarded runner for test-database commands
 ├── src/
 │   ├── app/
-│   │   ├── article/[slug]/
+│   │   ├── (home)/               # route group: the loading state covers only /
 │   │   │   ├── loading.tsx
+│   │   │   └── page.tsx
+│   │   ├── article/[slug]/       # no loading.tsx, so unknown slugs return 404
 │   │   │   └── page.tsx
 │   │   ├── category/[slug]/
 │   │   │   └── page.tsx
 │   │   ├── admin/                # moderation milestone
 │   │   ├── api/                  # added by owning feature phases
 │   │   ├── error.tsx
+│   │   ├── global-error.tsx
 │   │   ├── globals.css
 │   │   ├── layout.tsx
-│   │   ├── loading.tsx
-│   │   ├── not-found.tsx
-│   │   └── page.tsx
+│   │   └── not-found.tsx
 │   ├── components/
 │   │   ├── article/
-│   │   │   ├── article-reader.tsx
+│   │   │   ├── article-reader.tsx    # client: controls + reading position
 │   │   │   ├── paragraph-pair.tsx
-│   │   │   ├── reader-controls.tsx
+│   │   │   ├── reading-anchor.ts
 │   │   │   └── source-attribution.tsx
 │   │   ├── learning/             # contextual lookup milestone
 │   │   ├── news/
 │   │   │   ├── article-card.tsx
-│   │   │   └── category-section.tsx
+│   │   │   ├── article-filters-form.tsx
+│   │   │   ├── category-accent.ts
+│   │   │   └── category-card.tsx
 │   │   ├── shared/
+│   │   │   ├── category-nav.tsx
 │   │   │   ├── difficulty-badge.tsx
+│   │   │   ├── empty-state.tsx
 │   │   │   ├── site-footer.tsx
 │   │   │   └── site-header.tsx
-│   │   └── ui/                   # small local primitives only
+│   │   └── ui/                   # shared class lists only
 │   ├── domain/                   # boundary schemas/types as needed
 │   ├── generated/prisma/         # generated and ignored
 │   ├── jobs/                     # scheduled orchestration later
 │   ├── lib/
+│   │   ├── article-filters.ts
 │   │   ├── database-env.ts
 │   │   ├── dates.ts
+│   │   ├── difficulty.ts
 │   │   ├── env.ts
+│   │   ├── format.ts
 │   │   ├── reading-time.ts
 │   │   └── slug.ts
 │   └── server/
@@ -666,9 +675,9 @@ newslingo/
 │       │   └── providers/
 │       └── ai/                   # generation milestone
 ├── tests/
-│   ├── e2e/
-│   ├── fixtures/
-│   └── integration/
+│   ├── e2e/                      # Playwright journeys and axe scans
+│   ├── integration/              # Vitest against the test database
+│   └── support/                  # helpers shared by both suites
 ├── .env.example
 ├── .gitignore
 ├── .node-version
@@ -753,14 +762,14 @@ db:migrate:test
 db:seed
 db:seed:reference
 db:seed:demo
-db:seed:test
+db:reset:test
 db:reset
 db:studio
 ```
 
 `postinstall` may generate the Prisma client. CI still calls generation explicitly so the dependency is visible.
 
-`db:seed:reference` provisions only production-safe categories and approved expression libraries. `db:seed:demo` adds development/test articles and must refuse production; it runs only when `NODE_ENV` is not `production` and the database host is local. The convenience `db:seed` command may run both locally but is never used by production deployment. `db:seed:test`, `db:migrate:test`, and `test:integration` reach the isolated test database only through the guard in `scripts/with-test-database.ts`. `db:reset` is not added yet.
+`db:seed:reference` provisions only production-safe categories and approved expression libraries. `db:seed:demo` adds development/test articles and must refuse production; it runs only when `NODE_ENV` is not `production` and the database host is local. The convenience `db:seed` command may run both locally but is never used by production deployment. `db:migrate:test`, `db:reset:test`, `test:integration`, and `test:e2e` reach the isolated test database only through the guard in `scripts/with-test-database.ts`. `db:reset:test` empties the test database and reloads the reference and demo data; the browser tests run it before every run. `db:reset` for the development database is not added yet.
 
 ### 10.3 Local setup target
 
@@ -1020,78 +1029,78 @@ M2 complete.
 
 ### Work items — design foundation
 
-- [ ] Establish design tokens for:
+- [x] Establish design tokens for:
   - editorial text and muted text
   - background and surfaces
   - borders and focus rings
   - category accents
   - difficulty badges
   - spacing and content widths
-- [ ] Establish responsive typography:
+- [x] Establish responsive typography:
   - headline scale
   - article body scale
   - Turkish translation style
   - metadata and labels
   - comfortable line height and line length
-- [ ] Build reusable primitives only as needed.
-- [ ] Build the site header, category navigation, and footer.
-- [ ] Avoid a childish or gamified visual language.
+- [x] Build reusable primitives only as needed.
+- [x] Build the site header, category navigation, and footer.
+- [x] Avoid a childish or gamified visual language.
 
 ### Work items — homepage
 
-- [ ] Build a featured-article section.
-- [ ] Build latest-news cards.
-- [ ] Build category sections/cards for all six categories.
-- [ ] Show difficulty, source, source publication time, and reading time.
-- [ ] Add URL-backed filters for:
+- [x] Build a featured-article section.
+- [x] Build latest-news cards.
+- [x] Build category sections/cards for all six categories.
+- [x] Show difficulty, source, source publication time, and reading time.
+- [x] Add URL-backed filters for:
   - category
   - difficulty
   - reading-time band
   - source-publication date range
-- [ ] Validate filter query parameters and provide a clear reset action.
-- [ ] Do not show the saved-articles filter until accounts/saving exist.
-- [ ] Add useful empty and database-error states.
-- [ ] Ensure cards have one clear semantic link target.
+- [x] Validate filter query parameters and provide a clear reset action.
+- [x] Do not show the saved-articles filter until accounts/saving exist.
+- [x] Add useful empty and database-error states.
+- [x] Ensure cards have one clear semantic link target.
 
 ### Work items — category page
 
-- [ ] Resolve category by slug and return 404 for an unknown slug.
-- [ ] Show category name and description.
-- [ ] Query recent published articles only.
-- [ ] Render difficulty, source, date, and reading time consistently.
-- [ ] Add a meaningful empty-category state.
-- [ ] Generate category metadata.
+- [x] Resolve category by slug and return 404 for an unknown slug.
+- [x] Show category name and description.
+- [x] Query recent published articles only.
+- [x] Render difficulty, source, date, and reading time consistently.
+- [x] Add a meaningful empty-category state.
+- [x] Generate category metadata.
 
 ### Work items — article page
 
-- [ ] Resolve article by slug and return 404 for unknown/unpublished content.
-- [ ] Render headline, category, level, reading time, and source date.
-- [ ] Display permanent source attribution and an external source link.
-- [ ] Render paragraph pairs in explicit order:
+- [x] Resolve article by slug and return 404 for unknown/unpublished content.
+- [x] Render headline, category, level, reading time, and source date.
+- [x] Display permanent source attribution and an external source link.
+- [x] Render paragraph pairs in explicit order:
   - English paragraph
   - Turkish translation
-- [ ] Add subtle `EN` and `TR` labels.
-- [ ] Add reader controls:
+- [x] Add subtle `EN` and `TR` labels.
+- [x] Add reader controls:
   - show both languages
   - hide/show Turkish
   - font-size selection
-- [ ] Keep reader controls in a small Client Component.
-- [ ] Preserve the user's reading position when controls change.
-- [ ] Add lawful image fallback behavior.
-- [ ] Generate article title, description, canonical, and OpenGraph fallback metadata.
-- [ ] Add Article structured data after the public metadata shape stabilizes.
+- [x] Keep reader controls in a small Client Component.
+- [x] Preserve the user's reading position when controls change. `reading-anchor.ts` keeps the text being read in place; native scroll anchoring is disabled in the reader so every browser behaves the same.
+- [x] Add lawful image fallback behavior. Articles render without images until an image policy is approved; source image fields are not queried.
+- [x] Generate article title, description, canonical, and OpenGraph fallback metadata.
+- [x] Add Article structured data after the public metadata shape stabilizes.
 
 ### Work items — responsive and accessibility quality
 
-- [ ] Test narrow phones, larger phones, tablets, and desktop widths.
-- [ ] Keep line length readable on wide screens.
-- [ ] Prevent horizontal overflow for long English words and Turkish text.
-- [ ] Use semantic landmarks and heading order.
-- [ ] Provide visible keyboard focus.
-- [ ] Ensure controls have names, states, and sufficient target size.
-- [ ] Respect browser zoom and increased text size.
-- [ ] Confirm color contrast.
-- [ ] Add route loading, error, empty, and not-found behavior.
+- [x] Test narrow phones, larger phones, tablets, and desktop widths.
+- [x] Keep line length readable on wide screens.
+- [x] Prevent horizontal overflow for long English words and Turkish text.
+- [x] Use semantic landmarks and heading order.
+- [x] Provide visible keyboard focus.
+- [x] Ensure controls have names, states, and sufficient target size.
+- [x] Respect browser zoom and increased text size.
+- [x] Confirm color contrast.
+- [x] Add route loading, error, empty, and not-found behavior. Only the homepage has a loading state: a loading boundary on the category or article route would stream the response before `notFound()` runs and turn 404s into 200s.
 
 ### Automated verification
 
@@ -1720,6 +1729,8 @@ The M1 build order applies only while the application is database-free.
 2. Run critical desktop/mobile Playwright and axe checks.
 3. Upload traces/screenshots/videos only on failure.
 
+As implemented, the Playwright global setup resets and seeds the test database itself, and the tests run in Google Chrome through Playwright's `chrome` channel on a desktop and a Pixel 7 viewport.
+
 CI should cancel superseded runs on the same branch. Static checks and database/build/E2E work may be split into parallel jobs once the pipeline exists.
 
 ### 13.2 Environment strategy
@@ -1989,6 +2000,10 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-09-25 | An article is public only when it is `PUBLISHED` and its category is active. | Deactivating a category hides its articles from every public query, not only from navigation. |
 | 2026-09-25 | Feature the most recently published article on the homepage. | No editorial featured flag exists until moderation adds one. |
 | 2026-09-25 | Run database integration tests separately from unit tests, only through the guarded test-database runner. | `pnpm test` needs no database; `pnpm test:integration` empties the isolated test database before each test and refuses any other database. |
+| 2026-09-25 | Render public routes dynamically on every request during the Reader Release. Add caching with explicit invalidation together with publishing in M5. | Readers always see the current database state and builds need no database, at the cost of one query per request. |
+| 2026-09-25 | Give category and article routes no loading boundary. | Unknown slugs return a real 404 status instead of a streamed 200; navigating to those routes shows no skeleton. |
+| 2026-09-25 | Run browser tests in Google Chrome through Playwright's `chrome` channel, on a desktop and a Pixel 7 viewport. | No Playwright browser download is needed locally; CI installs Chrome before the browser tests. |
+| 2026-09-25 | Let the reader keep the reading position itself and disable native scroll anchoring inside it. | Hiding the translation or resizing text behaves the same in every browser, including Safari, which has no scroll anchoring. |
 
 ### Open decisions
 
@@ -2108,14 +2123,11 @@ Gate: complete Reader Release definition of done passes.
 
 ## 22. Immediate next actions
 
-Slices 1–3 are complete, and with them M1 and M2. The next implementation session should execute Reader Release Slice 4 unless scope is explicitly changed:
+Slices 1–5 are complete, and with them the Reader Release (M1–M3). On 2026-09-25 a native Turkish speaker reviewed the demo translations in `prisma/fixtures/articles.ts` and found them correct. The reader also passed a manual check on a real phone, covering filters, the translation and text-size controls, landscape, and larger text.
 
-1. Establish the M3 design tokens and responsive typography.
-2. Build the shared layout: site header, category navigation, and footer.
-3. Build article cards and category sections on the existing server-only queries.
-4. Replace the `create-next-app` homepage with the featured, latest, and category sections, plus validated URL-backed category, difficulty, reading-time, and date filters.
-5. Add the category page with its 404, empty, and loading states.
-6. Add Playwright and axe, then the home → category journey on desktop and mobile.
-7. Update this plan's checkboxes and decision log with any deviations.
+Next, M4 and M5 may run in parallel per the dependency map:
 
-Do not begin live news, AI, auth, or dictionary integration during the Reader Release.
+- **M4, contextual vocabulary and Real English.** It can start on local fixtures. The dictionary fallback decision (M0) is needed only before the live external integration.
+- **M5, moderation.** It needs the admin-authentication decision from M0 first.
+
+Do not begin live news or AI integration before their milestones.

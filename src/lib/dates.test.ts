@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { formatArticleDate } from "./dates";
+import {
+  formatArticleDate,
+  startOfDisplayDay,
+  startOfNextDisplayDay,
+} from "./dates";
 
 describe("formatArticleDate", () => {
   it("formats a timestamp as day, month name and year", () => {
@@ -18,5 +22,29 @@ describe("formatArticleDate", () => {
 
   it("rejects an invalid date", () => {
     expect(() => formatArticleDate(new Date("not a date"))).toThrow(RangeError);
+  });
+});
+
+describe("Istanbul day boundaries", () => {
+  it("starts a day at midnight Istanbul time", () => {
+    expect(startOfDisplayDay("2026-09-20").toISOString()).toBe(
+      "2026-09-19T21:00:00.000Z",
+    );
+  });
+
+  it("starts the next day exactly 24 hours later", () => {
+    expect(startOfNextDisplayDay("2026-09-20").toISOString()).toBe(
+      "2026-09-20T21:00:00.000Z",
+    );
+  });
+
+  it("agrees with the displayed calendar date", () => {
+    const start = startOfDisplayDay("2026-09-20");
+    const lastMoment = new Date(
+      startOfNextDisplayDay("2026-09-20").getTime() - 1,
+    );
+
+    expect(formatArticleDate(start)).toBe("20 September 2026");
+    expect(formatArticleDate(lastMoment)).toBe("20 September 2026");
   });
 });

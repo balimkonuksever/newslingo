@@ -1,6 +1,10 @@
 import "server-only";
 
+import { cache } from "react";
+
 import type { Prisma } from "@/generated/prisma/client";
+import { type ArticleFilters, sourceDateRange } from "@/lib/article-filters";
+import { READING_TIME_BANDS } from "@/lib/reading-time";
 import { slugSchema } from "@/lib/slug";
 import { db } from "@/server/db/client";
 
@@ -32,9 +36,8 @@ export type ArticleSummary = Prisma.ArticleGetPayload<{
 
 const articleDetailSelect = {
   ...articleSummarySelect,
+  publishedOnSiteAt: true,
   sourceUrl: true,
-  sourceImageUrl: true,
-  imageAttribution: true,
   wordCount: true,
   paragraphs: {
     orderBy: { order: "asc" },
@@ -61,18 +64,47 @@ export async function getFeaturedAndLatestArticles(latestLimit: number) {
   return { featured, latest };
 }
 
-/** A public article with its paragraph pairs in reading order, or null. */
-export async function getPublicArticleBySlug(
-  slug: string,
-): Promise<ArticleDetail | null> {
-  const parsedSlug = slugSchema.safeParse(slug);
+/**
+ * Public articles matching the homepage filters, most recent source
+ * publication first.
+ */
+export async function listPublicArticles(
+  filters: ArticleFilters,
+  limit: number,
+) {
+  const band = filters.length ? READING_TIME_BANDS[filters.length] : null;
 
-  if (!parsedSlug.success) {
-    return null;
-  }
-
-  return db.article.findUnique({
-    where: { slug: parsedSlug.data, ...publicArticleWhere },
-    select: articleDetailSelect,
+  return db.article.findMany({
+    where: {
+      ...publicArticleWhere,
+      category: { ...publicArticleWhere.category, slug: filters.category },
+      difficulty: filters.level,
+      readingTimeMinutes: band
+        ? { gte: band.minMinutes, lte: band.maxMinutes ?? undefined }
+        : undefined,
+      sourcePublishedAt: sourceDateRange(filters),
+    },
+    orderBy: [{ sourcePublishedAt: "desc" }, { id: "asc" }],
+    take: limit,
+    select: articleSummarySelect,
   });
 }
+
+/**
+ * A public article with its paragraph pairs in reading order, or null.
+ * Memoized per request, so metadata and the page share one database read.
+ */
+export const getPublicArticleBySlug = cache(
+  async (slug: string): Promise<ArticleDetail | null> => {
+    const parsedSlug = slugSchema.safeParse(slug);
+
+    if (!parsedSlug.success) {
+      return null;
+    }
+
+    return db.article.findUnique({
+      where: { slug: parsedSlug.data, ...publicArticleWhere },
+      select: articleDetailSelect,
+    });
+  },
+);

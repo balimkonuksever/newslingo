@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   getFeaturedAndLatestArticles,
   getPublicArticleBySlug,
+  listPublicArticles,
 } from "@/server/articles/queries";
 import {
   getCategoryWithArticles,
@@ -124,6 +125,105 @@ describe("getFeaturedAndLatestArticles", () => {
       readingTimeMinutes: 3,
       category: { slug: "ai", name: "AI" },
     });
+  });
+});
+
+describe("listPublicArticles", () => {
+  async function createFilterFixtures() {
+    const world = await createCategory({ slug: "world" });
+    const ai = await createCategory({ slug: "ai" });
+
+    await createArticle(world.id, {
+      slug: "world-a2-short",
+      difficulty: "A2",
+      readingTimeMinutes: 2,
+      sourcePublishedAt: new Date("2026-09-10T08:00:00Z"),
+    });
+    await createArticle(world.id, {
+      slug: "world-c1-long",
+      difficulty: "C1",
+      readingTimeMinutes: 7,
+      sourcePublishedAt: new Date("2026-09-12T08:00:00Z"),
+    });
+    await createArticle(ai.id, {
+      slug: "ai-b2-medium",
+      difficulty: "B2",
+      readingTimeMinutes: 5,
+      sourcePublishedAt: new Date("2026-09-11T08:00:00Z"),
+    });
+    await createArticle(ai.id, {
+      slug: "ai-b2-draft",
+      status: "DRAFT",
+      difficulty: "B2",
+      readingTimeMinutes: 5,
+      publishedOnSiteAt: null,
+    });
+  }
+
+  const slugsFor = async (filters: Parameters<typeof listPublicArticles>[0]) =>
+    (await listPublicArticles(filters, 20)).map(({ slug }) => slug);
+
+  it("lists every public article, newest source first, without filters", async () => {
+    await createFilterFixtures();
+
+    expect(await slugsFor({})).toEqual([
+      "world-c1-long",
+      "ai-b2-medium",
+      "world-a2-short",
+    ]);
+  });
+
+  it.each([
+    [{ category: "ai" }, ["ai-b2-medium"]],
+    [{ level: "A2" }, ["world-a2-short"]],
+    [{ length: "short" }, ["world-a2-short"]],
+    [{ length: "medium" }, ["ai-b2-medium"]],
+    [{ length: "long" }, ["world-c1-long"]],
+    [{ category: "world", level: "C1" }, ["world-c1-long"]],
+    [{ category: "ai", level: "A2" }, []],
+  ] as const)("filters by %o", async (filters, expected) => {
+    await createFilterFixtures();
+
+    expect(await slugsFor(filters)).toEqual(expected);
+  });
+
+  it("includes whole Istanbul days at both ends of a date range", async () => {
+    const category = await createCategory();
+    // 20:59 UTC on 9 Sept is 23:59 in Istanbul; 21:00 UTC is already 10 Sept.
+    await createArticle(category.id, {
+      slug: "late-on-the-9th",
+      sourcePublishedAt: new Date("2026-09-09T20:59:00Z"),
+    });
+    await createArticle(category.id, {
+      slug: "first-minute-of-the-10th",
+      sourcePublishedAt: new Date("2026-09-09T21:00:00Z"),
+    });
+    await createArticle(category.id, {
+      slug: "last-minute-of-the-11th",
+      sourcePublishedAt: new Date("2026-09-11T20:59:00Z"),
+    });
+    await createArticle(category.id, {
+      slug: "first-minute-of-the-12th",
+      sourcePublishedAt: new Date("2026-09-11T21:00:00Z"),
+    });
+
+    expect(await slugsFor({ from: "2026-09-10", to: "2026-09-11" })).toEqual([
+      "last-minute-of-the-11th",
+      "first-minute-of-the-10th",
+    ]);
+  });
+
+  it("never returns articles from inactive categories or non-public articles", async () => {
+    await createMixedArticles();
+
+    expect(await slugsFor({})).toEqual(["newest", "middle", "oldest"]);
+    expect(await slugsFor({ category: "hidden" })).toEqual([]);
+  });
+
+  it("limits the number of results", async () => {
+    await createFilterFixtures();
+
+    expect(await listPublicArticles({}, 2)).toHaveLength(2);
   });
 });
 

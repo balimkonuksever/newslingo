@@ -22,7 +22,7 @@ jobs:
   quality:
     name: Quality
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
@@ -62,15 +62,27 @@ jobs:
       - name: Apply migrations to the isolated test database
         run: pnpm db:migrate:test
 
-      # These commands swap in TEST_DATABASE_URL themselves after a safety
+      # The test commands swap in TEST_DATABASE_URL themselves after a safety
       # guard, so DATABASE_URL must keep naming the application database here.
       - name: Database integration tests
         run: pnpm test:integration
 
-      - name: Seed the isolated test database
-        run: pnpm db:seed:test
-
       - name: Build
-        env:
-          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
         run: pnpm build
+
+      - name: Install Google Chrome for browser tests
+        run: pnpm exec playwright install --with-deps chrome
+
+      # Resets the test database to the demo dataset, then serves the build.
+      - name: Browser and accessibility tests
+        run: pnpm test:e2e
+
+      - name: Upload the browser test report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
