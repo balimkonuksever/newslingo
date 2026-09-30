@@ -9,15 +9,22 @@ import {
   demoSourceUrl,
 } from "../../prisma/fixtures/articles";
 import { REFERENCE_CATEGORIES } from "../../prisma/reference/categories";
+import { REFERENCE_EXPRESSIONS } from "../../prisma/reference/expressions";
 import { editorialVocabularyRows } from "../../prisma/editorial-dictionary";
+import {
+  referenceExpressionData,
+  resolveExpressionOccurrences,
+} from "../../prisma/expression-library";
 import {
   DEMO_DICTIONARY,
   DEMO_SENSE_CHOICES,
 } from "../../prisma/fixtures/dictionary";
+import { DEMO_EXPRESSION_OCCURRENCES } from "../../prisma/fixtures/expression-occurrences";
 import {
   provisionReferenceData,
   seedDemoArticles,
   seedDemoDictionary,
+  seedDemoExpressions,
 } from "../../prisma/seeders";
 import { lookupWord } from "@/server/dictionary/lookup";
 import { resetDatabase } from "./database";
@@ -58,10 +65,38 @@ function snapshotArticles() {
   });
 }
 
+function snapshotExpressions() {
+  return db.expression.findMany({
+    orderBy: { slug: "asc" },
+    omit: { createdAt: true, updatedAt: true },
+    include: {
+      categories: {
+        orderBy: { categoryId: "asc" },
+        select: { categoryId: true, displayOrder: true, isFeatured: true },
+      },
+    },
+  });
+}
+
+/** The expression slugs on a category's page, in display order. */
+async function categoryPage(slug: string) {
+  const links = await db.categoryExpression.findMany({
+    where: { category: { slug } },
+    orderBy: { displayOrder: "asc" },
+    select: { displayOrder: true, expression: { select: { slug: true } } },
+  });
+
+  expect(links.map(({ displayOrder }) => displayOrder)).toEqual(
+    links.map((_, index) => index + 1),
+  );
+
+  return links.map(({ expression }) => expression.slug);
+}
+
 beforeEach(resetDatabase);
 
 describe("reference provisioning", () => {
-  it("creates the six launch categories and nothing else", async () => {
+  it("creates the six launch categories and no demo content", async () => {
     await provisionReferenceData(db);
 
     const categories = await db.category.findMany({
@@ -78,15 +113,57 @@ describe("reference provisioning", () => {
     expect(categories).toEqual(REFERENCE_CATEGORIES);
     expect(await db.article.count()).toBe(0);
     expect(await db.articleParagraph.count()).toBe(0);
+    expect(await db.articleExpression.count()).toBe(0);
   });
 
-  it("is idempotent and keeps category ids stable", async () => {
+  it("stores every Real English card and each category's page in library order", async () => {
     await provisionReferenceData(db);
-    const first = await snapshotCategories();
+
+    const expected = referenceExpressionData(REFERENCE_EXPRESSIONS);
+    const stored = await db.expression.findMany({
+      include: {
+        categories: {
+          select: { displayOrder: true, category: { select: { slug: true } } },
+        },
+      },
+    });
+    const bySlug = (a: { slug: string }, b: { slug: string }) =>
+      a.slug.localeCompare(b.slug);
+
+    expect(stored).toHaveLength(expected.length);
+    for (const { categories, ...card } of expected) {
+      const row = stored.find(({ slug }) => slug === card.slug);
+
+      expect(row, card.slug).toMatchObject(card);
+      expect(
+        row?.categories
+          .map(({ category, displayOrder }) => ({
+            slug: category.slug,
+            displayOrder,
+          }))
+          .sort(bySlug),
+        card.slug,
+      ).toEqual([...categories].sort(bySlug));
+    }
+
+    for (const { slug } of REFERENCE_CATEGORIES) {
+      expect(await categoryPage(slug), slug).toEqual(
+        REFERENCE_EXPRESSIONS.filter(({ categories }) =>
+          categories.includes(slug),
+        ).map((card) => card.slug),
+      );
+    }
+  });
+
+  it("is idempotent and keeps category and expression ids stable", async () => {
+    await provisionReferenceData(db);
+    const categories = await snapshotCategories();
+    const expressions = await snapshotExpressions();
 
     await provisionReferenceData(db);
 
-    expect(await snapshotCategories()).toEqual(first);
+    expect(await snapshotCategories()).toEqual(categories);
+    expect(await snapshotExpressions()).toEqual(expressions);
   });
 
   it("restores reference fields that were changed in the database", async () => {
@@ -104,6 +181,33 @@ describe("reference provisioning", () => {
         select: { name: true, displayOrder: true, isActive: true },
       }),
     ).toEqual({ name: "AI", displayOrder: 1, isActive: true });
+  });
+
+  it("restores cards and category links that were changed in the database", async () => {
+    await provisionReferenceData(db);
+    const expected = await snapshotExpressions();
+    const [first, second] = await categoryPage("entertainment");
+    const ai = await db.category.findUniqueOrThrow({ where: { slug: "ai" } });
+
+    await db.expression.update({
+      where: { slug: first },
+      data: { turkishMeaning: "Edited", literalWarning: null },
+    });
+    await db.categoryExpression.deleteMany({
+      where: { expression: { slug: second } },
+    });
+    await db.categoryExpression.create({
+      data: {
+        categoryId: ai.id,
+        expressionId: expected.find(({ slug }) => slug === first)!.id,
+        displayOrder: 1,
+        isFeatured: true,
+      },
+    });
+
+    await provisionReferenceData(db);
+
+    expect(await snapshotExpressions()).toEqual(expected);
   });
 });
 
@@ -243,5 +347,112 @@ describe("demo dictionary seeding", () => {
         turkishMeaning: "anlaşma",
       }),
     });
+  });
+});
+
+describe("demo expression seeding", () => {
+  const expected = resolveExpressionOccurrences(
+    DEMO_ARTICLES,
+    REFERENCE_EXPRESSIONS,
+    DEMO_EXPRESSION_OCCURRENCES,
+  );
+
+  async function seedEverything() {
+    await provisionReferenceData(db);
+    await seedDemoArticles(db);
+    return seedDemoExpressions(db);
+  }
+
+  async function storedOccurrences() {
+    const rows = await db.articleExpression.findMany({
+      select: {
+        surfaceText: true,
+        sentence: true,
+        startOffset: true,
+        endOffset: true,
+        displayOrder: true,
+        source: true,
+        article: { select: { slug: true } },
+        expression: { select: { slug: true } },
+        paragraph: { select: { order: true, english: true } },
+      },
+    });
+
+    return rows
+      .map((row) => ({
+        articleSlug: row.article.slug,
+        paragraphOrder: row.paragraph.order,
+        expressionSlug: row.expression.slug,
+        start: row.startOffset,
+        end: row.endOffset,
+        surfaceText: row.surfaceText,
+        sentence: row.sentence,
+        displayOrder: row.displayOrder,
+        source: row.source,
+        textAtOffsets: row.paragraph.english.slice(
+          row.startOffset,
+          row.endOffset,
+        ),
+      }))
+      .sort(
+        (a, b) =>
+          a.articleSlug.localeCompare(b.articleSlug) ||
+          a.displayOrder - b.displayOrder,
+      );
+  }
+
+  it("marks each listed occurrence at its exact place in the article", async () => {
+    await expect(seedEverything()).resolves.toEqual({
+      occurrences: expected.length,
+    });
+
+    const stored = await storedOccurrences();
+
+    expect(stored).toHaveLength(expected.length);
+    for (const occurrence of stored) {
+      expect(occurrence.textAtOffsets).toBe(occurrence.surfaceText);
+      expect(occurrence.source).toBe("editorial");
+      expect(
+        expected.find(
+          ({ articleSlug, displayOrder }) =>
+            articleSlug === occurrence.articleSlug &&
+            displayOrder === occurrence.displayOrder,
+        ),
+      ).toEqual({
+        articleSlug: occurrence.articleSlug,
+        paragraphOrder: occurrence.paragraphOrder,
+        expressionSlug: occurrence.expressionSlug,
+        start: occurrence.start,
+        end: occurrence.end,
+        surfaceText: occurrence.surfaceText,
+        sentence: occurrence.sentence,
+        displayOrder: occurrence.displayOrder,
+      });
+    }
+  });
+
+  it("can run again, including after the demo articles are reseeded", async () => {
+    await seedEverything();
+    const first = await storedOccurrences();
+
+    await seedDemoExpressions(db);
+    expect(await storedOccurrences()).toEqual(first);
+
+    // Reseeding the articles replaces their paragraphs, which removes the
+    // occurrences with them; the next expression seed puts them back.
+    await seedDemoArticles(db);
+    expect(await db.articleExpression.count()).toBe(0);
+    await seedDemoExpressions(db);
+    expect(await storedOccurrences()).toEqual(first);
+  });
+
+  it("refuses to run before the reference expressions exist", async () => {
+    await provisionReferenceData(db);
+    await seedDemoArticles(db);
+    await db.expression.deleteMany();
+
+    await expect(seedDemoExpressions(db)).rejects.toThrow(
+      "Run pnpm db:seed:reference",
+    );
   });
 });

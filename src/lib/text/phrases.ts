@@ -5,6 +5,20 @@ export type PhraseOccurrence = { start: number; end: number; text: string };
 
 const WHITESPACE_ONLY = /^\s+$/u;
 
+function normalizedWords(phrase: string) {
+  return tokenize(phrase)
+    .filter(({ kind }) => kind === "word")
+    .map(({ text: word }) => normalizeWord(word));
+}
+
+/**
+ * The form an expression is stored and compared by: its normalized words
+ * joined by single spaces, so "Sell  Out!" becomes "sell out".
+ */
+export function normalizeExpression(expression: string) {
+  return normalizedWords(expression).join(" ");
+}
+
 /**
  * Finds every occurrence of `phrase` in `text`, ignoring case and apostrophe
  * style. The phrase's words must be separated only by whitespace in the text,
@@ -14,9 +28,7 @@ export function findPhraseOccurrences(
   text: string,
   phrase: string,
 ): PhraseOccurrence[] {
-  const target = tokenize(phrase)
-    .filter(({ kind }) => kind === "word")
-    .map(({ text: word }) => normalizeWord(word));
+  const target = normalizedWords(phrase);
 
   if (target.length === 0) {
     return [];

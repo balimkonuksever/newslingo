@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { findPhraseOccurrences, selectOccurrences } from "./phrases";
+import {
+  findPhraseOccurrences,
+  normalizeExpression,
+  selectOccurrences,
+} from "./phrases";
+
+describe("normalizeExpression", () => {
+  it("keeps only the normalized words, separated by single spaces", () => {
+    expect(normalizeExpression("  Live UP to\nthe hype! ")).toBe(
+      "live up to the hype",
+    );
+    expect(normalizeExpression("Box\u2011Office hit")).toBe("box-office hit");
+    expect(normalizeExpression("It’s a wrap")).toBe("it's a wrap");
+  });
+});
 
 describe("findPhraseOccurrences", () => {
   it("finds a phrase regardless of case and apostrophe style", () => {

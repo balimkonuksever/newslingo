@@ -3,29 +3,59 @@ import type { PrismaClient } from "../src/generated/prisma/client";
 import { countWords, estimateReadingMinutes } from "../src/lib/reading-time";
 import { editorialVocabularyRows } from "./editorial-dictionary";
 import {
+  EDITORIAL_OCCURRENCE_SOURCE,
+  referenceExpressionData,
+  resolveExpressionOccurrences,
+} from "./expression-library";
+import {
   DEMO_ARTICLES,
   DEMO_SOURCE_NAME,
   demoSourceUrl,
 } from "./fixtures/articles";
 import { DEMO_DICTIONARY, DEMO_SENSE_CHOICES } from "./fixtures/dictionary";
+import { DEMO_EXPRESSION_OCCURRENCES } from "./fixtures/expression-occurrences";
 import { REFERENCE_CATEGORIES } from "./reference/categories";
+import { REFERENCE_EXPRESSIONS } from "./reference/expressions";
 
 /**
- * Upserts the launch categories by slug in one transaction. Production-safe:
- * it writes no articles and can be rerun at any time.
+ * Upserts the launch categories and the Real English cards by slug in one
+ * transaction. Production-safe: it writes no articles and can be rerun at any
+ * time. It refuses to write anything if a card is invalid or unreviewed.
  */
 export async function provisionReferenceData(db: PrismaClient) {
-  await db.$transaction(
-    REFERENCE_CATEGORIES.map((category) =>
+  const expressions = referenceExpressionData(REFERENCE_EXPRESSIONS);
+
+  await db.$transaction([
+    ...REFERENCE_CATEGORIES.map((category) =>
       db.category.upsert({
         where: { slug: category.slug },
         create: category,
         update: category,
       }),
     ),
-  );
+    // The library owns its cards' category links, so a card taken off a
+    // category's page in the library also leaves it here.
+    ...expressions.map(({ categories, ...expression }) => {
+      const links = categories.map(({ slug, displayOrder }) => ({
+        displayOrder,
+        category: { connect: { slug } },
+      }));
 
-  return { categories: REFERENCE_CATEGORIES.length };
+      return db.expression.upsert({
+        where: { slug: expression.slug },
+        create: { ...expression, categories: { create: links } },
+        update: {
+          ...expression,
+          categories: { deleteMany: {}, create: links },
+        },
+      });
+    }),
+  ]);
+
+  return {
+    categories: REFERENCE_CATEGORIES.length,
+    expressions: expressions.length,
+  };
 }
 
 /**
@@ -121,4 +151,78 @@ export async function seedDemoDictionary(db: PrismaClient) {
   ]);
 
   return { entries: rows.length, senses: DEMO_DICTIONARY.length };
+}
+
+/**
+ * Replaces the Real English occurrences in the demo articles, finding each
+ * one from its exact wording. Requires the reference cards and the demo
+ * articles; the same caller rules as `seedDemoArticles` apply.
+ */
+export async function seedDemoExpressions(db: PrismaClient) {
+  const occurrences = resolveExpressionOccurrences(
+    DEMO_ARTICLES,
+    REFERENCE_EXPRESSIONS,
+    DEMO_EXPRESSION_OCCURRENCES,
+  );
+
+  const [articles, expressions] = await Promise.all([
+    db.article.findMany({
+      where: { slug: { in: DEMO_ARTICLES.map(({ slug }) => slug) } },
+      select: {
+        id: true,
+        slug: true,
+        paragraphs: { select: { id: true, order: true } },
+      },
+    }),
+    db.expression.findMany({
+      where: {
+        slug: { in: occurrences.map(({ expressionSlug }) => expressionSlug) },
+      },
+      select: { id: true, slug: true },
+    }),
+  ]);
+  const articleBySlug = new Map(
+    articles.map((article) => [article.slug, article]),
+  );
+  const expressionIds = new Map(expressions.map(({ id, slug }) => [slug, id]));
+
+  const rows = occurrences.map((occurrence) => {
+    const article = articleBySlug.get(occurrence.articleSlug);
+    const paragraph = article?.paragraphs.find(
+      ({ order }) => order === occurrence.paragraphOrder,
+    );
+    const expressionId = expressionIds.get(occurrence.expressionSlug);
+
+    if (!article || !paragraph) {
+      throw new Error(
+        `Demo article "${occurrence.articleSlug}" is missing. Seed the demo articles before their expressions.`,
+      );
+    }
+    if (!expressionId) {
+      throw new Error(
+        `Expression "${occurrence.expressionSlug}" does not exist. Run pnpm db:seed:reference before seeding demo articles.`,
+      );
+    }
+
+    return {
+      articleId: article.id,
+      expressionId,
+      paragraphId: paragraph.id,
+      surfaceText: occurrence.surfaceText,
+      sentence: occurrence.sentence,
+      startOffset: occurrence.start,
+      endOffset: occurrence.end,
+      displayOrder: occurrence.displayOrder,
+      source: EDITORIAL_OCCURRENCE_SOURCE,
+    };
+  });
+
+  await db.$transaction([
+    db.articleExpression.deleteMany({
+      where: { articleId: { in: articles.map(({ id }) => id) } },
+    }),
+    db.articleExpression.createMany({ data: rows }),
+  ]);
+
+  return { occurrences: rows.length };
 }

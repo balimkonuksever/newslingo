@@ -605,11 +605,15 @@ newslingo/
 │       └── ci.yml
 ├── prisma/
 │   ├── migrations/
-│   ├── fixtures/
-│   │   └── articles.ts           # development/test demo articles
-│   ├── reference/
+│   ├── fixtures/                 # development/test data only
+│   │   ├── articles.ts           # demo articles
+│   │   ├── dictionary/           # editorial entries for their words (M4)
+│   │   └── expression-occurrences.ts  # where cards occur in them (M4)
+│   ├── reference/                # production reference data
 │   │   ├── categories.ts
-│   │   └── expressions.ts       # added in M4
+│   │   └── expressions/          # Real English cards, one file per category (M4)
+│   ├── editorial-dictionary.ts   # checks and rows for the dictionary entries
+│   ├── expression-library.ts     # checks and rows for cards and occurrences
 │   ├── schema.prisma
 │   ├── seed.ts                   # CLI: reference | demo | all
 │   └── seeders.ts                # seeding logic shared with tests
@@ -1170,8 +1174,8 @@ M3 complete. Dictionary provider selection is needed only for the external fallb
 ### Work items — data and contracts
 
 - [x] Add `VocabularyEntry`, `ArticleVocabulary`, `Expression`, `CategoryExpression`, and `ArticleExpression` migrations. An occurrence references its paragraph through a composite `(paragraphId, articleId)` key, so it cannot point at another article's paragraph.
-- [ ] Extend production-safe reference provisioning with at least 10 reviewed expressions for each launch category.
-- [ ] Keep representative article occurrences in development/test fixtures or generated article data, not global production reference content.
+- [ ] Extend production-safe reference provisioning with at least 10 reviewed expressions for each launch category. In progress: the cards live in `prisma/reference/expressions/`, one file per category, and `pnpm db:seed:reference` refuses the whole library if any card lacks the user's review date. Entertainment is done (13 cards and 2 general phrases, reviewed on 2026-09-30); AI, Technology, World, Business and Beauty remain.
+- [x] Keep representative article occurrences in development/test fixtures or generated article data, not global production reference content. Demo occurrences live in `prisma/fixtures/expression-occurrences.ts` and load only with the demo seed.
 - [x] Define validated dictionary request/response contracts. A request names a word by article slug, paragraph order and UTF-16 offsets; the server reads the word and its sentence from the published article (`src/domain/dictionary.ts`).
 - [x] Bound word and sentence-context lengths: words up to 64 characters, context up to 400 characters around the word, request bodies up to 1 KB.
 - [x] Define cache normalization and schema/provider versioning. The key is the normalized word, the SHA-256 of the sentence with the word marked, the provider, the provider version (model and prompt version) and the schema version.
@@ -1223,7 +1227,7 @@ M3 complete. Dictionary provider selection is needed only for the external fallb
 - [ ] Build “Real English from this article.”
 - [ ] Build “Key vocabulary from this article” from `ArticleVocabulary` records.
 - [ ] Build `/category/[slug]/expressions`.
-- [ ] Verify article expressions actually occur in the article text.
+- [x] Verify article expressions actually occur in the article text. Each occurrence is recorded by its exact wording, and the seed finds it in its paragraph, refusing wording that is missing, repeated in the paragraph or overlapping another occurrence (`prisma/expression-library.ts`). Generated articles (M7) can reuse the same check.
 
 ### Verification
 
@@ -2040,6 +2044,10 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-09-25 | Show the lookup card as a top-layer popover beside the word on wide screens and as a bottom sheet below 40rem. | Uses the browser's Popover API for light dismiss, Escape and focus return; no positioning library is needed. |
 | 2026-09-26 | Serve word lookups from editorial entries written ahead of time, with no live provider for now (`DICTIONARY_PROVIDER=none` by default in every environment). Claude writes the entries in Claude Code sessions, one per meaning, and records which meaning each ambiguous word has in each sentence; the user reviews samples of the Turkish. | Lookups are instant and cost no API credits. Words without an entry show that they are not in the dictionary yet. The Claude provider stays available behind `DICTIONARY_PROVIDER=anthropic`, and `DICTIONARY_CACHE_ONLY` remains its kill switch. |
 | 2026-09-25 | Rate-limit lookups in process memory: 30 a minute per client address (the last `x-forwarded-for` entry) and 60 provider calls a minute per server process. | Limits are per instance and rely on a proxy setting the header. Revisit with the hosting decision; content-bounded cost remains the hard cap. |
+| 2026-09-30 | Write the Real English cards by hand as reference data in `prisma/reference/expressions/`, one file per category, drafted by Claude in Claude Code sessions. The user checks the Turkish of every card, and each card records the review date. | Provisioning refuses the whole library while any card is unreviewed, so production only gets Turkish a native speaker has checked. The cards' CEFR levels are editorial estimates, not labels, and are never evaluation data. |
+| 2026-09-30 | Give phrases that belong to no topic, such as "thanks to", a card with no category. | They appear in the articles that use them but on no category page, so each category page stays about its topic. |
+| 2026-09-30 | Record demo expression occurrences by their exact wording ("sold out" for "sell out"), not by the card's form. | The phrase matcher does not inflect words. Phrasal verbs split by their object, such as "cutting their routines down", are not marked, because one clickable unit would swallow the words in between. |
+| 2026-09-30 | Let the library own its cards' category links: provisioning replaces a card's links with the library's. | A card taken off a category page in the library leaves it in every database. Links added to library cards by other means would be replaced; revisit if M5 adds editing of category pages. |
 
 ### Open decisions
 
@@ -2166,7 +2174,7 @@ M4 and M5 may run in parallel per the dependency map.
 **M4, contextual vocabulary and Real English, is in progress.** Done: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, and clickable words with a desktop popover, a mobile bottom sheet and keyboard access. Remaining:
 
 - the user's sample review of the editorial Turkish;
-- at least 10 reviewed Real English expressions per category, with the user reviewing the Turkish;
+- at least 10 reviewed Real English expressions per category, with the user reviewing the Turkish. Entertainment is done and loads through the seed; AI, Technology, World, Business and Beauty remain;
 - expression cards in the reader, the category expression pages, and the article's "Real English" and "Key vocabulary" sections.
 
 **M5, moderation,** needs the admin-authentication decision from M0 first.
