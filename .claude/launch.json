@@ -1,0 +1,30 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "newslingo-dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev", "--port", "3000"],
+      "port": 3000
+    },
+    {
+      "name": "newslingo-production",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["start", "--port", "3001"],
+      "port": 3001
+    },
+    {
+      "name": "newslingo-production-fixture",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "DICTIONARY_PROVIDER=fixture",
+        "pnpm",
+        "start",
+        "--port",
+        "3002"
+      ],
+      "port": 3002
+    }
+
+  ]
+}
