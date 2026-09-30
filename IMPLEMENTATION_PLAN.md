@@ -126,8 +126,8 @@ These are the working defaults. Items marked **Open** must be resolved before th
 | Search at launch | PostgreSQL full-text search | Accepted | Search is in the product MVP; a separate search service is unnecessary initially. |
 | Prisma workflow | Prisma ORM 7.10.0 with `prisma-client`, `prisma.config.ts`, and the PostgreSQL driver adapter | Accepted | ADR-001 pins the stable M2 generator, runtime, migration, and seeding workflow. |
 | News provider | One licensed RSS/API provider | Open | Licensing must be confirmed before ingestion work. |
-| AI provider/model | Structured-output-capable provider | Open | Must be selected before AI transformation. |
-| Dictionary fallback | Dictionary API or LLM fallback | Open | Must be selected before contextual lookup integration. |
+| AI provider/model | Anthropic Claude through the official SDK, `claude-opus-5` by default | Provider accepted | Structured outputs are supported. The model for each task is chosen by measured comparison (ML roadmap item 3) before M7. |
+| Dictionary fallback | Contextual Claude lookup, cache-first | Accepted | Word plus sentence gives the contextual Turkish sense; results are cached in `VocabularyEntry`. |
 | Admin authentication | Provider/mechanism to be selected | Open | Must be resolved before the admin milestone. |
 | Hosting/database | Provider-neutral until deployment planning | Open | Does not block local Reader Release work. |
 | Scheduler | Vercel Cron or Trigger.dev | Open | Depends on hosting and operational needs. |
@@ -605,11 +605,15 @@ newslingo/
 │       └── ci.yml
 ├── prisma/
 │   ├── migrations/
-│   ├── fixtures/
-│   │   └── articles.ts           # development/test demo articles
-│   ├── reference/
+│   ├── fixtures/                 # development/test data only
+│   │   ├── articles.ts           # demo articles
+│   │   ├── dictionary/           # editorial entries for their words (M4)
+│   │   └── expression-occurrences.ts  # where cards occur in them (M4)
+│   ├── reference/                # production reference data
 │   │   ├── categories.ts
-│   │   └── expressions.ts       # added in M4
+│   │   └── expressions/          # Real English cards, one file per category (M4)
+│   ├── editorial-dictionary.ts   # checks and rows for the dictionary entries
+│   ├── expression-library.ts     # checks and rows for cards and occurrences
 │   ├── schema.prisma
 │   ├── seed.ts                   # CLI: reference | demo | all
 │   └── seeders.ts                # seeding logic shared with tests
@@ -630,6 +634,7 @@ newslingo/
 │   │   │   └── page.tsx
 │   │   ├── admin/                # moderation milestone
 │   │   ├── api/                  # added by owning feature phases
+│   │   │   └── dictionary/route.ts   # POST: one word lookup (M4)
 │   │   ├── error.tsx
 │   │   ├── global-error.tsx
 │   │   ├── globals.css
@@ -641,7 +646,11 @@ newslingo/
 │   │   │   ├── paragraph-pair.tsx
 │   │   │   ├── reading-anchor.ts
 │   │   │   └── source-attribution.tsx
-│   │   ├── learning/             # contextual lookup milestone
+│   │   ├── learning/             # contextual lookup (M4)
+│   │   │   ├── english-text.tsx      # words as spans, one tab stop
+│   │   │   ├── lookup-client.ts
+│   │   │   ├── word-lookup.tsx       # client: popover / bottom sheet
+│   │   │   └── word-navigation.ts    # roving tab index between words
 │   │   ├── news/
 │   │   │   ├── article-card.tsx
 │   │   │   ├── article-filters-form.tsx
@@ -655,6 +664,7 @@ newslingo/
 │   │   │   └── site-header.tsx
 │   │   └── ui/                   # shared class lists only
 │   ├── domain/                   # boundary schemas/types as needed
+│   │   └── dictionary.ts
 │   ├── generated/prisma/         # generated and ignored
 │   ├── jobs/                     # scheduled orchestration later
 │   ├── lib/
@@ -665,12 +675,20 @@ newslingo/
 │   │   ├── env.ts
 │   │   ├── format.ts
 │   │   ├── reading-time.ts
-│   │   └── slug.ts
+│   │   ├── slug.ts
+│   │   └── text/                 # tokenizer, phrases, segments, lookup context
 │   └── server/
 │       ├── articles/queries.ts
 │       ├── categories/queries.ts
 │       ├── db/client.ts
-│       ├── dictionary/           # contextual lookup milestone
+│       ├── dictionary/           # contextual lookup (M4)
+│       │   ├── anthropic-provider.ts
+│       │   ├── config.ts         # provider and limits from the environment
+│       │   ├── fixture-provider.ts
+│       │   ├── log.ts            # outcome, latency and cost lines
+│       │   ├── lookup.ts         # cache-first lookup service
+│       │   ├── provider.ts
+│       │   └── rate-limit.ts
 │       ├── ingestion/            # ingestion milestone
 │       │   └── providers/
 │       └── ai/                   # generation milestone
@@ -715,10 +733,18 @@ TEST_DATABASE_URL=
 NEXT_PUBLIC_SITE_URL=
 ```
 
+M4 adds the dictionary settings. The API key goes only in `.env.local` or the host's secret store:
+
+```env
+DICTIONARY_PROVIDER=none      # none (default), fixture or anthropic
+DICTIONARY_MODEL=claude-opus-5
+DICTIONARY_CACHE_ONLY=false   # the kill switch: serve cached entries only
+ANTHROPIC_API_KEY=
+```
+
 Later milestones add variables only when required:
 
 ```env
-OPENAI_API_KEY=
 NEWS_API_KEY=
 CRON_SECRET=
 ADMIN_AUTH_SECRET=
@@ -733,6 +759,8 @@ Rules:
 - Environment validation is phase-aware: M1 must build without a database URL; database-backed routes introduced in M2 require `DATABASE_URL`.
 - Integration/E2E setup uses `TEST_DATABASE_URL` and must refuse destructive operations unless the database name or connection metadata explicitly identifies a test database.
 - CI sets database variables before any Prisma configuration, generation, migration, or test command evaluates them.
+- Dictionary settings are validated on the first lookup, so builds and pages need no API key.
+- Tests never call a live model: `scripts/with-test-database.ts` sets `DICTIONARY_PROVIDER=none` and removes `ANTHROPIC_API_KEY`, and `NODE_ENV=test` refuses the live provider.
 
 ### 10.2 Planned package scripts
 
@@ -850,8 +878,8 @@ Turn the remaining launch-sensitive choices into explicit decisions before they 
   - natural Turkish translation
   - required attribution
   - unsuitable/sensitive-news handling
-- [ ] Select the AI provider/model and confirm structured-output support.
-- [ ] Select the contextual dictionary fallback.
+- [ ] Select the AI provider/model and confirm structured-output support. Provider selected on 2026-09-25: Anthropic Claude, with structured outputs. The model for each task is still to be chosen by measured comparison.
+- [x] Select the contextual dictionary fallback: a contextual Claude lookup, cache-first (2026-09-25).
 - [ ] Select admin authentication.
 - [ ] Select hosting, managed PostgreSQL, and scheduler.
 - [ ] Set operational limits:
@@ -1145,48 +1173,48 @@ M3 complete. Dictionary provider selection is needed only for the external fallb
 
 ### Work items — data and contracts
 
-- [ ] Add `VocabularyEntry`, `ArticleVocabulary`, `Expression`, `CategoryExpression`, and `ArticleExpression` migrations.
-- [ ] Extend production-safe reference provisioning with at least 10 reviewed expressions for each launch category.
-- [ ] Keep representative article occurrences in development/test fixtures or generated article data, not global production reference content.
-- [ ] Define validated dictionary request/response contracts.
-- [ ] Bound word and sentence-context lengths.
-- [ ] Define cache normalization and schema/provider versioning.
+- [x] Add `VocabularyEntry`, `ArticleVocabulary`, `Expression`, `CategoryExpression`, and `ArticleExpression` migrations. An occurrence references its paragraph through a composite `(paragraphId, articleId)` key, so it cannot point at another article's paragraph.
+- [ ] Extend production-safe reference provisioning with at least 10 reviewed expressions for each launch category. In progress: the cards live in `prisma/reference/expressions/`, one file per category, and `pnpm db:seed:reference` refuses the whole library if any card lacks the user's review date. Entertainment is done (13 cards and 2 general phrases, reviewed on 2026-09-30); AI, Technology, World, Business and Beauty remain.
+- [x] Keep representative article occurrences in development/test fixtures or generated article data, not global production reference content. Demo occurrences live in `prisma/fixtures/expression-occurrences.ts` and load only with the demo seed.
+- [x] Define validated dictionary request/response contracts. A request names a word by article slug, paragraph order and UTF-16 offsets; the server reads the word and its sentence from the published article (`src/domain/dictionary.ts`).
+- [x] Bound word and sentence-context lengths: words up to 64 characters, context up to 400 characters around the word, request bodies up to 1 KB.
+- [x] Define cache normalization and schema/provider versioning. The key is the normalized word, the SHA-256 of the sentence with the word marked, the provider, the provider version (model and prompt version) and the schema version.
 
 ### Work items — text analysis
 
-- [ ] Build a tokenizer that preserves exact:
+- [x] Build a tokenizer that preserves exact:
   - spaces
   - punctuation
   - contractions/apostrophes
   - capitalization
   - hyphenated words
   - sentence boundaries
-- [ ] Match known multi-word expressions before individual words.
-- [ ] Prefer the longest valid expression when matches overlap.
-- [ ] Prevent a phrase occurrence from producing nested word targets.
-- [ ] Preserve surface text while looking up normalized values.
-- [ ] Extract the complete sentence for contextual lookup.
-- [ ] Add fixtures for punctuation, quotations, Unicode, repeated words, and overlapping phrases.
+- [x] Match known multi-word expressions before individual words.
+- [x] Prefer the longest valid expression when matches overlap.
+- [x] Prevent a phrase occurrence from producing nested word targets.
+- [x] Preserve surface text while looking up normalized values.
+- [x] Extract the complete sentence for contextual lookup. `Intl.Segmenter` splits after titles such as "Mr.", so `sentenceAt` rejoins those.
+- [x] Add fixtures for punctuation, quotations, Unicode, repeated words, and overlapping phrases.
 
 ### Work items — interaction
 
-- [ ] Render no lookup requests during initial article rendering.
+- [x] Render no lookup requests during initial article rendering.
 - [ ] Build one accessible interactive unit per matched expression.
-- [ ] Build word interaction for the remaining English tokens.
-- [ ] Use a desktop popover.
-- [ ] Use a mobile bottom sheet.
-- [ ] Handle loading, success, missing entry, rate limit, provider failure, and retry.
-- [ ] Preserve keyboard focus when the surface opens and closes.
-- [ ] Avoid an unusably long tab order; choose and document a keyboard-navigation strategy for tokenized paragraphs.
+- [x] Build word interaction for the remaining English tokens. Words are server-rendered spans without a role, handled by one delegated listener, so screen readers read plain prose and no per-word client component hydrates.
+- [x] Use a desktop popover.
+- [x] Use a mobile bottom sheet. It scrolls the page when it would cover the word.
+- [x] Handle loading, success, missing entry, rate limit, provider failure, and retry.
+- [x] Preserve keyboard focus when the surface opens and closes.
+- [x] Avoid an unusably long tab order; choose and document a keyboard-navigation strategy for tokenized paragraphs. Each English paragraph is one tab stop (a roving tab index on its words). The arrow keys move between words, Home and End jump to the first and last word, and Enter or Space opens the card, which takes focus and gives it back to the word when it closes.
 
 ### Work items — lookup service
 
-- [ ] Lookup local/contextual cache first.
-- [ ] On miss, send normalized word plus sentence context to the selected fallback.
-- [ ] Validate external output before returning or caching it.
-- [ ] Cache by normalized word, context hash, provider version, and schema version.
-- [ ] Rate limit per client/session/IP as appropriate to the deployment.
-- [ ] Log outcome classes without recording unnecessary personal data.
+- [x] Lookup local/contextual cache first.
+- [x] On miss, send the word and its sentence context to the selected fallback. The provider sees the surface word and the sentence with that occurrence marked; the cache key uses the normalized word. Simultaneous misses for the same key share one provider call.
+- [x] Validate external output before returning or caching it.
+- [x] Cache by normalized word, context hash, provider version, and schema version.
+- [x] Rate limit per client/session/IP as appropriate to the deployment: 30 lookups a minute per client address and 60 provider calls a minute per server process, held in memory until hosting is chosen.
+- [x] Log outcome classes without recording unnecessary personal data. Each lookup logs one JSON line with outcome, provider, latency, token usage and estimated cost, and no address, word or sentence.
 
 ### Work items — expression surfaces
 
@@ -1199,7 +1227,7 @@ M3 complete. Dictionary provider selection is needed only for the external fallb
 - [ ] Build “Real English from this article.”
 - [ ] Build “Key vocabulary from this article” from `ArticleVocabulary` records.
 - [ ] Build `/category/[slug]/expressions`.
-- [ ] Verify article expressions actually occur in the article text.
+- [x] Verify article expressions actually occur in the article text. Each occurrence is recorded by its exact wording, and the seed finds it in its paragraph, refusing wording that is missing, repeated in the paragraph or overlapping another occurrence (`prisma/expression-library.ts`). Generated articles (M7) can reuse the same check.
 
 ### Verification
 
@@ -2004,6 +2032,22 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-09-25 | Give category and article routes no loading boundary. | Unknown slugs return a real 404 status instead of a streamed 200; navigating to those routes shows no skeleton. |
 | 2026-09-25 | Run browser tests in Google Chrome through Playwright's `chrome` channel, on a desktop and a Pixel 7 viewport. | No Playwright browser download is needed locally; CI installs Chrome before the browser tests. |
 | 2026-09-25 | Let the reader keep the reading position itself and disable native scroll anchoring inside it. | Hiding the translation or resizing text behaves the same in every browser, including Safari, which has no scroll anchoring. |
+| 2026-09-25 | Use Anthropic Claude as the LLM provider through the official SDK, starting with the M4 contextual dictionary. The model defaults to `claude-opus-5` and is configurable. | The model for each task (dictionary, generation, CEFR checks) is chosen by measured quality, cost and latency (ML roadmap item 3), not assumed. |
+| 2026-09-25 | Look up words contextually with Claude behind a provider interface, cache-first in `VocabularyEntry`. Tests and CI use a fixture provider. | Pull-request CI never calls the live model. Every live lookup logs usage, cost and latency. |
+| 2026-09-25 | Keep ML code in an `ml/` folder in this repository (ADR-002). | Training and evaluation run locally in Python; production gets no Python service. |
+| 2026-09-25 | Train the CEFR classifier on CEFR-SP's Wiki-Auto subset (CC BY-SA 3.0) with its published splits, and evaluate article-level accuracy on a set the user labels. | Commercial use is allowed. SCoRE (non-commercial) and Newsela (restricted) stay out of anything shipped. |
+| 2026-09-25 | A dictionary request names a word by its position in a published article, never by free text. | The endpoint cannot serve as a general model proxy, and live lookups are bounded by the distinct words in published sentences: cost grows with content, not traffic. |
+| 2026-09-25 | Cache dictionary entries by normalized word, the SHA-256 of the sentence with the word marked, provider, provider version (model plus prompt version) and schema version. | A new model or prompt starts a fresh cache namespace. A word repeated in one sentence keeps separate entries. |
+| 2026-09-25 | Call Claude for lookups with low effort, the default adaptive thinking, structured outputs, `fallbacks: "default"`, a cached system prompt, a 15-second timeout and one retry. | A reader gets an answer or a clear failure within about 30 seconds. Refusals are re-run on Anthropic's recommended fallback model. |
+| 2026-09-25 | Give IPA in British English and parts of speech from a fixed list of eleven. | Matches the en-GB conventions already used for dates; the card's labels stay consistent. |
+| 2026-09-25 | Make each English paragraph one tab stop, with a roving tab index over role-less word spans. | Tab order grows with paragraphs, not words, and screen readers read the article as ordinary prose. |
+| 2026-09-25 | Show the lookup card as a top-layer popover beside the word on wide screens and as a bottom sheet below 40rem. | Uses the browser's Popover API for light dismiss, Escape and focus return; no positioning library is needed. |
+| 2026-09-26 | Serve word lookups from editorial entries written ahead of time, with no live provider for now (`DICTIONARY_PROVIDER=none` by default in every environment). Claude writes the entries in Claude Code sessions, one per meaning, and records which meaning each ambiguous word has in each sentence; the user reviews samples of the Turkish. | Lookups are instant and cost no API credits. Words without an entry show that they are not in the dictionary yet. The Claude provider stays available behind `DICTIONARY_PROVIDER=anthropic`, and `DICTIONARY_CACHE_ONLY` remains its kill switch. |
+| 2026-09-25 | Rate-limit lookups in process memory: 30 a minute per client address (the last `x-forwarded-for` entry) and 60 provider calls a minute per server process. | Limits are per instance and rely on a proxy setting the header. Revisit with the hosting decision; content-bounded cost remains the hard cap. |
+| 2026-09-30 | Write the Real English cards by hand as reference data in `prisma/reference/expressions/`, one file per category, drafted by Claude in Claude Code sessions. The user checks the Turkish of every card, and each card records the review date. | Provisioning refuses the whole library while any card is unreviewed, so production only gets Turkish a native speaker has checked. The cards' CEFR levels are editorial estimates, not labels, and are never evaluation data. |
+| 2026-09-30 | Give phrases that belong to no topic, such as "thanks to", a card with no category. | They appear in the articles that use them but on no category page, so each category page stays about its topic. |
+| 2026-09-30 | Record demo expression occurrences by their exact wording ("sold out" for "sell out"), not by the card's form. | The phrase matcher does not inflect words. Phrasal verbs split by their object, such as "cutting their routines down", are not marked, because one clickable unit would swallow the words in between. |
+| 2026-09-30 | Let the library own its cards' category links: provisioning replaces a card's links with the library's. | A card taken off a category page in the library leaves it in every database. Links added to library cards by other means would be replaced; revisit if M5 adds editing of category pages. |
 
 ### Open decisions
 
@@ -2011,8 +2055,8 @@ Learning-product analytics such as article completion and words clicked can be a
 |---|---|---|
 | Licensed news provider and exact usage rights | Before M6 | One provider with explicit derivative-content rights. |
 | Image policy/provider | Before using production images | Omit unless rights are explicit. |
-| AI provider/model | Before M7 | Structured outputs, predictable cost, good EN/TR quality. |
-| Dictionary fallback | Before live M4 integration | Cache-first; selected provider receives bounded sentence context. |
+| AI provider/model | Before M7 | Provider decided on 2026-09-25 (Claude). Still open: the model for each task, chosen by the ML roadmap's comparison. |
+| Dictionary fallback | Before live M4 integration | Resolved on 2026-09-25: contextual Claude lookup, cache-first (see Accepted). |
 | Admin authentication | Before M5 | Simple, secure admin-only auth; no general user model yet. |
 | Hosting and managed PostgreSQL | Before M8/M9 | Choose based on operational simplicity and regional needs. |
 | Scheduler | Before M8 | Vercel Cron for simple hosting alignment or Trigger.dev for richer runs. |
@@ -2125,9 +2169,14 @@ Gate: complete Reader Release definition of done passes.
 
 Slices 1–5 are complete, and with them the Reader Release (M1–M3). On 2026-09-25 a native Turkish speaker reviewed the demo translations in `prisma/fixtures/articles.ts` and found them correct. The reader also passed a manual check on a real phone, covering filters, the translation and text-size controls, landscape, and larger text.
 
-Next, M4 and M5 may run in parallel per the dependency map:
+M4 and M5 may run in parallel per the dependency map.
 
-- **M4, contextual vocabulary and Real English.** It can start on local fixtures. The dictionary fallback decision (M0) is needed only before the live external integration.
-- **M5, moderation.** It needs the admin-authentication decision from M0 first.
+**M4, contextual vocabulary and Real English, is in progress.** Done: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, and clickable words with a desktop popover, a mobile bottom sheet and keyboard access. Remaining:
+
+- the user's sample review of the editorial Turkish;
+- at least 10 reviewed Real English expressions per category, with the user reviewing the Turkish. Entertainment is done and loads through the seed; AI, Technology, World, Business and Beauty remain;
+- expression cards in the reader, the category expression pages, and the article's "Real English" and "Key vocabulary" sections.
+
+**M5, moderation,** needs the admin-authentication decision from M0 first.
 
 Do not begin live news or AI integration before their milestones.

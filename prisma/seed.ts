@@ -1,6 +1,6 @@
 // Seeds the database named by DATABASE_URL.
 //
-//   tsx prisma/seed.ts reference   production-safe categories only
+//   tsx prisma/seed.ts reference   production-safe categories and expressions
 //   tsx prisma/seed.ts demo        demo articles (local databases only)
 //   tsx prisma/seed.ts [all]       both; this is what `prisma db seed` runs
 import nextEnv from "@next/env";
@@ -11,7 +11,12 @@ import {
   assertDemoSeedAllowed,
   parsePostgresUrl,
 } from "../src/lib/database-env";
-import { provisionReferenceData, seedDemoArticles } from "./seeders";
+import {
+  provisionReferenceData,
+  seedDemoArticles,
+  seedDemoDictionary,
+  seedDemoExpressions,
+} from "./seeders";
 
 const { loadEnvConfig } = nextEnv;
 
@@ -44,14 +49,26 @@ const db = new PrismaClient({
 
 try {
   if (target !== "demo") {
-    const { categories } = await provisionReferenceData(db);
-    console.log(`Provisioned ${categories} reference categories.`);
+    const { categories, expressions } = await provisionReferenceData(db);
+    console.log(
+      `Provisioned ${categories} reference categories and ${expressions} expressions.`,
+    );
   }
 
   if (target !== "reference") {
     const { articles, paragraphs } = await seedDemoArticles(db);
     console.log(
       `Seeded ${articles} demo articles with ${paragraphs} paragraph pairs.`,
+    );
+
+    const { entries, senses } = await seedDemoDictionary(db);
+    console.log(
+      `Seeded ${entries} dictionary entries from ${senses} word senses.`,
+    );
+
+    const { occurrences } = await seedDemoExpressions(db);
+    console.log(
+      `Marked ${occurrences} expression occurrences in the demo articles.`,
     );
   }
 } finally {

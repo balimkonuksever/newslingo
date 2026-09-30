@@ -8,7 +8,7 @@ The **Reader Release** (milestones M1–M3) is in place. It runs entirely on Pos
 - category pages
 - a bilingual reader that alternates English paragraphs with their Turkish translations, with controls to hide the translation and change the text size
 
-Contextual vocabulary, moderation, licensed news ingestion, and AI adaptation are later milestones.
+M4, contextual vocabulary and Real English expressions, is in progress: every English word in the reader can already be looked up. Moderation, licensed news ingestion, and AI adaptation are later milestones.
 
 ## Stack
 
@@ -100,12 +100,12 @@ Database data persists in the Docker volume named `newslingo_postgres_data`. `do
 
 Seeding is split by what is safe where:
 
-| Command                  | Writes                                                                          | Where it may run                                                         |
-| ------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `pnpm db:seed:reference` | The six launch categories from `prisma/reference/categories.ts`                 | Anywhere, including production. Idempotent upsert by slug.               |
-| `pnpm db:seed:demo`      | Six demo articles with EN/TR paragraph pairs from `prisma/fixtures/articles.ts` | Local databases only. Refuses `NODE_ENV=production` and non-local hosts. |
-| `pnpm db:seed`           | Both, via `prisma db seed`                                                      | Local development.                                                       |
-| `pnpm db:reset:test`     | Empties the isolated test database, then loads both                             | Local and CI. The browser tests run it automatically.                    |
+| Command                  | Writes                                                                                                                                                                        | Where it may run                                                                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm db:seed:reference` | The six launch categories from `prisma/reference/categories.ts` and the Real English expression cards from `prisma/reference/expressions/`                                    | Anywhere, including production. Idempotent upsert by slug. Refuses to write anything if a card is invalid or its Turkish is unreviewed. |
+| `pnpm db:seed:demo`      | Six demo articles with EN/TR paragraph pairs from `prisma/fixtures/articles.ts`, a dictionary entry for each of their words, and where Real English expressions occur in them | Local databases only. Refuses `NODE_ENV=production` and non-local hosts.                                                                |
+| `pnpm db:seed`           | Both, via `prisma db seed`                                                                                                                                                    | Local development.                                                                                                                      |
+| `pnpm db:reset:test`     | Empties the isolated test database, then loads both                                                                                                                           | Local and CI. The browser tests run it automatically.                                                                                   |
 
 Every seed command is idempotent: rerunning it updates rows in place and never duplicates them. The demo articles are original, invented educational fixtures attributed to "Newslingo demo fixture" with URLs on the reserved `demo.newslingo.example` domain, so they cannot be mistaken for real or ingested news. Their CEFR levels are the author's intent, not verified labels, so they must not be used as evaluation data. Live news fetching is a later milestone.
 

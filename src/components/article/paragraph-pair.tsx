@@ -1,3 +1,5 @@
+import { EnglishText } from "@/components/learning/english-text";
+
 const labelClass =
   "pt-[0.3em] text-[0.6875rem] font-semibold tracking-wider text-ink-muted select-none";
 
@@ -24,7 +26,7 @@ export function ParagraphPair({
           EN
         </span>
         <p lang="en" className="reader-english wrap-break-word text-ink">
-          {english}
+          <EnglishText text={english} />
         </p>
       </div>
       <div

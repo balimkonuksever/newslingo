@@ -25,40 +25,52 @@ enum ArticleStatus {
   ARCHIVED
 }
 
+enum ExpressionType {
+  IDIOM
+  PHRASAL_VERB
+  COLLOCATION
+  COMMON_EXPRESSION
+  SLANG
+  NEWS_ENGLISH
+}
+
 model Category {
-  id           String    @id @default(cuid())
-  slug         String    @unique
+  id           String               @id @default(cuid())
+  slug         String               @unique
   name         String
   description  String?
   displayOrder Int
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
   articles     Article[]
+  expressions  CategoryExpression[]
 
   @@index([isActive, displayOrder])
 }
 
 model Article {
-  id                 String             @id @default(cuid())
-  slug               String             @unique
+  id                 String              @id @default(cuid())
+  slug               String              @unique
   title              String
   shortSummary       String?
   categoryId         String
   difficulty         Difficulty
-  status             ArticleStatus      @default(DRAFT)
+  status             ArticleStatus       @default(DRAFT)
   sourceName         String
-  sourceUrl          String             @unique
+  sourceUrl          String              @unique
   sourceImageUrl     String?
   imageAttribution   String?
   sourcePublishedAt  DateTime
   publishedOnSiteAt  DateTime?
   wordCount          Int
   readingTimeMinutes Int
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  category           Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  category           Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   paragraphs         ArticleParagraph[]
+  expressions        ArticleExpression[]
+  vocabulary         ArticleVocabulary[]
 
   @@index([categoryId, status, sourcePublishedAt])
   @@index([status, publishedOnSiteAt])
@@ -66,14 +78,117 @@ model Article {
 }
 
 model ArticleParagraph {
-  id        String   @id @default(cuid())
-  articleId String
-  order     Int
-  english   String
-  turkish   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  id          String              @id @default(cuid())
+  articleId   String
+  order       Int
+  english     String
+  turkish     String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  article     Article             @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  expressions ArticleExpression[]
 
   @@unique([articleId, order])
+  // Lets an expression occurrence reference its paragraph and article together.
+  @@unique([id, articleId])
+}
+
+/// A contextual word lookup, cached per word, sentence and provider/schema version.
+model VocabularyEntry {
+  id                String              @id @default(cuid())
+  surfaceWord       String
+  normalizedWord    String
+  lemma             String?
+  partOfSpeech      String?
+  englishDefinition String
+  turkishMeaning    String
+  exampleSentence   String?
+  ipa               String?
+  contextSentence   String
+  /// SHA-256 of the normalized context sentence.
+  contextHash       String
+  provider          String
+  providerVersion   String
+  schemaVersion     Int
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  articles          ArticleVocabulary[]
+
+  @@unique([normalizedWord, contextHash, provider, providerVersion, schemaVersion])
+}
+
+/// Curated key vocabulary for an article, distinct from on-demand lookups.
+model ArticleVocabulary {
+  id                String          @id @default(cuid())
+  articleId         String
+  vocabularyEntryId String
+  sourceSentence    String
+  displayOrder      Int
+  source            String?
+  createdAt         DateTime        @default(now())
+  article           Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  vocabularyEntry   VocabularyEntry @relation(fields: [vocabularyEntryId], references: [id], onDelete: Restrict)
+
+  @@unique([articleId, vocabularyEntryId])
+  @@unique([articleId, displayOrder])
+}
+
+/// A reusable Real English expression. It may belong to several categories.
+model Expression {
+  id                   String               @id @default(cuid())
+  slug                 String               @unique
+  expression           String
+  normalizedExpression String
+  type                 ExpressionType
+  difficulty           Difficulty?
+  englishMeaning       String
+  turkishMeaning       String
+  exampleEnglish       String?
+  exampleTurkish       String?
+  usageNote            String?
+  literalWarning       String?
+  pronunciation        String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  categories           CategoryExpression[]
+  occurrences          ArticleExpression[]
+
+  @@index([normalizedExpression])
+}
+
+model CategoryExpression {
+  categoryId   String
+  expressionId String
+  displayOrder Int
+  isFeatured   Boolean    @default(false)
+  category     Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  expression   Expression @relation(fields: [expressionId], references: [id], onDelete: Cascade)
+
+  @@id([categoryId, expressionId])
+  @@index([categoryId, displayOrder])
+}
+
+/// One occurrence of an expression in an article's English text.
+model ArticleExpression {
+  id           String           @id @default(cuid())
+  articleId    String
+  expressionId String
+  paragraphId  String
+  surfaceText  String
+  sentence     String
+  /// UTF-16 offsets into the paragraph's English text.
+  startOffset  Int
+  endOffset    Int
+  displayOrder Int
+  source       String?
+  confidence   Float?
+  createdAt    DateTime         @default(now())
+  article      Article          @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  expression   Expression       @relation(fields: [expressionId], references: [id], onDelete: Restrict)
+  // The composite key guarantees that the paragraph belongs to the same article.
+  paragraph    ArticleParagraph @relation(fields: [paragraphId, articleId], references: [id, articleId], onDelete: Cascade)
+
+  @@unique([paragraphId, startOffset, expressionId])
+  @@index([articleId, displayOrder])
+  @@index([expressionId])
 }
