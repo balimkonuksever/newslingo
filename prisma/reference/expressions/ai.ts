@@ -1,0 +1,203 @@
+import type { ReferenceExpression } from "../../expression-library";
+
+/** AI's expression page, in display order: common phrases first. */
+export const AI_EXPRESSIONS: ReferenceExpression[] = [
+  {
+    slug: "keep-up-with",
+    expression: "keep up with",
+    type: "PHRASAL_VERB",
+    level: "B1",
+    en: "To move or change as fast as something else, so that you are not left behind.",
+    tr: "-e ayak uydurmak, -e yetişmek",
+    example: {
+      en: "It's hard to keep up with how fast AI is changing.",
+      tr: "Yapay zekânın bu kadar hızlı değişmesine ayak uydurmak zor.",
+    },
+    usage:
+      "Also for news and information: “keep up with the news” means staying informed.",
+    warning:
+      "“Up” does not mean “yukarı” here: it is about keeping the same speed.",
+    categories: ["ai"],
+  },
+  {
+    slug: "roll-out",
+    expression: "roll out",
+    type: "PHRASAL_VERB",
+    level: "B2",
+    en: "To make a new product, service or feature available, often to more people step by step.",
+    tr: "kullanıma sunmak, (adım adım) yaygınlaştırmak",
+    example: {
+      en: "The company is rolling out the new assistant to all users this month.",
+      tr: "Şirket yeni asistanı bu ay tüm kullanıcılara sunuyor.",
+    },
+    usage: "The noun is “rollout”: “a slow rollout”.",
+    warning: "Nothing rolls: it is not “yuvarlamak”.",
+    categories: ["ai"],
+  },
+  {
+    slug: "take-over",
+    expression: "take over",
+    type: "PHRASAL_VERB",
+    level: "B2",
+    en: "To take control of something, or to start doing a job that someone else did before.",
+    tr: "devralmak, ele geçirmek, (birinin işini) üstlenmek",
+    example: {
+      en: "Will AI take over jobs that people do today?",
+      tr: "Yapay zekâ bugün insanların yaptığı işleri devralacak mı?",
+    },
+    usage: "The noun is “takeover”, often for one company buying another.",
+    categories: ["ai"],
+  },
+  {
+    slug: "make-something-up",
+    expression: "make something up",
+    type: "PHRASAL_VERB",
+    level: "B2",
+    en: "To invent something that is not true, such as a fact, a story or an excuse.",
+    tr: "uydurmak",
+    example: {
+      en: "If the chatbot doesn't know the answer, it may make something up.",
+      tr: "Sohbet botu cevabı bilmiyorsa bir şey uydurabilir.",
+    },
+    usage:
+      "When an AI system makes things up, people also say it “hallucinates”.",
+    warning: "It has nothing to do with make-up (“makyaj”).",
+    categories: ["ai"],
+  },
+  {
+    slug: "train-a-model",
+    expression: "train a model",
+    type: "COLLOCATION",
+    level: "B2",
+    en: "To teach an AI system by giving it large numbers of examples to learn from.",
+    tr: "bir modeli eğitmek",
+    example: {
+      en: "The researchers trained the model on millions of weather records.",
+      tr: "Araştırmacılar modeli milyonlarca hava durumu kaydıyla eğitti.",
+    },
+    usage: "You train a model “on” data: “trained on public texts”.",
+    categories: ["ai"],
+  },
+  {
+    slug: "game-changer",
+    expression: "game changer",
+    type: "COMMON_EXPRESSION",
+    level: "B2",
+    en: "Something that completely changes how things are done.",
+    tr: "oyunun kurallarını değiştiren şey, çığır açan gelişme",
+    example: {
+      en: "Doctors say the new tool could be a game changer for early diagnosis.",
+      tr: "Doktorlar, yeni aracın erken teşhiste oyunun kurallarını değiştirebileceğini söylüyor.",
+    },
+    usage: "Also written “game-changer”; the adjective is “game-changing”.",
+    categories: ["ai"],
+  },
+  {
+    slug: "under-the-hood",
+    expression: "under the hood",
+    type: "IDIOM",
+    level: "B2",
+    en: "In the hidden inner parts of a machine or system: how it really works inside.",
+    tr: "arka planda, (bir sistemin) içinde",
+    example: {
+      en: "Under the hood, the app uses a large language model.",
+      tr: "Uygulama arka planda büyük bir dil modeli kullanıyor.",
+    },
+    usage: "Also “look under the hood”: to examine how something really works.",
+    warning:
+      "It comes from a car's bonnet (“kaput”), but no car is meant: it means “inside the system”.",
+    categories: ["ai"],
+  },
+  {
+    slug: "ahead-of-the-curve",
+    expression: "ahead of the curve",
+    type: "IDIOM",
+    level: "B2",
+    en: "More advanced or better prepared than other people or competitors.",
+    tr: "diğerlerinden önde olmak, gelişmelerin önünde olmak",
+    example: {
+      en: "Schools are teaching AI skills early to stay ahead of the curve.",
+      tr: "Okullar gelişmelerin önünde olmak için yapay zekâ becerilerini erkenden öğretiyor.",
+    },
+    usage: "Often with “stay” or “keep”. The opposite is “behind the curve”.",
+    warning:
+      "Do not translate “curve” as “eğri”: the phrase is about being early, not about a line.",
+    categories: ["ai"],
+  },
+  {
+    slug: "the-next-big-thing",
+    expression: "the next big thing",
+    type: "COMMON_EXPRESSION",
+    level: "B2",
+    en: "Something new that people expect to become very popular or important.",
+    tr: "yeni gözde, bir sonraki büyük olay",
+    example: {
+      en: "Investors are always looking for the next big thing.",
+      tr: "Yatırımcılar hep bir sonraki büyük olayın peşinde.",
+    },
+    usage:
+      "Used for products, technologies and people, often with some doubt: “Is this the next big thing?”",
+    categories: ["ai"],
+  },
+  {
+    slug: "confidently-wrong",
+    expression: "confidently wrong",
+    type: "COLLOCATION",
+    level: "B2",
+    en: "Wrong while sounding completely sure, which makes the mistake easy to miss.",
+    tr: "kendinden emin bir şekilde yanılmak, emin bir tavırla yanlış bilgi vermek",
+    example: {
+      en: "A chatbot can be confidently wrong, so check important facts.",
+      tr: "Bir sohbet botu kendinden emin bir şekilde yanılabilir, bu yüzden önemli bilgileri kontrol edin.",
+    },
+    usage: "Common when people talk about AI answers, forecasts and experts.",
+    categories: ["ai"],
+  },
+  {
+    slug: "at-the-cutting-edge",
+    expression: "at the cutting edge",
+    type: "IDIOM",
+    level: "C1",
+    en: "At the newest and most advanced stage of something.",
+    tr: "en ileri noktada, en son teknolojiyle",
+    example: {
+      en: "The lab is at the cutting edge of speech recognition.",
+      tr: "Laboratuvar, ses tanıma alanında en ileri noktada.",
+    },
+    usage: "Before a noun it takes a hyphen: “cutting-edge tools”.",
+    warning: "Nothing is cut: it means “the most advanced”.",
+    categories: ["ai"],
+  },
+  {
+    slug: "jump-on-the-bandwagon",
+    expression: "jump on the bandwagon",
+    type: "IDIOM",
+    level: "C1",
+    en: "To start doing something because it has suddenly become popular.",
+    tr: "furyaya katılmak, modaya uymak",
+    example: {
+      en: "Many companies jumped on the AI bandwagon without a clear plan.",
+      tr: "Pek çok şirket, net bir planı olmadan yapay zekâ furyasına katıldı.",
+    },
+    usage:
+      "Often a little critical: it suggests people follow a trend without thinking.",
+    warning:
+      "Don't picture a real wagon (“bando arabası”): it means a popular trend.",
+    categories: ["ai"],
+  },
+  {
+    slug: "work-out-the-kinks",
+    expression: "work out the kinks",
+    type: "IDIOM",
+    level: "C1",
+    en: "To fix the small problems in something new so that it works smoothly.",
+    tr: "aksaklıkları gidermek, pürüzleri gidermek",
+    example: {
+      en: "The chatbot still makes mistakes, but the team is working out the kinks.",
+      tr: "Sohbet botu hâlâ hata yapıyor ama ekip aksaklıkları gideriyor.",
+    },
+    usage:
+      "Also “iron out the kinks”. Used for new products, systems and plans.",
+    categories: ["ai"],
+  },
+];
