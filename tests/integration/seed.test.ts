@@ -9,7 +9,17 @@ import {
   demoSourceUrl,
 } from "../../prisma/fixtures/articles";
 import { REFERENCE_CATEGORIES } from "../../prisma/reference/categories";
-import { provisionReferenceData, seedDemoArticles } from "../../prisma/seeders";
+import { editorialVocabularyRows } from "../../prisma/editorial-dictionary";
+import {
+  DEMO_DICTIONARY,
+  DEMO_SENSE_CHOICES,
+} from "../../prisma/fixtures/dictionary";
+import {
+  provisionReferenceData,
+  seedDemoArticles,
+  seedDemoDictionary,
+} from "../../prisma/seeders";
+import { lookupWord } from "@/server/dictionary/lookup";
 import { resetDatabase } from "./database";
 
 const demoParagraphCount = DEMO_ARTICLES.reduce(
@@ -182,5 +192,56 @@ describe("demo seed", () => {
     await seedDemoArticles(db);
 
     expect(await snapshotArticles()).toEqual(expected);
+  });
+});
+
+describe("demo dictionary seeding", () => {
+  const expectedRows = editorialVocabularyRows(
+    DEMO_ARTICLES,
+    DEMO_DICTIONARY,
+    DEMO_SENSE_CHOICES,
+  ).length;
+
+  async function seedEverything() {
+    await provisionReferenceData(db);
+    await seedDemoArticles(db);
+    return seedDemoDictionary(db);
+  }
+
+  it("stores an editorial entry for every word and can run twice", async () => {
+    await expect(seedEverything()).resolves.toEqual({
+      entries: expectedRows,
+      senses: DEMO_DICTIONARY.length,
+    });
+    await seedDemoDictionary(db);
+
+    await expect(
+      db.vocabularyEntry.count({ where: { provider: "editorial" } }),
+    ).resolves.toBe(expectedRows);
+  });
+
+  it("answers a reader's lookup without any provider", async () => {
+    await seedEverything();
+    const [river] = DEMO_ARTICLES;
+    const english = river.paragraphs[0].english;
+    const start = english.indexOf("agreement");
+
+    await expect(
+      lookupWord(
+        {
+          articleSlug: river.slug,
+          paragraphOrder: 1,
+          start,
+          end: start + "agreement".length,
+        },
+        { provider: null, log: () => {} },
+      ),
+    ).resolves.toEqual({
+      entry: expect.objectContaining({
+        word: "agreement",
+        lemma: "agreement",
+        turkishMeaning: "anlaşma",
+      }),
+    });
   });
 });

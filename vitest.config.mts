@@ -7,6 +7,14 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     tsconfigPaths: true,
+    alias: {
+      // Tests call server modules directly, outside a React Server
+      // environment, so the `server-only` marker must be inert. Next.js
+      // builds still enforce it.
+      "server-only": fileURLToPath(
+        new URL("./node_modules/server-only/empty.js", import.meta.url),
+      ),
+    },
   },
   test: {
     projects: [
@@ -21,15 +29,6 @@ export default defineConfig({
       },
       {
         extends: true,
-        resolve: {
-          alias: {
-            // Integration tests call server modules directly, outside a React
-            // Server environment, so the `server-only` marker must be inert.
-            "server-only": fileURLToPath(
-              new URL("./node_modules/server-only/empty.js", import.meta.url),
-            ),
-          },
-        },
         test: {
           name: "integration",
           environment: "node",

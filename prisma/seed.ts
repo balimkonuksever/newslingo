@@ -11,7 +11,11 @@ import {
   assertDemoSeedAllowed,
   parsePostgresUrl,
 } from "../src/lib/database-env";
-import { provisionReferenceData, seedDemoArticles } from "./seeders";
+import {
+  provisionReferenceData,
+  seedDemoArticles,
+  seedDemoDictionary,
+} from "./seeders";
 
 const { loadEnvConfig } = nextEnv;
 
@@ -52,6 +56,11 @@ try {
     const { articles, paragraphs } = await seedDemoArticles(db);
     console.log(
       `Seeded ${articles} demo articles with ${paragraphs} paragraph pairs.`,
+    );
+
+    const { entries, senses } = await seedDemoDictionary(db);
+    console.log(
+      `Seeded ${entries} dictionary entries from ${senses} word senses.`,
     );
   }
 } finally {

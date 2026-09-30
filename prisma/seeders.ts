@@ -1,10 +1,13 @@
+import { EDITORIAL_SOURCE } from "../src/domain/dictionary";
 import type { PrismaClient } from "../src/generated/prisma/client";
 import { countWords, estimateReadingMinutes } from "../src/lib/reading-time";
+import { editorialVocabularyRows } from "./editorial-dictionary";
 import {
   DEMO_ARTICLES,
   DEMO_SOURCE_NAME,
   demoSourceUrl,
 } from "./fixtures/articles";
+import { DEMO_DICTIONARY, DEMO_SENSE_CHOICES } from "./fixtures/dictionary";
 import { REFERENCE_CATEGORIES } from "./reference/categories";
 
 /**
@@ -95,4 +98,27 @@ export async function seedDemoArticles(db: PrismaClient) {
     articles: articles.length,
     paragraphs: articles.reduce((total, a) => total + a.paragraphs.length, 0),
   };
+}
+
+/**
+ * Replaces the editorial dictionary entries with one for every word of every
+ * demo article, keyed like live lookups so the reader finds them first.
+ * Entries that curated article vocabulary points to are kept. The same
+ * caller rules as `seedDemoArticles` apply.
+ */
+export async function seedDemoDictionary(db: PrismaClient) {
+  const rows = editorialVocabularyRows(
+    DEMO_ARTICLES,
+    DEMO_DICTIONARY,
+    DEMO_SENSE_CHOICES,
+  );
+
+  await db.$transaction([
+    db.vocabularyEntry.deleteMany({
+      where: { provider: EDITORIAL_SOURCE.provider, articles: { none: {} } },
+    }),
+    db.vocabularyEntry.createMany({ data: rows, skipDuplicates: true }),
+  ]);
+
+  return { entries: rows.length, senses: DEMO_DICTIONARY.length };
 }

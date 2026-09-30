@@ -55,3 +55,42 @@ export function createArticle(
     },
   });
 }
+
+export function createExpression(
+  data: Partial<Prisma.ExpressionUncheckedCreateInput> = {},
+) {
+  sequence += 1;
+
+  return db.expression.create({
+    data: {
+      slug: `expression-${sequence}`,
+      expression: `roll out ${sequence}`,
+      normalizedExpression: `roll out ${sequence}`,
+      type: "PHRASAL_VERB",
+      englishMeaning: "to introduce something new",
+      turkishMeaning: "kullanıma sunmak",
+      ...data,
+    },
+  });
+}
+
+export function createVocabularyEntry(
+  data: Partial<Prisma.VocabularyEntryUncheckedCreateInput> = {},
+) {
+  sequence += 1;
+
+  return db.vocabularyEntry.create({
+    data: {
+      surfaceWord: "Harvest",
+      normalizedWord: `harvest-${sequence}`,
+      englishDefinition: "to gather crops",
+      turkishMeaning: "hasat etmek",
+      contextSentence: "Farmers decide when to harvest.",
+      contextHash: "a".repeat(64),
+      provider: "fixture",
+      providerVersion: "1",
+      schemaVersion: 1,
+      ...data,
+    },
+  });
+}

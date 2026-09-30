@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArticleReader } from "@/components/article/article-reader";
 import { ParagraphPair } from "@/components/article/paragraph-pair";
 import { SourceAttribution } from "@/components/article/source-attribution";
+import { WordLookup } from "@/components/learning/word-lookup";
 import { categoryAccent } from "@/components/news/category-accent";
 import { DifficultyBadge } from "@/components/shared/difficulty-badge";
 import { formatArticleDate } from "@/lib/dates";
@@ -126,9 +127,19 @@ export default async function ArticlePage(props: PageProps<"/article/[slug]">) {
 
       <div className="mt-8">
         <ArticleReader>
-          {article.paragraphs.map((paragraph) => (
-            <ParagraphPair key={paragraph.order} {...paragraph} />
-          ))}
+          <WordLookup articleSlug={article.slug}>
+            <p className="-mb-4 text-sm text-ink-muted">
+              Select any English word to see what it means here.
+              <span className="sr-only">
+                {" "}
+                With a keyboard, tab to a paragraph, choose a word with the
+                arrow keys and press Enter.
+              </span>
+            </p>
+            {article.paragraphs.map((paragraph) => (
+              <ParagraphPair key={paragraph.order} {...paragraph} />
+            ))}
+          </WordLookup>
         </ArticleReader>
       </div>
 

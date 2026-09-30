@@ -19,6 +19,8 @@
 
   --color-brand: #b42318;
   --color-focus: #1d4ed8;
+  /* Behind the word whose lookup card is open. */
+  --color-highlight: #fdecc8;
 
   /* Category accents: always shown next to the category's name, never alone. */
   --color-category-ai: #6d28d9;
@@ -88,6 +90,56 @@
     font-size: var(--reader-turkish-size);
     line-height: 1.65;
     color: var(--color-ink-muted);
+  }
+
+  /* Words that open a lookup card. Only colours change, so the text never
+     reflows when a word is hovered, focused or looked up. */
+  .reader-english [data-w] {
+    border-radius: 0.2em;
+  }
+
+  .reader-english [data-w][data-active] {
+    background-color: var(--color-highlight);
+  }
+
+  @media (hover: hover) {
+    .reader-english [data-w]:hover {
+      background-color: var(--color-rule);
+      cursor: pointer;
+    }
+  }
+
+  /* The lookup card: a popover under the word, or a bottom sheet on phones.
+     word-lookup.tsx sets the position variables. */
+  .word-lookup {
+    position: absolute;
+    inset: auto;
+    top: var(--lookup-top, 0);
+    left: var(--lookup-left, 0);
+    margin: 0;
+    width: min(22rem, calc(100vw - 2rem));
+    padding: 1.25rem;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: 0.75rem;
+  }
+
+  @media (max-width: 39.999rem) {
+    .word-lookup {
+      position: fixed;
+      top: auto;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      width: auto;
+      max-height: 75vh;
+      border-width: 1px 0 0;
+      border-radius: 1rem 1rem 0 0;
+      padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+    }
+
+    .word-lookup::backdrop {
+      background-color: rgb(28 25 23 / 0.2);
+    }
   }
 }
 

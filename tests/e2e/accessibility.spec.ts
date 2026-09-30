@@ -50,3 +50,15 @@ test("the reader with the translation hidden has no serious accessibility violat
 
   expect(await seriousViolations(page)).toEqual([]);
 });
+
+test("the open word card has no serious accessibility violations", async ({
+  page,
+}) => {
+  await page.goto(`/article/${article.slug}`);
+  await page.locator('[data-pair="1"] [data-w]').nth(3).click();
+  await expect(
+    page.getByRole("dialog").getByText("Explained by AI for this sentence."),
+  ).toBeVisible();
+
+  expect(await seriousViolations(page)).toEqual([]);
+});
