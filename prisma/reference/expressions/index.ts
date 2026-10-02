@@ -11,10 +11,14 @@
  * data.
  */
 import type { ReferenceExpression } from "../../expression-library";
+import { AI_EXPRESSIONS } from "./ai";
 import { ENTERTAINMENT_EXPRESSIONS } from "./entertainment";
 import { GENERAL_EXPRESSIONS } from "./general";
+import { TECHNOLOGY_EXPRESSIONS } from "./technology";
 
 export const REFERENCE_EXPRESSIONS: readonly ReferenceExpression[] = [
+  ...AI_EXPRESSIONS,
+  ...TECHNOLOGY_EXPRESSIONS,
   ...ENTERTAINMENT_EXPRESSIONS,
   ...GENERAL_EXPRESSIONS,
 ];

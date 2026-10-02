@@ -18,6 +18,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     warning:
       "“Up” does not mean “yukarı” here: it is about keeping the same speed.",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "roll-out",
@@ -33,6 +34,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     usage: "The noun is “rollout”: “a slow rollout”.",
     warning: "Nothing rolls: it is not “yuvarlamak”.",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "take-over",
@@ -47,6 +49,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     },
     usage: "The noun is “takeover”, often for one company buying another.",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "make-something-up",
@@ -63,6 +66,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
       "When an AI system makes things up, people also say it “hallucinates”.",
     warning: "It has nothing to do with make-up (“makyaj”).",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "train-a-model",
@@ -77,6 +81,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     },
     usage: "You train a model “on” data: “trained on public texts”.",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "game-changer",
@@ -91,6 +96,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     },
     usage: "Also written “game-changer”; the adjective is “game-changing”.",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "under-the-hood",
@@ -107,6 +113,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     warning:
       "It comes from a car's bonnet (“kaput”), but no car is meant: it means “inside the system”.",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "ahead-of-the-curve",
@@ -123,6 +130,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     warning:
       "Do not translate “curve” as “eğri”: the phrase is about being early, not about a line.",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "the-next-big-thing",
@@ -138,6 +146,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     usage:
       "Used for products, technologies and people, often with some doubt: “Is this the next big thing?”",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "confidently-wrong",
@@ -152,6 +161,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     },
     usage: "Common when people talk about AI answers, forecasts and experts.",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "at-the-cutting-edge",
@@ -167,6 +177,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     usage: "Before a noun it takes a hyphen: “cutting-edge tools”.",
     warning: "Nothing is cut: it means “the most advanced”.",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "jump-on-the-bandwagon",
@@ -184,6 +195,7 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     warning:
       "Don't picture a real wagon (“bando arabası”): it means a popular trend.",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
   {
     slug: "work-out-the-kinks",
@@ -199,5 +211,6 @@ export const AI_EXPRESSIONS: ReferenceExpression[] = [
     usage:
       "Also “iron out the kinks”. Used for new products, systems and plans.",
     categories: ["ai"],
+    reviewed: "2026-10-01",
   },
 ];
