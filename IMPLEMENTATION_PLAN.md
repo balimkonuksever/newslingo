@@ -608,12 +608,14 @@ newslingo/
 │   ├── fixtures/                 # development/test data only
 │   │   ├── articles.ts           # demo articles
 │   │   ├── dictionary/           # editorial entries for their words (M4)
-│   │   └── expression-occurrences.ts  # where cards occur in them (M4)
+│   │   ├── expression-occurrences.ts  # where cards occur in them (M4)
+│   │   └── key-vocabulary.ts     # each article's key words (M4)
 │   ├── reference/                # production reference data
 │   │   ├── categories.ts
 │   │   └── expressions/          # Real English cards, one file per category (M4)
 │   ├── editorial-dictionary.ts   # checks and rows for the dictionary entries
 │   ├── expression-library.ts     # checks and rows for cards and occurrences
+│   ├── key-vocabulary.ts         # checks key words and keys them to entries
 │   ├── schema.prisma
 │   ├── seed.ts                   # CLI: reference | demo | all
 │   └── seeders.ts                # seeding logic shared with tests
@@ -650,6 +652,8 @@ newslingo/
 │   │   ├── learning/             # contextual lookup (M4)
 │   │   │   ├── english-text.tsx      # words and expressions as spans, one tab stop
 │   │   │   ├── expression-details.tsx  # a Real English card
+│   │   │   ├── disclosure-list.tsx     # rows that open to more detail
+│   │   │   ├── key-vocabulary-list.tsx # an article's key words
 │   │   │   ├── real-english-list.tsx   # cards as rows that open to the rest
 │   │   │   ├── lookup-client.ts
 │   │   │   ├── word-lookup.tsx       # client: popover / bottom sheet
@@ -1231,7 +1235,7 @@ M3 complete. Dictionary provider selection is needed only for the external fallb
 
   The card also names the article's wording when it differs from the card's ("here: “sold out”" for *sell out*) and says that the card was written with AI and checked by a native Turkish speaker (`src/components/learning/expression-details.tsx`).
 - [x] Build “Real English from this article.” A section after the article lists its expressions in display order, each a row with the expression, type, level and Turkish meaning that opens to the rest of the card, and links to the category's Real English page.
-- [ ] Build “Key vocabulary from this article” from `ArticleVocabulary` records.
+- [x] Build “Key vocabulary from this article” from `ArticleVocabulary` records. Each demo article has 6 to 8 key words (`prisma/fixtures/key-vocabulary.ts`), each pointing at its editorial dictionary entry for that sentence, so the list adds no new Turkish. A section before the Real English one lists them as rows with the dictionary form, part of speech, pronunciation and Turkish meaning, opening to the definition, the article's sentence and an example.
 - [x] Build `/category/[slug]/expressions`. The category page links to it with the expression count.
 - [x] Verify article expressions actually occur in the article text. Each occurrence is recorded by its exact wording, and the seed finds it in its paragraph, refusing wording that is missing, repeated in the paragraph or overlapping another occurrence (`prisma/expression-library.ts`). Generated articles (M7) can reuse the same check.
 
@@ -2055,6 +2059,7 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-09-30 | Record demo expression occurrences by their exact wording ("sold out" for "sell out"), not by the card's form. | The phrase matcher does not inflect words. Phrasal verbs split by their object, such as "cutting their routines down", are not marked, because one clickable unit would swallow the words in between. |
 | 2026-10-03 | Open an expression's card from data the article page already holds, in the word card's popover or bottom sheet, and mark expressions with a dotted underline. | Opening a card sends no request and cannot fail. The article query returns each paragraph's marks and one card per expression, so the page needs no second query. |
 | 2026-10-03 | Show Real English lists, at the end of an article and on a category's expression page, as native disclosure rows: the expression, type, level and Turkish meaning, opening to the rest of the card. | The lists work without JavaScript and stay short to scan; the "checked by a native Turkish speaker" note appears once under each list. |
+| 2026-10-03 | Curate 6 to 8 key words per demo article from the editorial dictionary: each `ArticleVocabulary` row points at the entry for the word in its sentence, and the demo dictionary seed drops and restores those links so the entries are always rewritten from the fixtures. | Key vocabulary adds no new Turkish to review, and a corrected dictionary entry reaches the database on the next seed. Words inside marked expressions are not chosen, because the reader cannot open them on their own. |
 | 2026-10-03 | When a card fits neither below nor above its word, place it below and scroll the page just enough to show it, keeping the word visible. | Expression cards are taller than word cards; on a short window they no longer open partly off-screen. |
 | 2026-09-30 | Let the library own its cards' category links: provisioning replaces a card's links with the library's. | A card taken off a category page in the library leaves it in every database. Links added to library cards by other means would be replaced; revisit if M5 adds editing of category pages. |
 
@@ -2180,10 +2185,11 @@ Slices 1–5 are complete, and with them the Reader Release (M1–M3). On 2026-0
 
 M4 and M5 may run in parallel per the dependency map.
 
-**M4, contextual vocabulary and Real English, is in progress.** Done: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, and clickable words with a desktop popover, a mobile bottom sheet and keyboard access. Remaining:
+**M4, contextual vocabulary and Real English: every work item is built.** Done: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, clickable words and expressions with a desktop popover, a mobile bottom sheet and keyboard access, 97 reviewed Real English cards with 30 occurrences marked in the demo articles, the article's "Key vocabulary" and "Real English" sections, and the category expression pages. Before the exit gate:
 
-- the user's sample review of the editorial Turkish;
-- the article's "Key vocabulary" section. Expression cards in the reader, the article's "Real English" section and the category expression pages are done. The Real English cards for all six categories are reviewed and load through the seed, with 30 occurrences marked in the six demo articles; curated key vocabulary for the demo articles is still to be chosen.
+- the user's sample review of the editorial dictionary's Turkish;
+- a manual check on a real phone of words, expressions and both lists;
+- the verification item "Long C1 articles stay within the agreed DOM/performance budget": no budget has been agreed yet, so agree one and measure the longest demo article against it.
 
 **M5, moderation,** needs the admin-authentication decision from M0 first.
 

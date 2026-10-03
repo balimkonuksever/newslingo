@@ -14,12 +14,16 @@ import { db } from "@/server/db/client";
 
 import { DEMO_ARTICLES } from "../../prisma/fixtures/articles";
 import { DEMO_EXPRESSION_OCCURRENCES } from "../../prisma/fixtures/expression-occurrences";
+import { DEMO_KEY_VOCABULARY } from "../../prisma/fixtures/key-vocabulary";
+import { resolveKeyVocabulary } from "../../prisma/key-vocabulary";
 import { REFERENCE_CATEGORIES } from "../../prisma/reference/categories";
 import { REFERENCE_EXPRESSIONS } from "../../prisma/reference/expressions";
 import {
   provisionReferenceData,
   seedDemoArticles,
+  seedDemoDictionary,
   seedDemoExpressions,
+  seedDemoKeyVocabulary,
 } from "../../prisma/seeders";
 import {
   createArticle,
@@ -415,6 +419,7 @@ describe("getPublicArticleBySlug", () => {
       sourceUrl: article.sourceUrl,
       wordCount: article.wordCount,
       expressionCards: [],
+      keyVocabulary: [],
     });
   });
 
@@ -575,6 +580,36 @@ describe("queries against the seeded demo dataset", () => {
           categories.includes(slug),
         ).map((card) => card.slug),
       );
+    }
+  });
+
+  it("lists each demo article's key vocabulary in reading order", async () => {
+    await seedDemoDictionary(db);
+    await seedDemoKeyVocabulary(db);
+    const chosen = resolveKeyVocabulary(DEMO_ARTICLES, DEMO_KEY_VOCABULARY);
+
+    for (const fixture of DEMO_ARTICLES) {
+      const article = await getPublicArticleBySlug(fixture.slug);
+      const expected = chosen.filter(
+        ({ articleSlug }) => articleSlug === fixture.slug,
+      );
+
+      expect(
+        article?.keyVocabulary.map(({ word, sentence }) => ({
+          word,
+          sentence,
+        })),
+        fixture.slug,
+      ).toEqual(
+        expected.map(({ surfaceWord, sourceSentence }) => ({
+          word: surfaceWord,
+          sentence: sourceSentence,
+        })),
+      );
+      for (const word of article?.keyVocabulary ?? []) {
+        expect(word.turkishMeaning, word.word).not.toBe("");
+        expect(word.lemma, word.word).not.toBeNull();
+      }
     }
   });
 

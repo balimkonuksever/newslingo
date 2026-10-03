@@ -90,3 +90,9 @@ export type DictionaryLookupError =
 
 export type DictionaryLookupResponse =
   { entry: DictionaryEntry } | { error: DictionaryLookupError };
+
+/** A word chosen as key vocabulary for an article, with its meaning there. */
+export type KeyWord = DictionaryEntry & {
+  /** The article's sentence the word comes from. */
+  sentence: string;
+};

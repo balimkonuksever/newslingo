@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
+import type { KeyWord } from "@/domain/dictionary";
 import type { ExpressionCard, ExpressionMark } from "@/domain/expressions";
 import type { Prisma } from "@/generated/prisma/client";
 import { type ArticleFilters, sourceDateRange } from "@/lib/article-filters";
@@ -67,6 +68,23 @@ const articleDetailSelect = {
       expression: { select: expressionCardSelect },
     },
   },
+  vocabulary: {
+    orderBy: { displayOrder: "asc" },
+    select: {
+      sourceSentence: true,
+      vocabularyEntry: {
+        select: {
+          surfaceWord: true,
+          lemma: true,
+          partOfSpeech: true,
+          englishDefinition: true,
+          turkishMeaning: true,
+          exampleSentence: true,
+          ipa: true,
+        },
+      },
+    },
+  },
 } satisfies Prisma.ArticleSelect;
 
 type ArticleDetailRecord = Prisma.ArticleGetPayload<{
@@ -75,11 +93,12 @@ type ArticleDetailRecord = Prisma.ArticleGetPayload<{
 
 /**
  * An article as the reader shows it: each paragraph with the Real English
- * expressions marked in it, and one card for every expression that occurs.
+ * expressions marked in it, one card for every expression that occurs, and
+ * its key vocabulary.
  */
 export type ArticleDetail = Omit<
   ArticleDetailRecord,
-  "paragraphs" | "expressions"
+  "paragraphs" | "expressions" | "vocabulary"
 > & {
   paragraphs: Array<
     ArticleDetailRecord["paragraphs"][number] & {
@@ -88,11 +107,14 @@ export type ArticleDetail = Omit<
   >;
   /** In the article's display order, each expression once. */
   expressionCards: ExpressionCard[];
+  /** In display order. */
+  keyVocabulary: KeyWord[];
 };
 
 function toArticleDetail({
   paragraphs,
   expressions,
+  vocabulary,
   ...article
 }: ArticleDetailRecord): ArticleDetail {
   const cards = new Map<string, ExpressionCard>();
@@ -117,6 +139,13 @@ function toArticleDetail({
         .sort((a, b) => a.start - b.start),
     })),
     expressionCards: [...cards.values()],
+    keyVocabulary: vocabulary.map(
+      ({ sourceSentence, vocabularyEntry: { surfaceWord, ...entry } }) => ({
+        word: surfaceWord,
+        ...entry,
+        sentence: sourceSentence,
+      }),
+    ),
   };
 }
 

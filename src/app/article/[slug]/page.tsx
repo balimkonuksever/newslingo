@@ -6,6 +6,7 @@ import { ArticleReader } from "@/components/article/article-reader";
 import { ParagraphPair } from "@/components/article/paragraph-pair";
 import { SourceAttribution } from "@/components/article/source-attribution";
 import { EXPRESSION_SOURCE_NOTE } from "@/components/learning/expression-details";
+import { KeyVocabularyList } from "@/components/learning/key-vocabulary-list";
 import { RealEnglishList } from "@/components/learning/real-english-list";
 import { WordLookup } from "@/components/learning/word-lookup";
 import { categoryAccent } from "@/components/news/category-accent";
@@ -13,7 +14,7 @@ import { DifficultyBadge } from "@/components/shared/difficulty-badge";
 import { textLink } from "@/components/ui/styles";
 import { formatArticleDate } from "@/lib/dates";
 import { env } from "@/lib/env";
-import { formatExpressionCount } from "@/lib/format";
+import { formatExpressionCount, formatWordCount } from "@/lib/format";
 import {
   type ArticleDetail,
   getPublicArticleBySlug,
@@ -151,6 +152,27 @@ export default async function ArticlePage(props: PageProps<"/article/[slug]">) {
           </WordLookup>
         </ArticleReader>
       </div>
+
+      {article.keyVocabulary.length > 0 && (
+        <section aria-labelledby="key-vocabulary" className="mt-14">
+          <h2
+            id="key-vocabulary"
+            className="font-serif text-2xl font-semibold tracking-tight text-ink"
+          >
+            Key vocabulary from this article
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            {formatWordCount(article.keyVocabulary.length)} worth learning, in
+            the order you meet them.
+          </p>
+          <div className="mt-4">
+            <KeyVocabularyList words={article.keyVocabulary} />
+          </div>
+          <p className="mt-3 text-xs text-ink-muted">
+            Explained by AI for these sentences. It can make mistakes.
+          </p>
+        </section>
+      )}
 
       {article.expressionCards.length > 0 && (
         <section aria-labelledby="real-english" className="mt-14">
