@@ -1174,7 +1174,7 @@ M3 complete. Dictionary provider selection is needed only for the external fallb
 ### Work items — data and contracts
 
 - [x] Add `VocabularyEntry`, `ArticleVocabulary`, `Expression`, `CategoryExpression`, and `ArticleExpression` migrations. An occurrence references its paragraph through a composite `(paragraphId, articleId)` key, so it cannot point at another article's paragraph.
-- [ ] Extend production-safe reference provisioning with at least 10 reviewed expressions for each launch category. In progress: the cards live in `prisma/reference/expressions/`, one file per category, and `pnpm db:seed:reference` refuses the whole library if any card lacks the user's review date. Entertainment, AI, Technology, World and Business are done, 13 cards each plus general phrases from their articles, reviewed between 2026-09-30 and 2026-10-03; Beauty remains.
+- [x] Extend production-safe reference provisioning with at least 10 reviewed expressions for each launch category. The cards live in `prisma/reference/expressions/`, one file per category plus `general.ts` for phrases without a topic, and `pnpm db:seed:reference` refuses the whole library if any card lacks the user's review date. Each launch category has 12 or 13 cards, and 20 general phrases come from the demo articles, all reviewed by the user between 2026-09-30 and 2026-10-03; a unit test requires at least ten per category.
 - [x] Keep representative article occurrences in development/test fixtures or generated article data, not global production reference content. Demo occurrences live in `prisma/fixtures/expression-occurrences.ts` and load only with the demo seed.
 - [x] Define validated dictionary request/response contracts. A request names a word by article slug, paragraph order and UTF-16 offsets; the server reads the word and its sentence from the published article (`src/domain/dictionary.ts`).
 - [x] Bound word and sentence-context lengths: words up to 64 characters, context up to 400 characters around the word, request bodies up to 1 KB.
@@ -2174,8 +2174,7 @@ M4 and M5 may run in parallel per the dependency map.
 **M4, contextual vocabulary and Real English, is in progress.** Done: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, and clickable words with a desktop popover, a mobile bottom sheet and keyboard access. Remaining:
 
 - the user's sample review of the editorial Turkish;
-- at least 10 reviewed Real English expressions per category, with the user reviewing the Turkish. Five categories are done and load through the seed; Beauty remains;
-- expression cards in the reader, the category expression pages, and the article's "Real English" and "Key vocabulary" sections.
+- expression cards in the reader, the category expression pages, and the article's "Real English" and "Key vocabulary" sections. The Real English cards for all six categories are reviewed and load through the seed, with 30 occurrences marked in the six demo articles; curated key vocabulary for the demo articles is still to be chosen.
 
 **M5, moderation,** needs the admin-authentication decision from M0 first.
 

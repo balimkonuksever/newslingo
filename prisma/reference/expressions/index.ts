@@ -12,6 +12,7 @@
  */
 import type { ReferenceExpression } from "../../expression-library";
 import { AI_EXPRESSIONS } from "./ai";
+import { BEAUTY_EXPRESSIONS } from "./beauty";
 import { BUSINESS_EXPRESSIONS } from "./business";
 import { ENTERTAINMENT_EXPRESSIONS } from "./entertainment";
 import { GENERAL_EXPRESSIONS } from "./general";
@@ -24,5 +25,6 @@ export const REFERENCE_EXPRESSIONS: readonly ReferenceExpression[] = [
   ...WORLD_EXPRESSIONS,
   ...BUSINESS_EXPRESSIONS,
   ...ENTERTAINMENT_EXPRESSIONS,
+  ...BEAUTY_EXPRESSIONS,
   ...GENERAL_EXPRESSIONS,
 ];
