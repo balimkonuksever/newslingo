@@ -12,13 +12,17 @@
  */
 import type { ReferenceExpression } from "../../expression-library";
 import { AI_EXPRESSIONS } from "./ai";
+import { BUSINESS_EXPRESSIONS } from "./business";
 import { ENTERTAINMENT_EXPRESSIONS } from "./entertainment";
 import { GENERAL_EXPRESSIONS } from "./general";
 import { TECHNOLOGY_EXPRESSIONS } from "./technology";
+import { WORLD_EXPRESSIONS } from "./world";
 
 export const REFERENCE_EXPRESSIONS: readonly ReferenceExpression[] = [
   ...AI_EXPRESSIONS,
   ...TECHNOLOGY_EXPRESSIONS,
+  ...WORLD_EXPRESSIONS,
+  ...BUSINESS_EXPRESSIONS,
   ...ENTERTAINMENT_EXPRESSIONS,
   ...GENERAL_EXPRESSIONS,
 ];

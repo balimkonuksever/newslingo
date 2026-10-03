@@ -222,7 +222,7 @@ describe("resolveExpressionOccurrences", () => {
 describe("the Real English library", () => {
   // Categories whose cards are still being written. Remove each one as its
   // cards land, so that in the end every launch category is checked.
-  const CATEGORIES_IN_PROGRESS = new Set(["world", "business", "beauty"]);
+  const CATEGORIES_IN_PROGRESS = new Set(["beauty"]);
 
   it("has only valid, reviewed cards", () => {
     expect(referenceExpressionData(REFERENCE_EXPRESSIONS)).toHaveLength(
