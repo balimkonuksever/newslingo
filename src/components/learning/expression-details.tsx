@@ -5,32 +5,43 @@ import {
 } from "@/domain/expressions";
 import { normalizeExpression } from "@/lib/text/phrases";
 
+/** Where Real English cards come from, said once wherever cards appear. */
+export const EXPRESSION_SOURCE_NOTE =
+  "Written with AI and checked by a native Turkish speaker.";
+
 /**
- * A Real English card: the expression's meanings, an example with its
- * translation, how it is used, and what a word-for-word Turkish translation
- * gets wrong. `surface` is the expression as the article wrote it, shown
- * when it differs from the card's form, as "sold out" does from "sell out".
+ * The card's type and level, and `surface`, the expression as an article
+ * wrote it, when that differs from the card's form, as "sold out" does from
+ * "sell out".
  */
-export function ExpressionDetails({
+export function ExpressionFacts({
   card,
   surface,
 }: {
   card: ExpressionCard;
-  surface: string;
+  surface?: string;
 }) {
   const showSurface =
+    surface !== undefined &&
     normalizeExpression(surface) !== normalizeExpression(card.expression);
 
   return (
-    <div className="mt-1">
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-muted">
-        <span>{EXPRESSION_TYPE_LABELS[card.type]}</span>
-        {card.difficulty && <DifficultyBadge level={card.difficulty} />}
-        {showSurface && <span lang="en">{`here: “${surface}”`}</span>}
-      </p>
-      <p lang="tr" className="mt-3 text-lg leading-snug font-semibold">
-        {card.turkishMeaning}
-      </p>
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-muted">
+      <span>{EXPRESSION_TYPE_LABELS[card.type]}</span>
+      {card.difficulty && <DifficultyBadge level={card.difficulty} />}
+      {showSurface && <span lang="en">{`here: “${surface}”`}</span>}
+    </span>
+  );
+}
+
+/**
+ * Everything on the card after its Turkish meaning: the English meaning, an
+ * example with its translation, how it is used, and what a word-for-word
+ * Turkish translation gets wrong.
+ */
+export function ExpressionBody({ card }: { card: ExpressionCard }) {
+  return (
+    <>
       <p lang="en" className="mt-2 leading-relaxed">
         {card.englishMeaning}
       </p>
@@ -60,9 +71,27 @@ export function ExpressionDetails({
           {card.literalWarning}
         </p>
       )}
-      <p className="mt-4 text-xs text-ink-muted">
-        Written with AI and checked by a native Turkish speaker.
+    </>
+  );
+}
+
+/** A whole Real English card, as the lookup card shows it. */
+export function ExpressionDetails({
+  card,
+  surface,
+}: {
+  card: ExpressionCard;
+  surface?: string;
+}) {
+  return (
+    <div className="mt-1">
+      <p>
+        <ExpressionFacts card={card} surface={surface} />
       </p>
+      <p lang="tr" className="mt-3 text-lg leading-snug font-semibold">
+        {card.turkishMeaning}
+      </p>
+      <ExpressionBody card={card} />
     </div>
   );
 }

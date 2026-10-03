@@ -12,7 +12,10 @@ import {
   useState,
 } from "react";
 
-import { ExpressionDetails } from "@/components/learning/expression-details";
+import {
+  EXPRESSION_SOURCE_NOTE,
+  ExpressionDetails,
+} from "@/components/learning/expression-details";
 import { fetchDictionaryEntry } from "@/components/learning/lookup-client";
 import {
   isWord,
@@ -298,7 +301,12 @@ export function WordLookup({
           {state.status === "loading" && <LoadingEntry />}
           {state.status === "found" && <EntryDetails entry={state.entry} />}
           {state.status === "expression" && (
-            <ExpressionDetails card={state.card} surface={state.word} />
+            <>
+              <ExpressionDetails card={state.card} surface={state.word} />
+              <p className="mt-4 text-xs text-ink-muted">
+                {EXPRESSION_SOURCE_NOTE}
+              </p>
+            </>
           )}
           {state.status === "failed" && (
             <LookupFailure

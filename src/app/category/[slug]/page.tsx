@@ -6,7 +6,7 @@ import { ArticleCard } from "@/components/news/article-card";
 import { categoryAccent } from "@/components/news/category-accent";
 import { EmptyState } from "@/components/shared/empty-state";
 import { textLink } from "@/components/ui/styles";
-import { formatArticleCount } from "@/lib/format";
+import { formatArticleCount, formatExpressionCount } from "@/lib/format";
 import { getCategoryWithArticles } from "@/server/categories/queries";
 
 const CATEGORY_ARTICLE_LIMIT = 24;
@@ -60,6 +60,16 @@ export default async function CategoryPage(
         {category.articles.length > 0 && (
           <p className="mt-2 text-sm text-ink-muted">
             {formatArticleCount(category.articles.length)}, most recent first
+          </p>
+        )}
+        {category.expressionCount > 0 && (
+          <p className="mt-4">
+            <Link
+              href={`/category/${category.slug}/expressions`}
+              className={textLink}
+            >
+              {`Real English for ${category.name}: ${formatExpressionCount(category.expressionCount)}`}
+            </Link>
           </p>
         )}
       </header>

@@ -93,3 +93,63 @@ test.describe("keyboard", () => {
     await expect(phrase(page, "thanks-to")).toBeFocused();
   });
 });
+
+test.describe("Real English lists", () => {
+  test("ends the article with its expressions, each opening to its card", async ({
+    page,
+  }) => {
+    await page.goto(path);
+
+    const section = page.getByRole("region", {
+      name: "Real English from this article",
+    });
+    const rows = section.locator("summary");
+
+    await expect(section).toContainText("3 expressions");
+    await expect(rows).toHaveCount(3);
+    await expect(rows.nth(0)).toContainText("open its doors");
+    await expect(rows.nth(1)).toContainText("thanks to");
+    await expect(rows.nth(2)).toContainText("sell out");
+
+    const watchOut = section.locator("details").nth(2).getByText("Watch out:");
+    await expect(watchOut).toBeHidden();
+    await rows.nth(2).click();
+    await expect(watchOut).toBeVisible();
+    await expect(watchOut.locator("..")).toContainText("kapalı gişe");
+
+    await section
+      .getByRole("link", { name: "All Real English for Entertainment" })
+      .click();
+    await expect(page).toHaveURL("/category/entertainment/expressions");
+  });
+
+  test("gives each category a Real English page", async ({ page }) => {
+    await page.goto("/category/entertainment");
+    await page
+      .getByRole("link", {
+        name: "Real English for Entertainment: 13 expressions",
+      })
+      .click();
+
+    await expect(page).toHaveURL("/category/entertainment/expressions");
+    await expect(page).toHaveTitle(
+      "Real English for Entertainment · Newslingo",
+    );
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Real English",
+    );
+
+    const rows = page.locator("main summary");
+    await expect(rows).toHaveCount(13);
+    await expect(rows.first()).toContainText("be a hit");
+    await expect(rows.first()).toContainText("tutmak");
+  });
+
+  test("answers an unknown category's Real English page with a 404", async ({
+    page,
+  }) => {
+    const response = await page.goto("/category/no-such-category/expressions");
+
+    expect(response?.status()).toBe(404);
+  });
+});

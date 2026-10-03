@@ -5,11 +5,15 @@ import { notFound } from "next/navigation";
 import { ArticleReader } from "@/components/article/article-reader";
 import { ParagraphPair } from "@/components/article/paragraph-pair";
 import { SourceAttribution } from "@/components/article/source-attribution";
+import { EXPRESSION_SOURCE_NOTE } from "@/components/learning/expression-details";
+import { RealEnglishList } from "@/components/learning/real-english-list";
 import { WordLookup } from "@/components/learning/word-lookup";
 import { categoryAccent } from "@/components/news/category-accent";
 import { DifficultyBadge } from "@/components/shared/difficulty-badge";
+import { textLink } from "@/components/ui/styles";
 import { formatArticleDate } from "@/lib/dates";
 import { env } from "@/lib/env";
+import { formatExpressionCount } from "@/lib/format";
 import {
   type ArticleDetail,
   getPublicArticleBySlug,
@@ -147,6 +151,35 @@ export default async function ArticlePage(props: PageProps<"/article/[slug]">) {
           </WordLookup>
         </ArticleReader>
       </div>
+
+      {article.expressionCards.length > 0 && (
+        <section aria-labelledby="real-english" className="mt-14">
+          <h2
+            id="real-english"
+            className="font-serif text-2xl font-semibold tracking-tight text-ink"
+          >
+            Real English from this article
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            {formatExpressionCount(article.expressionCards.length)}, in the
+            order you meet them. Open one to see how it is used.
+          </p>
+          <div className="mt-4">
+            <RealEnglishList cards={article.expressionCards} />
+          </div>
+          <p className="mt-3 text-xs text-ink-muted">
+            {EXPRESSION_SOURCE_NOTE}
+          </p>
+          <p className="mt-4 text-sm">
+            <Link
+              href={`/category/${article.category.slug}/expressions`}
+              className={textLink}
+            >
+              {`All Real English for ${article.category.name}`}
+            </Link>
+          </p>
+        </section>
+      )}
 
       <SourceAttribution
         sourceName={article.sourceName}

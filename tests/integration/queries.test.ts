@@ -6,6 +6,7 @@ import {
   listPublicArticles,
 } from "@/server/articles/queries";
 import {
+  getCategoryExpressions,
   getCategoryWithArticles,
   listCategoriesWithArticleCounts,
 } from "@/server/categories/queries";
@@ -14,6 +15,7 @@ import { db } from "@/server/db/client";
 import { DEMO_ARTICLES } from "../../prisma/fixtures/articles";
 import { DEMO_EXPRESSION_OCCURRENCES } from "../../prisma/fixtures/expression-occurrences";
 import { REFERENCE_CATEGORIES } from "../../prisma/reference/categories";
+import { REFERENCE_EXPRESSIONS } from "../../prisma/reference/expressions";
 import {
   provisionReferenceData,
   seedDemoArticles,
@@ -304,6 +306,86 @@ describe("getCategoryWithArticles", () => {
   );
 });
 
+describe("getCategoryExpressions", () => {
+  async function createCategoryPage() {
+    const category = await createCategory({ slug: "talk" });
+    const [first, second, third] = [
+      await createExpression({ slug: "one" }),
+      await createExpression({ slug: "two", difficulty: "C1" }),
+      await createExpression({ slug: "three" }),
+    ];
+
+    // Linked out of display order on purpose; "three" is on another page.
+    await db.categoryExpression.createMany({
+      data: [
+        { categoryId: category.id, expressionId: second.id, displayOrder: 2 },
+        { categoryId: category.id, expressionId: first.id, displayOrder: 1 },
+      ],
+    });
+    const other = await createCategory({ slug: "other" });
+    await db.categoryExpression.create({
+      data: { categoryId: other.id, expressionId: third.id, displayOrder: 1 },
+    });
+
+    return { category, first, second };
+  }
+
+  it("lists a category's expressions in display order, as cards", async () => {
+    const { category, second } = await createCategoryPage();
+
+    const result = await getCategoryExpressions("talk");
+
+    expect(result).toMatchObject({
+      slug: "talk",
+      name: category.name,
+      description: category.description,
+    });
+    expect(result?.expressions.map(({ slug }) => slug)).toEqual(["one", "two"]);
+    expect(result?.expressions[1]).toEqual({
+      slug: "two",
+      expression: second.expression,
+      type: second.type,
+      difficulty: "C1",
+      englishMeaning: second.englishMeaning,
+      turkishMeaning: second.turkishMeaning,
+      exampleEnglish: null,
+      exampleTurkish: null,
+      usageNote: null,
+      literalWarning: null,
+    });
+  });
+
+  it("gives an active category without expressions an empty page", async () => {
+    await createCategory({ slug: "quiet" });
+
+    expect(await getCategoryExpressions("quiet")).toMatchObject({
+      slug: "quiet",
+      expressions: [],
+    });
+  });
+
+  it.each(["hidden", "unknown", "Talk", "talk/"])(
+    "returns null for %j",
+    async (slug) => {
+      await createCategoryPage();
+      await createCategory({ slug: "hidden", isActive: false });
+
+      expect(await getCategoryExpressions(slug)).toBeNull();
+    },
+  );
+
+  it("counts a category's expressions alongside its articles", async () => {
+    await createCategoryPage();
+
+    expect(await getCategoryWithArticles("talk", 10)).toMatchObject({
+      expressionCount: 2,
+    });
+    expect(await getCategoryWithArticles("other", 10)).toMatchObject({
+      expressionCount: 1,
+    });
+  });
+});
+
 describe("getPublicArticleBySlug", () => {
   it("returns the article with paragraphs in ascending order", async () => {
     const category = await createCategory();
@@ -478,6 +560,21 @@ describe("queries against the seeded demo dataset", () => {
           turkish,
         })),
       ).toEqual(fixture.paragraphs);
+    }
+  });
+
+  it("serves every launch category's Real English page in library order", async () => {
+    for (const { slug } of REFERENCE_CATEGORIES) {
+      const page = await getCategoryExpressions(slug);
+
+      expect(
+        page?.expressions.map((card) => card.slug),
+        slug,
+      ).toEqual(
+        REFERENCE_EXPRESSIONS.filter(({ categories }) =>
+          categories.includes(slug),
+        ).map((card) => card.slug),
+      );
     }
   });
 
