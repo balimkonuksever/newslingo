@@ -12,9 +12,19 @@ import {
 import { db } from "@/server/db/client";
 
 import { DEMO_ARTICLES } from "../../prisma/fixtures/articles";
+import { DEMO_EXPRESSION_OCCURRENCES } from "../../prisma/fixtures/expression-occurrences";
 import { REFERENCE_CATEGORIES } from "../../prisma/reference/categories";
-import { provisionReferenceData, seedDemoArticles } from "../../prisma/seeders";
-import { createArticle, createCategory, resetDatabase } from "./database";
+import {
+  provisionReferenceData,
+  seedDemoArticles,
+  seedDemoExpressions,
+} from "../../prisma/seeders";
+import {
+  createArticle,
+  createCategory,
+  createExpression,
+  resetDatabase,
+} from "./database";
 
 const at = (day: number) => new Date(Date.UTC(2026, 8, day, 12));
 
@@ -314,15 +324,101 @@ describe("getPublicArticleBySlug", () => {
     const result = await getPublicArticleBySlug("ordered");
 
     expect(result?.paragraphs).toEqual([
-      { order: 1, english: "English 1", turkish: "Türkçe 1" },
-      { order: 2, english: "English 2", turkish: "Türkçe 2" },
-      { order: 3, english: "English 3", turkish: "Türkçe 3" },
+      { order: 1, english: "English 1", turkish: "Türkçe 1", expressions: [] },
+      { order: 2, english: "English 2", turkish: "Türkçe 2", expressions: [] },
+      { order: 3, english: "English 3", turkish: "Türkçe 3", expressions: [] },
     ]);
     expect(result).toMatchObject({
       slug: "ordered",
       sourceUrl: article.sourceUrl,
       wordCount: article.wordCount,
+      expressionCards: [],
     });
+  });
+
+  it("marks each paragraph's expressions and gives each card once, in display order", async () => {
+    const category = await createCategory();
+    const article = await createArticle(category.id, { slug: "phrases" });
+    const [first, second] = await Promise.all(
+      ["Every show sold out.", "It sold out fast, thanks to the reviews."].map(
+        (english, index) =>
+          db.articleParagraph.create({
+            data: {
+              articleId: article.id,
+              order: index + 1,
+              english,
+              turkish: "Türkçe",
+            },
+          }),
+      ),
+    );
+    const sellOut = await createExpression({
+      slug: "sell-out",
+      expression: "sell out",
+      normalizedExpression: "sell out",
+      difficulty: "B1",
+      literalWarning: "Not “dışarı”.",
+    });
+    const thanksTo = await createExpression({
+      slug: "thanks-to",
+      expression: "thanks to",
+      normalizedExpression: "thanks to",
+    });
+    const occur = (
+      paragraph: { id: string; english: string },
+      expressionId: string,
+      surfaceText: string,
+      displayOrder: number,
+    ) => {
+      const startOffset = paragraph.english.indexOf(surfaceText);
+
+      return db.articleExpression.create({
+        data: {
+          articleId: article.id,
+          paragraphId: paragraph.id,
+          expressionId,
+          surfaceText,
+          sentence: paragraph.english,
+          startOffset,
+          endOffset: startOffset + surfaceText.length,
+          displayOrder,
+        },
+      });
+    };
+
+    // Inserted out of reading order, and "thanks to" displays first.
+    await occur(second, sellOut.id, "sold out", 3);
+    await occur(second, thanksTo.id, "thanks to", 1);
+    await occur(first, sellOut.id, "sold out", 2);
+
+    const result = await getPublicArticleBySlug("phrases");
+
+    expect(result?.paragraphs.map(({ expressions }) => expressions)).toEqual([
+      [{ slug: "sell-out", start: 11, end: 19 }],
+      [
+        { slug: "sell-out", start: 3, end: 11 },
+        { slug: "thanks-to", start: 18, end: 27 },
+      ],
+    ]);
+    expect(result?.expressionCards).toEqual([
+      {
+        slug: "thanks-to",
+        expression: "thanks to",
+        type: thanksTo.type,
+        difficulty: null,
+        englishMeaning: thanksTo.englishMeaning,
+        turkishMeaning: thanksTo.turkishMeaning,
+        exampleEnglish: null,
+        exampleTurkish: null,
+        usageNote: null,
+        literalWarning: null,
+      },
+      expect.objectContaining({
+        slug: "sell-out",
+        difficulty: "B1",
+        literalWarning: "Not “dışarı”.",
+      }),
+    ]);
   });
 
   it.each([
@@ -382,6 +478,32 @@ describe("queries against the seeded demo dataset", () => {
           turkish,
         })),
       ).toEqual(fixture.paragraphs);
+    }
+  });
+
+  it("marks every demo expression where its article says it", async () => {
+    await seedDemoExpressions(db);
+
+    for (const fixture of DEMO_ARTICLES) {
+      const article = await getPublicArticleBySlug(fixture.slug);
+      const listed = DEMO_EXPRESSION_OCCURRENCES[fixture.slug] ?? [];
+      const marked = article!.paragraphs.flatMap(({ english, expressions }) =>
+        expressions.map(({ slug, start, end }) => ({
+          slug,
+          text: english.slice(start, end),
+        })),
+      );
+
+      expect(marked.toSorted((a, b) => a.text.localeCompare(b.text))).toEqual(
+        listed
+          .map(({ expression, text }) => ({ slug: expression, text }))
+          .toSorted((a, b) => a.text.localeCompare(b.text)),
+      );
+      expect(
+        article!.expressionCards.map(({ slug }) => slug).toSorted(),
+      ).toEqual(
+        [...new Set(listed.map(({ expression }) => expression))].toSorted(),
+      );
     }
   });
 });

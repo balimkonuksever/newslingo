@@ -1,16 +1,25 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import type { ExpressionMark } from "@/domain/expressions";
+
 import { EnglishText } from "./english-text";
 
-function renderText(text: string) {
+function renderText(text: string, expressions?: ExpressionMark[]) {
   const { container } = render(
     <p>
-      <EnglishText text={text} />
+      <EnglishText text={text} expressions={expressions} />
     </p>,
   );
 
   return container.querySelector("p")!;
+}
+
+/** Marks the first occurrence of `phrase` in `text` with the card `slug`. */
+function mark(text: string, phrase: string, slug: string): ExpressionMark {
+  const start = text.indexOf(phrase);
+
+  return { slug, start, end: start + phrase.length };
 }
 
 describe("EnglishText", () => {
@@ -48,6 +57,42 @@ describe("EnglishText", () => {
         (word) => word.textContent,
       ),
     ).toEqual(["In"]);
+    expect(paragraph.querySelectorAll("[role]")).toHaveLength(0);
+  });
+
+  it("makes a known expression one target covering all its words", () => {
+    const text = "Every show was sold out, so we sold our tickets.";
+    const paragraph = renderText(text, [mark(text, "sold out", "sell-out")]);
+    const phrase = paragraph.querySelector("[data-e]")!;
+
+    expect(paragraph.textContent).toBe(text);
+    expect(phrase.textContent).toBe("sold out");
+    expect(phrase.getAttribute("data-e")).toBe("sell-out");
+    expect(phrase.getAttribute("data-w")).toBe(String(text.indexOf("sold")));
+    expect(
+      [...paragraph.querySelectorAll("[data-w]")].map((w) => w.textContent),
+    ).toEqual([
+      "Every",
+      "show",
+      "was",
+      "sold out",
+      "so",
+      "we",
+      "sold",
+      "our",
+      "tickets",
+    ]);
+  });
+
+  it("lets an expression be the paragraph's tab stop", () => {
+    const text = "Thanks to you, it worked.";
+    const paragraph = renderText(text, [mark(text, "Thanks to", "thanks-to")]);
+
+    expect(
+      [...paragraph.querySelectorAll('[tabindex="0"]')].map(
+        (target) => target.textContent,
+      ),
+    ).toEqual(["Thanks to"]);
     expect(paragraph.querySelectorAll("[role]")).toHaveLength(0);
   });
 });

@@ -7,10 +7,12 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 
+import { ExpressionDetails } from "@/components/learning/expression-details";
 import { fetchDictionaryEntry } from "@/components/learning/lookup-client";
 import {
   isWord,
@@ -23,11 +25,13 @@ import type {
   DictionaryEntry,
   DictionaryLookupError,
 } from "@/domain/dictionary";
+import type { ExpressionCard } from "@/domain/expressions";
 
 type LookupState =
   | { status: "closed" }
   | { status: "loading"; word: string }
   | { status: "found"; word: string; entry: DictionaryEntry }
+  | { status: "expression"; word: string; card: ExpressionCard }
   | { status: "failed"; word: string; error: DictionaryLookupError };
 
 /** Space between the word and the card, and between the card and the edges. */
@@ -59,8 +63,21 @@ function placeCard(card: HTMLElement | null, word: HTMLElement | null) {
   const height = card.offsetHeight;
   const fitsBelow = box.bottom + GAP + height <= window.innerHeight - EDGE;
   const fitsAbove = box.top - GAP - height >= EDGE;
-  const top =
-    !fitsBelow && fitsAbove ? box.top - GAP - height : box.bottom + GAP;
+  let top = !fitsBelow && fitsAbove ? box.top - GAP - height : box.bottom + GAP;
+
+  // A card too tall for either side, such as a long expression card, goes
+  // below the word, and the page scrolls to show it without hiding the word.
+  if (!fitsBelow && !fitsAbove) {
+    const scroll = Math.min(
+      top + height - (window.innerHeight - EDGE),
+      box.top - EDGE,
+    );
+
+    if (scroll > 0) {
+      window.scrollBy({ top: scroll, behavior: "instant" });
+      top -= scroll;
+    }
+  }
   const maxLeft =
     document.documentElement.clientWidth - card.offsetWidth - EDGE;
   const left = Math.max(EDGE, Math.min(box.left, maxLeft));
@@ -73,16 +90,24 @@ function placeCard(card: HTMLElement | null, word: HTMLElement | null) {
  * Makes the English words in `children` explorable: a click, tap, Enter or
  * Space on a word opens a card with its meaning in this sentence. The card is
  * a popover beside the word on wide screens and a bottom sheet on phones. No
- * lookup happens until a reader asks for one.
+ * lookup happens until a reader asks for one. A marked Real English
+ * expression opens its card from `expressions`, which the page already
+ * holds, so it costs no request.
  */
 export function WordLookup({
   articleSlug,
+  expressions = [],
   children,
 }: {
   articleSlug: string;
+  expressions?: readonly ExpressionCard[];
   children: ReactNode;
 }) {
   const [state, setState] = useState<LookupState>({ status: "closed" });
+  const cards = useMemo(
+    () => new Map(expressions.map((card) => [card.slug, card])),
+    [expressions],
+  );
   const cardRef = useRef<HTMLDivElement>(null);
   const activeWordRef = useRef<HTMLElement | null>(null);
   const requestRef = useRef<AbortController | null>(null);
@@ -145,6 +170,20 @@ export function WordLookup({
     );
   }
 
+  /** Shows a marked expression's card, which needs no request. */
+  function showExpression(target: HTMLElement, slug: string) {
+    const text = target.textContent ?? "";
+    const card = cards.get(slug);
+
+    requestRef.current?.abort();
+    requestRef.current = null;
+    setState(
+      card
+        ? { status: "expression", word: text, card }
+        : { status: "failed", word: text, error: "not_found" },
+    );
+  }
+
   function open(word: HTMLElement) {
     const card = cardRef.current;
 
@@ -159,7 +198,12 @@ export function WordLookup({
     // The browser returns focus to whatever had it when the card opened, so
     // make that the word; a click alone would leave it on the page.
     word.focus({ preventScroll: true });
-    load(word);
+
+    if (word.dataset.e === undefined) {
+      load(word);
+    } else {
+      showExpression(word, word.dataset.e);
+    }
 
     if (!card.matches(":popover-open")) {
       card.showPopover();
@@ -234,7 +278,11 @@ export function WordLookup({
             lang="en"
             className="font-serif text-2xl leading-tight font-semibold wrap-break-word"
           >
-            {state.status === "closed" ? "" : state.word}
+            {state.status === "closed"
+              ? ""
+              : state.status === "expression"
+                ? state.card.expression
+                : state.word}
           </h2>
           <button
             type="button"
@@ -249,6 +297,9 @@ export function WordLookup({
         <div aria-live="polite" aria-busy={state.status === "loading"}>
           {state.status === "loading" && <LoadingEntry />}
           {state.status === "found" && <EntryDetails entry={state.entry} />}
+          {state.status === "expression" && (
+            <ExpressionDetails card={state.card} surface={state.word} />
+          )}
           {state.status === "failed" && (
             <LookupFailure
               error={state.error}

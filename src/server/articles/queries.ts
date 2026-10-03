@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
+import type { ExpressionCard, ExpressionMark } from "@/domain/expressions";
 import type { Prisma } from "@/generated/prisma/client";
 import { type ArticleFilters, sourceDateRange } from "@/lib/article-filters";
 import { READING_TIME_BANDS } from "@/lib/reading-time";
@@ -34,6 +35,19 @@ export type ArticleSummary = Prisma.ArticleGetPayload<{
   select: typeof articleSummarySelect;
 }>;
 
+const expressionCardSelect = {
+  slug: true,
+  expression: true,
+  type: true,
+  difficulty: true,
+  englishMeaning: true,
+  turkishMeaning: true,
+  exampleEnglish: true,
+  exampleTurkish: true,
+  usageNote: true,
+  literalWarning: true,
+} satisfies Prisma.ExpressionSelect;
+
 const articleDetailSelect = {
   ...articleSummarySelect,
   publishedOnSiteAt: true,
@@ -43,11 +57,67 @@ const articleDetailSelect = {
     orderBy: { order: "asc" },
     select: { order: true, english: true, turkish: true },
   },
+  expressions: {
+    orderBy: { displayOrder: "asc" },
+    select: {
+      startOffset: true,
+      endOffset: true,
+      paragraph: { select: { order: true } },
+      expression: { select: expressionCardSelect },
+    },
+  },
 } satisfies Prisma.ArticleSelect;
 
-export type ArticleDetail = Prisma.ArticleGetPayload<{
+type ArticleDetailRecord = Prisma.ArticleGetPayload<{
   select: typeof articleDetailSelect;
 }>;
+
+/**
+ * An article as the reader shows it: each paragraph with the Real English
+ * expressions marked in it, and one card for every expression that occurs.
+ */
+export type ArticleDetail = Omit<
+  ArticleDetailRecord,
+  "paragraphs" | "expressions"
+> & {
+  paragraphs: Array<
+    ArticleDetailRecord["paragraphs"][number] & {
+      expressions: ExpressionMark[];
+    }
+  >;
+  /** In the article's display order, each expression once. */
+  expressionCards: ExpressionCard[];
+};
+
+function toArticleDetail({
+  paragraphs,
+  expressions,
+  ...article
+}: ArticleDetailRecord): ArticleDetail {
+  const cards = new Map<string, ExpressionCard>();
+
+  for (const { expression } of expressions) {
+    if (!cards.has(expression.slug)) {
+      cards.set(expression.slug, expression);
+    }
+  }
+
+  return {
+    ...article,
+    paragraphs: paragraphs.map((paragraph) => ({
+      ...paragraph,
+      expressions: expressions
+        .filter((mark) => mark.paragraph.order === paragraph.order)
+        .map(({ expression, startOffset, endOffset }) => ({
+          slug: expression.slug,
+          start: startOffset,
+          end: endOffset,
+        }))
+        .sort((a, b) => a.start - b.start),
+    })),
+    expressionCards: [...cards.values()],
+  };
+}
 
 /**
  * The featured story is the most recently published article. Up to
@@ -91,8 +161,9 @@ export async function listPublicArticles(
 }
 
 /**
- * A public article with its paragraph pairs in reading order, or null.
- * Memoized per request, so metadata and the page share one database read.
+ * A public article with its paragraph pairs in reading order and its Real
+ * English expressions, or null. Memoized per request, so metadata and the
+ * page share one database read.
  */
 export const getPublicArticleBySlug = cache(
   async (slug: string): Promise<ArticleDetail | null> => {
@@ -102,9 +173,11 @@ export const getPublicArticleBySlug = cache(
       return null;
     }
 
-    return db.article.findUnique({
+    const article = await db.article.findUnique({
       where: { slug: parsedSlug.data, ...publicArticleWhere },
       select: articleDetailSelect,
     });
+
+    return article && toArticleDetail(article);
   },
 );

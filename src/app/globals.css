@@ -102,6 +102,15 @@
     background-color: var(--color-highlight);
   }
 
+  /* A Real English expression: one target for its words, marked quietly. */
+  .reader-english [data-e] {
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-decoration-thickness: 0.1em;
+    text-decoration-color: var(--color-ink-muted);
+    text-underline-offset: 0.25em;
+  }
+
   @media (hover: hover) {
     .reader-english [data-w]:hover {
       background-color: var(--color-rule);
