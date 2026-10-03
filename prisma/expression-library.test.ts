@@ -220,10 +220,6 @@ describe("resolveExpressionOccurrences", () => {
 });
 
 describe("the Real English library", () => {
-  // Categories whose cards are still being written. Remove each one as its
-  // cards land, so that in the end every launch category is checked.
-  const CATEGORIES_IN_PROGRESS = new Set(["beauty"]);
-
   it("has only valid, reviewed cards", () => {
     expect(referenceExpressionData(REFERENCE_EXPRESSIONS)).toHaveLength(
       REFERENCE_EXPRESSIONS.length,
@@ -234,10 +230,6 @@ describe("the Real English library", () => {
     const rows = referenceExpressionData(REFERENCE_EXPRESSIONS);
 
     for (const { slug } of REFERENCE_CATEGORIES) {
-      if (CATEGORIES_IN_PROGRESS.has(slug)) {
-        continue;
-      }
-
       const page = rows.filter(({ categories }) =>
         categories.some((category) => category.slug === slug),
       );

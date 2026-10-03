@@ -69,4 +69,20 @@ export const DEMO_EXPRESSION_OCCURRENCES: ExpressionOccurrences = {
     { expression: "thanks-to", paragraph: 1, text: "thanks to" },
     { expression: "sell-out", paragraph: 4, text: "sold out" },
   ],
+  "skincare-routines-are-getting-shorter": [
+    { expression: "add-up", paragraph: 2, text: "adds up" },
+    {
+      expression: "active-ingredient",
+      paragraph: 2,
+      text: "active ingredients",
+    },
+    { expression: "work-out", paragraph: 2, text: "work out" },
+    { expression: "one-at-a-time", paragraph: 4, text: "one at a time" },
+    { expression: "point-out", paragraph: 5, text: "point out" },
+    {
+      expression: "pay-attention-to",
+      paragraph: 5,
+      text: "paying attention to",
+    },
+  ],
 };
