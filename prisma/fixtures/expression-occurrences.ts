@@ -11,6 +11,22 @@
 import type { ExpressionOccurrences } from "../expression-library";
 
 export const DEMO_EXPRESSION_OCCURRENCES: ExpressionOccurrences = {
+  "three-neighbouring-countries-sign-river-agreement": [
+    {
+      expression: "more-than-your-fair-share",
+      paragraph: 2,
+      text: "more than their fair share",
+    },
+    { expression: "at-the-heart-of", paragraph: 3, text: "At the heart of" },
+    {
+      expression: "cautiously-welcome",
+      paragraph: 5,
+      text: "cautiously welcomed",
+    },
+    { expression: "point-out", paragraph: 5, text: "pointed out" },
+    { expression: "mixed-feelings", paragraph: 6, text: "mixed feelings" },
+    { expression: "have-yet-to", paragraph: 6, text: "have yet to" },
+  ],
   "farmers-turn-to-ai-weather-forecasts": [
     {
       expression: "a-growing-number-of",
@@ -41,6 +57,12 @@ export const DEMO_EXPRESSION_OCCURRENCES: ExpressionOccurrences = {
       paragraph: 6,
       text: "from time to time",
     },
+  ],
+  "bakery-delivers-bread-by-bicycle": [
+    { expression: "until-now", paragraph: 1, text: "Until now" },
+    { expression: "run-a-business", paragraph: 2, text: "runs the bakery" },
+    { expression: "have-time-to", paragraph: 2, text: "have time to" },
+    { expression: "cost-extra", paragraph: 3, text: "costs a little extra" },
   ],
   "old-cinema-reopens-with-films-chosen-by-neighbours": [
     { expression: "open-its-doors", paragraph: 1, text: "opened its doors" },
