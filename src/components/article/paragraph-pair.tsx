@@ -1,4 +1,5 @@
 import { EnglishText } from "@/components/learning/english-text";
+import type { ExpressionMark } from "@/domain/expressions";
 
 const labelClass =
   "pt-[0.3em] text-[0.6875rem] font-semibold tracking-wider text-ink-muted select-none";
@@ -11,10 +12,13 @@ export function ParagraphPair({
   order,
   english,
   turkish,
+  expressions,
 }: {
   order: number;
   english: string;
   turkish: string;
+  /** Real English expressions to mark in the English text. */
+  expressions?: readonly ExpressionMark[];
 }) {
   return (
     <div data-pair={order} className="flex flex-col gap-3">
@@ -26,7 +30,7 @@ export function ParagraphPair({
           EN
         </span>
         <p lang="en" className="reader-english wrap-break-word text-ink">
-          <EnglishText text={english} />
+          <EnglishText text={english} expressions={expressions} />
         </p>
       </div>
       <div

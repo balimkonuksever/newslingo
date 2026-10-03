@@ -62,3 +62,17 @@ test("the open word card has no serious accessibility violations", async ({
 
   expect(await seriousViolations(page)).toEqual([]);
 });
+
+test("the open expression card has no serious accessibility violations", async ({
+  page,
+}) => {
+  await page.goto(
+    "/article/old-cinema-reopens-with-films-chosen-by-neighbours",
+  );
+  await page.locator('[data-e="sell-out"]').click();
+  await expect(
+    page.getByRole("dialog").getByRole("heading", { name: "sell out" }),
+  ).toBeVisible();
+
+  expect(await seriousViolations(page)).toEqual([]);
+});

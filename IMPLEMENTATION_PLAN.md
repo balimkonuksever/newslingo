@@ -647,7 +647,8 @@ newslingo/
 │   │   │   ├── reading-anchor.ts
 │   │   │   └── source-attribution.tsx
 │   │   ├── learning/             # contextual lookup (M4)
-│   │   │   ├── english-text.tsx      # words as spans, one tab stop
+│   │   │   ├── english-text.tsx      # words and expressions as spans, one tab stop
+│   │   │   ├── expression-details.tsx  # a Real English card
 │   │   │   ├── lookup-client.ts
 │   │   │   ├── word-lookup.tsx       # client: popover / bottom sheet
 │   │   │   └── word-navigation.ts    # roving tab index between words
@@ -664,7 +665,8 @@ newslingo/
 │   │   │   └── site-header.tsx
 │   │   └── ui/                   # shared class lists only
 │   ├── domain/                   # boundary schemas/types as needed
-│   │   └── dictionary.ts
+│   │   ├── dictionary.ts
+│   │   └── expressions.ts        # Real English cards and marks for the reader
 │   ├── generated/prisma/         # generated and ignored
 │   ├── jobs/                     # scheduled orchestration later
 │   ├── lib/
@@ -1199,7 +1201,7 @@ M3 complete. Dictionary provider selection is needed only for the external fallb
 ### Work items — interaction
 
 - [x] Render no lookup requests during initial article rendering.
-- [ ] Build one accessible interactive unit per matched expression.
+- [x] Build one accessible interactive unit per matched expression. A marked expression is one role-less span over all its words, underlined with dots, in the same roving tab order as the words; a click, tap, Enter or Space opens its card in the word card's popover or bottom sheet. The card's content comes with the page, so opening it sends no request.
 - [x] Build word interaction for the remaining English tokens. Words are server-rendered spans without a role, handled by one delegated listener, so screen readers read plain prose and no per-word client component hydrates.
 - [x] Use a desktop popover.
 - [x] Use a mobile bottom sheet. It scrolls the page when it would cover the word.
@@ -1218,12 +1220,14 @@ M3 complete. Dictionary provider selection is needed only for the external fallb
 
 ### Work items — expression surfaces
 
-- [ ] Build expression detail content:
+- [x] Build expression detail content:
   - type and CEFR
   - English/Turkish meanings
   - examples
   - usage note
   - literal-translation warning
+
+  The card also names the article's wording when it differs from the card's ("here: “sold out”" for *sell out*) and says that the card was written with AI and checked by a native Turkish speaker (`src/components/learning/expression-details.tsx`).
 - [ ] Build “Real English from this article.”
 - [ ] Build “Key vocabulary from this article” from `ArticleVocabulary` records.
 - [ ] Build `/category/[slug]/expressions`.
@@ -2047,6 +2051,8 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-09-30 | Write the Real English cards by hand as reference data in `prisma/reference/expressions/`, one file per category, drafted by Claude in Claude Code sessions. The user checks the Turkish of every card, and each card records the review date. | Provisioning refuses the whole library while any card is unreviewed, so production only gets Turkish a native speaker has checked. The cards' CEFR levels are editorial estimates, not labels, and are never evaluation data. |
 | 2026-09-30 | Give phrases that belong to no topic, such as "thanks to", a card with no category. | They appear in the articles that use them but on no category page, so each category page stays about its topic. |
 | 2026-09-30 | Record demo expression occurrences by their exact wording ("sold out" for "sell out"), not by the card's form. | The phrase matcher does not inflect words. Phrasal verbs split by their object, such as "cutting their routines down", are not marked, because one clickable unit would swallow the words in between. |
+| 2026-10-03 | Open an expression's card from data the article page already holds, in the word card's popover or bottom sheet, and mark expressions with a dotted underline. | Opening a card sends no request and cannot fail. The article query returns each paragraph's marks and one card per expression, so the page needs no second query. |
+| 2026-10-03 | When a card fits neither below nor above its word, place it below and scroll the page just enough to show it, keeping the word visible. | Expression cards are taller than word cards; on a short window they no longer open partly off-screen. |
 | 2026-09-30 | Let the library own its cards' category links: provisioning replaces a card's links with the library's. | A card taken off a category page in the library leaves it in every database. Links added to library cards by other means would be replaced; revisit if M5 adds editing of category pages. |
 
 ### Open decisions
@@ -2174,7 +2180,7 @@ M4 and M5 may run in parallel per the dependency map.
 **M4, contextual vocabulary and Real English, is in progress.** Done: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, and clickable words with a desktop popover, a mobile bottom sheet and keyboard access. Remaining:
 
 - the user's sample review of the editorial Turkish;
-- expression cards in the reader, the category expression pages, and the article's "Real English" and "Key vocabulary" sections. The Real English cards for all six categories are reviewed and load through the seed, with 30 occurrences marked in the six demo articles; curated key vocabulary for the demo articles is still to be chosen.
+- the category expression pages, and the article's "Real English" and "Key vocabulary" sections. Expression cards in the reader are done: a marked expression opens its card. The Real English cards for all six categories are reviewed and load through the seed, with 30 occurrences marked in the six demo articles; curated key vocabulary for the demo articles is still to be chosen.
 
 **M5, moderation,** needs the admin-authentication decision from M0 first.
 

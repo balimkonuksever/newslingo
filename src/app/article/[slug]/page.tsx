@@ -127,9 +127,14 @@ export default async function ArticlePage(props: PageProps<"/article/[slug]">) {
 
       <div className="mt-8">
         <ArticleReader>
-          <WordLookup articleSlug={article.slug}>
+          <WordLookup
+            articleSlug={article.slug}
+            expressions={article.expressionCards}
+          >
             <p className="-mb-4 text-sm text-ink-muted">
-              Select any English word to see what it means here.
+              {article.expressionCards.length > 0
+                ? "Select any English word, or an underlined phrase, to see what it means here."
+                : "Select any English word to see what it means here."}
               <span className="sr-only">
                 {" "}
                 With a keyboard, tab to a paragraph, choose a word with the
