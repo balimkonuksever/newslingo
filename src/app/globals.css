@@ -102,6 +102,15 @@
     background-color: var(--color-highlight);
   }
 
+  /* Real English lists draw their own open/closed arrow. */
+  .real-english summary {
+    list-style: none;
+  }
+
+  .real-english summary::-webkit-details-marker {
+    display: none;
+  }
+
   /* A Real English expression: one target for its words, marked quietly. */
   .reader-english [data-e] {
     text-decoration-line: underline;

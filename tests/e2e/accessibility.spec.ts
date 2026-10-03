@@ -22,6 +22,7 @@ for (const path of [
   "/",
   "/?level=B2",
   "/category/world",
+  "/category/world/expressions",
   `/article/${article.slug}`,
   "/article/no-such-article",
 ]) {
@@ -72,6 +73,23 @@ test("the open expression card has no serious accessibility violations", async (
   await page.locator('[data-e="sell-out"]').click();
   await expect(
     page.getByRole("dialog").getByRole("heading", { name: "sell out" }),
+  ).toBeVisible();
+
+  expect(await seriousViolations(page)).toEqual([]);
+});
+
+test("an opened Real English row has no serious accessibility violations", async ({
+  page,
+}) => {
+  await page.goto(
+    "/article/old-cinema-reopens-with-films-chosen-by-neighbours",
+  );
+  const section = page.getByRole("region", {
+    name: "Real English from this article",
+  });
+  await section.locator("summary").last().click();
+  await expect(
+    section.locator("details").last().getByText("Watch out:"),
   ).toBeVisible();
 
   expect(await seriousViolations(page)).toEqual([]);

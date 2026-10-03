@@ -266,7 +266,7 @@ Local contextual cache → External fallback → Validate → Cache → UI
 | `/` | Reader Release | Featured story, latest articles, category sections, basic discovery. |
 | `/category/[slug]` | Reader Release | Category description and recent published articles. |
 | `/article/[slug]` | Reader Release | Bilingual reader, metadata, attribution, learning interactions. |
-| `/category/[slug]/expressions` | Launch MVP | Category-specific Real English library. |
+| `/category/[slug]/expressions` | Launch MVP | Category-specific Real English library. Built in M4: the category's cards in display order, linked from the category page and from each article's Real English section; unknown or inactive categories return 404. |
 
 Reserved but disabled until their product phases:
 
@@ -631,7 +631,8 @@ newslingo/
 │   │   ├── article/[slug]/       # no loading.tsx, so unknown slugs return 404
 │   │   │   └── page.tsx
 │   │   ├── category/[slug]/
-│   │   │   └── page.tsx
+│   │   │   ├── page.tsx
+│   │   │   └── expressions/page.tsx  # the category's Real English (M4)
 │   │   ├── admin/                # moderation milestone
 │   │   ├── api/                  # added by owning feature phases
 │   │   │   └── dictionary/route.ts   # POST: one word lookup (M4)
@@ -649,6 +650,7 @@ newslingo/
 │   │   ├── learning/             # contextual lookup (M4)
 │   │   │   ├── english-text.tsx      # words and expressions as spans, one tab stop
 │   │   │   ├── expression-details.tsx  # a Real English card
+│   │   │   ├── real-english-list.tsx   # cards as rows that open to the rest
 │   │   │   ├── lookup-client.ts
 │   │   │   ├── word-lookup.tsx       # client: popover / bottom sheet
 │   │   │   └── word-navigation.ts    # roving tab index between words
@@ -1228,9 +1230,9 @@ M3 complete. Dictionary provider selection is needed only for the external fallb
   - literal-translation warning
 
   The card also names the article's wording when it differs from the card's ("here: “sold out”" for *sell out*) and says that the card was written with AI and checked by a native Turkish speaker (`src/components/learning/expression-details.tsx`).
-- [ ] Build “Real English from this article.”
+- [x] Build “Real English from this article.” A section after the article lists its expressions in display order, each a row with the expression, type, level and Turkish meaning that opens to the rest of the card, and links to the category's Real English page.
 - [ ] Build “Key vocabulary from this article” from `ArticleVocabulary` records.
-- [ ] Build `/category/[slug]/expressions`.
+- [x] Build `/category/[slug]/expressions`. The category page links to it with the expression count.
 - [x] Verify article expressions actually occur in the article text. Each occurrence is recorded by its exact wording, and the seed finds it in its paragraph, refusing wording that is missing, repeated in the paragraph or overlapping another occurrence (`prisma/expression-library.ts`). Generated articles (M7) can reuse the same check.
 
 ### Verification
@@ -2052,6 +2054,7 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-09-30 | Give phrases that belong to no topic, such as "thanks to", a card with no category. | They appear in the articles that use them but on no category page, so each category page stays about its topic. |
 | 2026-09-30 | Record demo expression occurrences by their exact wording ("sold out" for "sell out"), not by the card's form. | The phrase matcher does not inflect words. Phrasal verbs split by their object, such as "cutting their routines down", are not marked, because one clickable unit would swallow the words in between. |
 | 2026-10-03 | Open an expression's card from data the article page already holds, in the word card's popover or bottom sheet, and mark expressions with a dotted underline. | Opening a card sends no request and cannot fail. The article query returns each paragraph's marks and one card per expression, so the page needs no second query. |
+| 2026-10-03 | Show Real English lists, at the end of an article and on a category's expression page, as native disclosure rows: the expression, type, level and Turkish meaning, opening to the rest of the card. | The lists work without JavaScript and stay short to scan; the "checked by a native Turkish speaker" note appears once under each list. |
 | 2026-10-03 | When a card fits neither below nor above its word, place it below and scroll the page just enough to show it, keeping the word visible. | Expression cards are taller than word cards; on a short window they no longer open partly off-screen. |
 | 2026-09-30 | Let the library own its cards' category links: provisioning replaces a card's links with the library's. | A card taken off a category page in the library leaves it in every database. Links added to library cards by other means would be replaced; revisit if M5 adds editing of category pages. |
 
@@ -2180,7 +2183,7 @@ M4 and M5 may run in parallel per the dependency map.
 **M4, contextual vocabulary and Real English, is in progress.** Done: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, and clickable words with a desktop popover, a mobile bottom sheet and keyboard access. Remaining:
 
 - the user's sample review of the editorial Turkish;
-- the category expression pages, and the article's "Real English" and "Key vocabulary" sections. Expression cards in the reader are done: a marked expression opens its card. The Real English cards for all six categories are reviewed and load through the seed, with 30 occurrences marked in the six demo articles; curated key vocabulary for the demo articles is still to be chosen.
+- the article's "Key vocabulary" section. Expression cards in the reader, the article's "Real English" section and the category expression pages are done. The Real English cards for all six categories are reviewed and load through the seed, with 30 occurrences marked in the six demo articles; curated key vocabulary for the demo articles is still to be chosen.
 
 **M5, moderation,** needs the admin-authentication decision from M0 first.
 

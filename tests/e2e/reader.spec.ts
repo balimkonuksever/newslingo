@@ -104,7 +104,8 @@ test.describe("article reader", () => {
     await page.goto(`/article/${article.slug}`);
 
     const toggle = page.getByRole("button", { name: "Turkish translation" });
-    const turkish = page.locator('p[lang="tr"]');
+    // The paragraphs' translations, not the Turkish in the Real English list.
+    const turkish = page.locator('[data-lang="tr"] p[lang="tr"]');
 
     await expect(toggle).toHaveAttribute("aria-pressed", "true");
     await expect(turkish.first()).toBeVisible();
@@ -275,6 +276,7 @@ test.describe("layout and keyboard", () => {
       "/",
       "/?level=B2",
       "/category/world",
+      "/category/world/expressions",
       `/article/${longestArticle.slug}`,
     ]) {
       await page.goto(path);

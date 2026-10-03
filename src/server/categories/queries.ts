@@ -2,9 +2,11 @@ import "server-only";
 
 import { cache } from "react";
 
+import type { ExpressionCard } from "@/domain/expressions";
 import { slugSchema } from "@/lib/slug";
 import {
   articleSummarySelect,
+  expressionCardSelect,
   publicArticleWhere,
 } from "@/server/articles/queries";
 import { db } from "@/server/db/client";
@@ -33,8 +35,9 @@ export const listCategoriesWithArticleCounts = cache(async () => {
 
 /**
  * An active category with up to `articleLimit` of its public articles, most
- * recent source publication first, or null when the slug is unknown or the
- * category is inactive. Memoized per request for metadata and the page.
+ * recent source publication first, and the number of Real English
+ * expressions on its page, or null when the slug is unknown or the category
+ * is inactive. Memoized per request for metadata and the page.
  */
 export const getCategoryWithArticles = cache(
   async (slug: string, articleLimit: number) => {
@@ -44,7 +47,7 @@ export const getCategoryWithArticles = cache(
       return null;
     }
 
-    return db.category.findUnique({
+    const category = await db.category.findUnique({
       where: { slug: parsedSlug.data, isActive: true },
       select: {
         slug: true,
@@ -56,7 +59,61 @@ export const getCategoryWithArticles = cache(
           take: articleLimit,
           select: articleSummarySelect,
         },
+        _count: { select: { expressions: true } },
       },
     });
+
+    if (!category) {
+      return null;
+    }
+
+    const { _count, ...rest } = category;
+
+    return { ...rest, expressionCount: _count.expressions };
+  },
+);
+
+export type CategoryExpressions = {
+  slug: string;
+  name: string;
+  description: string | null;
+  /** The category's Real English page, in display order. */
+  expressions: ExpressionCard[];
+};
+
+/**
+ * An active category with the Real English expressions on its page, in
+ * display order, or null when the slug is unknown or the category is
+ * inactive. Memoized per request for metadata and the page.
+ */
+export const getCategoryExpressions = cache(
+  async (slug: string): Promise<CategoryExpressions | null> => {
+    const parsedSlug = slugSchema.safeParse(slug);
+
+    if (!parsedSlug.success) {
+      return null;
+    }
+
+    const category = await db.category.findUnique({
+      where: { slug: parsedSlug.data, isActive: true },
+      select: {
+        slug: true,
+        name: true,
+        description: true,
+        expressions: {
+          orderBy: [{ displayOrder: "asc" }, { expressionId: "asc" }],
+          select: { expression: { select: expressionCardSelect } },
+        },
+      },
+    });
+
+    if (!category) {
+      return null;
+    }
+
+    return {
+      ...category,
+      expressions: category.expressions.map(({ expression }) => expression),
+    };
   },
 );

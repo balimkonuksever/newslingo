@@ -35,7 +35,8 @@ export type ArticleSummary = Prisma.ArticleGetPayload<{
   select: typeof articleSummarySelect;
 }>;
 
-const expressionCardSelect = {
+/** The fields a Real English card shows. */
+export const expressionCardSelect = {
   slug: true,
   expression: true,
   type: true,
