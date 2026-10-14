@@ -1,6 +1,7 @@
 // Empties the test database named by DATABASE_URL, then loads the reference
-// categories and expressions, the demo articles, their dictionary entries and
-// their expression occurrences, so browser tests start from a known state.
+// categories and expressions, the demo articles, their dictionary entries,
+// key vocabulary and expression occurrences, so browser tests start from a
+// known state.
 // Run it through the guarded runner: `pnpm db:reset:test`.
 import nextEnv from "@next/env";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -10,6 +11,7 @@ import {
   seedDemoArticles,
   seedDemoDictionary,
   seedDemoExpressions,
+  seedDemoKeyVocabulary,
 } from "../prisma/seeders";
 import { PrismaClient } from "../src/generated/prisma/client";
 import {
@@ -37,6 +39,7 @@ try {
   await provisionReferenceData(db);
   const { articles } = await seedDemoArticles(db);
   await seedDemoDictionary(db);
+  await seedDemoKeyVocabulary(db);
   await seedDemoExpressions(db);
 
   console.log(`Reset the test database and loaded ${articles} demo articles.`);

@@ -102,12 +102,12 @@
     background-color: var(--color-highlight);
   }
 
-  /* Real English lists draw their own open/closed arrow. */
-  .real-english summary {
+  /* Disclosure lists draw their own open/closed arrow. */
+  .disclosure-list summary {
     list-style: none;
   }
 
-  .real-english summary::-webkit-details-marker {
+  .disclosure-list summary::-webkit-details-marker {
     display: none;
   }
 

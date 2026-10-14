@@ -20,11 +20,14 @@ import {
   DEMO_SENSE_CHOICES,
 } from "../../prisma/fixtures/dictionary";
 import { DEMO_EXPRESSION_OCCURRENCES } from "../../prisma/fixtures/expression-occurrences";
+import { DEMO_KEY_VOCABULARY } from "../../prisma/fixtures/key-vocabulary";
+import { resolveKeyVocabulary } from "../../prisma/key-vocabulary";
 import {
   provisionReferenceData,
   seedDemoArticles,
   seedDemoDictionary,
   seedDemoExpressions,
+  seedDemoKeyVocabulary,
 } from "../../prisma/seeders";
 import { lookupWord } from "@/server/dictionary/lookup";
 import { resetDatabase } from "./database";
@@ -453,6 +456,94 @@ describe("demo expression seeding", () => {
 
     await expect(seedDemoExpressions(db)).rejects.toThrow(
       "Run pnpm db:seed:reference",
+    );
+  });
+});
+
+describe("demo key vocabulary seeding", () => {
+  const expected = resolveKeyVocabulary(DEMO_ARTICLES, DEMO_KEY_VOCABULARY);
+
+  async function seedEverything() {
+    await provisionReferenceData(db);
+    await seedDemoArticles(db);
+    await seedDemoDictionary(db);
+    return seedDemoKeyVocabulary(db);
+  }
+
+  it("links each chosen word to its entry for that sentence, in reading order", async () => {
+    await expect(seedEverything()).resolves.toEqual({ words: expected.length });
+
+    const rows = await db.articleVocabulary.findMany({
+      select: {
+        displayOrder: true,
+        sourceSentence: true,
+        source: true,
+        article: { select: { slug: true } },
+        vocabularyEntry: {
+          select: {
+            surfaceWord: true,
+            normalizedWord: true,
+            contextHash: true,
+            provider: true,
+          },
+        },
+      },
+    });
+
+    expect(rows).toHaveLength(expected.length);
+    for (const word of expected) {
+      expect(
+        rows.find(
+          (row) =>
+            row.article.slug === word.articleSlug &&
+            row.displayOrder === word.displayOrder,
+        ),
+        word.surfaceWord,
+      ).toEqual({
+        displayOrder: word.displayOrder,
+        sourceSentence: word.sourceSentence,
+        source: "editorial",
+        article: { slug: word.articleSlug },
+        vocabularyEntry: {
+          surfaceWord: word.surfaceWord,
+          normalizedWord: word.normalizedWord,
+          contextHash: word.contextHash,
+          provider: "editorial",
+        },
+      });
+    }
+  });
+
+  it("lets a reseeded dictionary rewrite the entries it points at", async () => {
+    await seedEverything();
+    const [word] = expected;
+    const key = {
+      normalizedWord: word.normalizedWord,
+      contextHash: word.contextHash,
+    };
+    const { turkishMeaning } = await db.vocabularyEntry.findFirstOrThrow({
+      where: key,
+    });
+    await db.vocabularyEntry.updateMany({
+      where: key,
+      data: { turkishMeaning: "Outdated" },
+    });
+
+    await seedDemoDictionary(db);
+    await seedDemoKeyVocabulary(db);
+
+    await expect(
+      db.vocabularyEntry.findFirstOrThrow({ where: key }),
+    ).resolves.toMatchObject({ turkishMeaning });
+    expect(await db.articleVocabulary.count()).toBe(expected.length);
+  });
+
+  it("refuses to run before the dictionary is seeded", async () => {
+    await provisionReferenceData(db);
+    await seedDemoArticles(db);
+
+    await expect(seedDemoKeyVocabulary(db)).rejects.toThrow(
+      "Seed the demo dictionary before the key vocabulary",
     );
   });
 });

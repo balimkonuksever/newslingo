@@ -153,3 +153,37 @@ test.describe("Real English lists", () => {
     expect(response?.status()).toBe(404);
   });
 });
+
+test("ends the article with its key vocabulary, each opening to its sentence", async ({
+  page,
+}) => {
+  await page.goto("/article/three-neighbouring-countries-sign-river-agreement");
+
+  const section = page.getByRole("region", {
+    name: "Key vocabulary from this article",
+  });
+  const rows = section.locator("summary");
+
+  await expect(section).toContainText("8 words worth learning");
+  await expect(rows).toHaveCount(8);
+  await expect(rows.nth(0)).toContainText("acrimonious");
+  await expect(rows.nth(1)).toContainText("ratify");
+  await expect(rows.nth(1)).toContainText("here: “ratified”");
+  await expect(rows.nth(1)).toContainText("(resmen) onaylamak");
+
+  // "ratified" and "droughts" share a sentence, so look inside the row.
+  const sentence = section
+    .locator("details")
+    .nth(1)
+    .getByText("The accord, which must still be ratified", { exact: false });
+  await expect(sentence).toBeHidden();
+  await rows.nth(1).click();
+  await expect(sentence).toBeVisible();
+
+  // The section comes before the article's Real English.
+  const headings = page.locator("section[aria-labelledby] h2");
+  await expect(headings).toHaveText([
+    "Key vocabulary from this article",
+    "Real English from this article",
+  ]);
+});

@@ -16,6 +16,7 @@ import {
   seedDemoArticles,
   seedDemoDictionary,
   seedDemoExpressions,
+  seedDemoKeyVocabulary,
 } from "./seeders";
 
 const { loadEnvConfig } = nextEnv;
@@ -65,6 +66,9 @@ try {
     console.log(
       `Seeded ${entries} dictionary entries from ${senses} word senses.`,
     );
+
+    const { words } = await seedDemoKeyVocabulary(db);
+    console.log(`Linked ${words} key vocabulary words to the demo articles.`);
 
     const { occurrences } = await seedDemoExpressions(db);
     console.log(

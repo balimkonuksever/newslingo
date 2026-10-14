@@ -7,3 +7,8 @@ export function formatArticleCount(count: number) {
 export function formatExpressionCount(count: number) {
   return `${count} ${count === 1 ? "expression" : "expressions"}`;
 }
+
+/** "1 word", "8 words". */
+export function formatWordCount(count: number) {
+  return `${count} ${count === 1 ? "word" : "words"}`;
+}

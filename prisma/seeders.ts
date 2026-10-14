@@ -1,4 +1,7 @@
-import { EDITORIAL_SOURCE } from "../src/domain/dictionary";
+import {
+  DICTIONARY_SCHEMA_VERSION,
+  EDITORIAL_SOURCE,
+} from "../src/domain/dictionary";
 import type { PrismaClient } from "../src/generated/prisma/client";
 import { countWords, estimateReadingMinutes } from "../src/lib/reading-time";
 import { editorialVocabularyRows } from "./editorial-dictionary";
@@ -14,6 +17,8 @@ import {
 } from "./fixtures/articles";
 import { DEMO_DICTIONARY, DEMO_SENSE_CHOICES } from "./fixtures/dictionary";
 import { DEMO_EXPRESSION_OCCURRENCES } from "./fixtures/expression-occurrences";
+import { DEMO_KEY_VOCABULARY } from "./fixtures/key-vocabulary";
+import { resolveKeyVocabulary } from "./key-vocabulary";
 import { REFERENCE_CATEGORIES } from "./reference/categories";
 import { REFERENCE_EXPRESSIONS } from "./reference/expressions";
 
@@ -132,9 +137,11 @@ export async function seedDemoArticles(db: PrismaClient) {
 
 /**
  * Replaces the editorial dictionary entries with one for every word of every
- * demo article, keyed like live lookups so the reader finds them first.
- * Entries that curated article vocabulary points to are kept. The same
- * caller rules as `seedDemoArticles` apply.
+ * demo article, keyed like live lookups so the reader finds them first. The
+ * demo articles' key vocabulary is removed first, so that every entry is
+ * rewritten from the fixtures; `seedDemoKeyVocabulary` restores it. Entries
+ * that other articles' curated vocabulary points to are kept. The same caller
+ * rules as `seedDemoArticles` apply.
  */
 export async function seedDemoDictionary(db: PrismaClient) {
   const rows = editorialVocabularyRows(
@@ -144,6 +151,11 @@ export async function seedDemoDictionary(db: PrismaClient) {
   );
 
   await db.$transaction([
+    db.articleVocabulary.deleteMany({
+      where: {
+        article: { slug: { in: DEMO_ARTICLES.map(({ slug }) => slug) } },
+      },
+    }),
     db.vocabularyEntry.deleteMany({
       where: { provider: EDITORIAL_SOURCE.provider, articles: { none: {} } },
     }),
@@ -225,4 +237,72 @@ export async function seedDemoExpressions(db: PrismaClient) {
   ]);
 
   return { occurrences: rows.length };
+}
+
+/**
+ * Replaces the demo articles' key vocabulary, linking each chosen word to
+ * its editorial dictionary entry for that sentence. Requires the demo
+ * articles and their dictionary entries; the same caller rules as
+ * `seedDemoArticles` apply.
+ */
+export async function seedDemoKeyVocabulary(db: PrismaClient) {
+  const words = resolveKeyVocabulary(DEMO_ARTICLES, DEMO_KEY_VOCABULARY);
+
+  const [articles, entries] = await Promise.all([
+    db.article.findMany({
+      where: { slug: { in: DEMO_ARTICLES.map(({ slug }) => slug) } },
+      select: { id: true, slug: true },
+    }),
+    db.vocabularyEntry.findMany({
+      where: {
+        provider: EDITORIAL_SOURCE.provider,
+        providerVersion: EDITORIAL_SOURCE.version,
+        schemaVersion: DICTIONARY_SCHEMA_VERSION,
+        contextHash: { in: words.map(({ contextHash }) => contextHash) },
+      },
+      select: { id: true, normalizedWord: true, contextHash: true },
+    }),
+  ]);
+  const articleIds = new Map(articles.map(({ id, slug }) => [slug, id]));
+  const entryIds = new Map(
+    entries.map(({ id, normalizedWord, contextHash }) => [
+      `${normalizedWord} ${contextHash}`,
+      id,
+    ]),
+  );
+
+  const rows = words.map((word) => {
+    const articleId = articleIds.get(word.articleSlug);
+    const vocabularyEntryId = entryIds.get(
+      `${word.normalizedWord} ${word.contextHash}`,
+    );
+
+    if (!articleId) {
+      throw new Error(
+        `Demo article "${word.articleSlug}" is missing. Seed the demo articles before their key vocabulary.`,
+      );
+    }
+    if (!vocabularyEntryId) {
+      throw new Error(
+        `"${word.surfaceWord}" in "${word.articleSlug}" has no dictionary entry. Seed the demo dictionary before the key vocabulary.`,
+      );
+    }
+
+    return {
+      articleId,
+      vocabularyEntryId,
+      sourceSentence: word.sourceSentence,
+      displayOrder: word.displayOrder,
+      source: EDITORIAL_SOURCE.provider,
+    };
+  });
+
+  await db.$transaction([
+    db.articleVocabulary.deleteMany({
+      where: { articleId: { in: articles.map(({ id }) => id) } },
+    }),
+    db.articleVocabulary.createMany({ data: rows }),
+  ]);
+
+  return { words: rows.length };
 }

@@ -94,3 +94,18 @@ test("an opened Real English row has no serious accessibility violations", async
 
   expect(await seriousViolations(page)).toEqual([]);
 });
+
+test("an opened key vocabulary row has no serious accessibility violations", async ({
+  page,
+}) => {
+  await page.goto(`/article/${article.slug}`);
+  const section = page.getByRole("region", {
+    name: "Key vocabulary from this article",
+  });
+  await section.locator("summary").first().click();
+  await expect(
+    section.locator("details").first().getByText("In this article"),
+  ).toBeVisible();
+
+  expect(await seriousViolations(page)).toEqual([]);
+});
