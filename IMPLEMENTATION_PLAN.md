@@ -888,7 +888,7 @@ Turn the remaining launch-sensitive choices into explicit decisions before they 
   - unsuitable/sensitive-news handling
 - [ ] Select the AI provider/model and confirm structured-output support. Provider selected on 2026-09-25: Anthropic Claude, with structured outputs. The model for each task is still to be chosen by measured comparison.
 - [x] Select the contextual dictionary fallback: a contextual Claude lookup, cache-first (2026-09-25).
-- [ ] Select admin authentication.
+- [x] Select admin authentication: Better Auth with an email, a password and an authenticator-app code, for admins only (2026-10-14, ADR-003).
 - [ ] Select hosting, managed PostgreSQL, and scheduler.
 - [ ] Set operational limits:
   - candidates fetched per run
@@ -1248,7 +1248,7 @@ M3 complete. Dictionary provider selection is needed only for the external fallb
 - Provider failures are recoverable and never break the article.
 - Desktop/mobile interaction surfaces behave appropriately.
 - Keyboard navigation and focus management pass manual and automated checks.
-- Long C1 articles stay within the agreed DOM/performance budget.
+- Long C1 articles stay within the agreed DOM/performance budget (§17). `tests/e2e/page-budget.spec.ts` checks its size limits on every demo article.
 - Every launch category has at least 10 reviewed, database-backed expressions.
 - Curated article vocabulary renders from persisted `ArticleVocabulary` records.
 
@@ -1266,7 +1266,7 @@ Create a secure article lifecycle before connecting live candidates and AI gener
 
 ### Dependencies
 
-M3 reader components and workflow schema. Admin-authentication decision from M0.
+M3 reader components and workflow schema. Admin authentication was decided on 2026-10-14 (ADR-003).
 
 ### Work items
 
@@ -1933,7 +1933,18 @@ Automated scans supplement—not replace—manual keyboard and screen-reader che
 - Long C1 articles are profiled after tokenization.
 - Public caching must never expose drafts or admin data.
 
-Exact numeric budgets should be established after the Reader Release baseline is measured rather than guessed in advance.
+The article page budget, set on 2026-10-14 for the longest article the product spec allows (C1, 900 English words, with its key vocabulary and Real English lists), on a production build:
+
+| Limit | Budget | 900-word article | C1 demo article (488 words) |
+|---|---|---|---|
+| Page elements | 600 plus one per English word (1,500) | 1,372 | 907 |
+| HTML download, compressed | 50 KB | 34 KB | 29 KB |
+| JavaScript download on a first visit, compressed | 175 KB | 145 KB | 145 KB |
+| Main-thread blocking while loading, phone profile | 200 ms | 42 ms | 67 ms |
+| Script time for one tap, phone profile | 100 ms | 41 ms | 38 ms |
+| Time from a tap to the next frame, real browser | 200 ms | 16 ms or less | 48 ms |
+
+`tests/e2e/page-budget.spec.ts` enforces the three size limits on every demo article. The timings were measured once. The phone profile is Google Chrome driven by Playwright at a Pixel 7 viewport with the CPU slowed four times, taking the median of seven loads; the Event Timing API timed the word card, the translation toggle and the text-size buttons, and the word card was the slowest. The 900-word article was a temporary copy of the C1 demo article with its paragraphs repeated. Repeated text compresses better than new text, so a real 900-word article's HTML download would be nearer 39 KB. Headless Chrome added 100 ms or more of waiting for the next frame to every word-card tap, which a real browser window did not show, so the phone budget counts script time and the 200 ms response target is checked in a real browser. Measure again when M7 sets article lengths, and before launch.
 
 ### Cache plan
 
@@ -2062,6 +2073,8 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-10-03 | Curate 6 to 8 key words per demo article from the editorial dictionary: each `ArticleVocabulary` row points at the entry for the word in its sentence, and the demo dictionary seed drops and restores those links so the entries are always rewritten from the fixtures. | Key vocabulary adds no new Turkish to review, and a corrected dictionary entry reaches the database on the next seed. Words inside marked expressions are not chosen, because the reader cannot open them on their own. |
 | 2026-10-03 | When a card fits neither below nor above its word, place it below and scroll the page just enough to show it, keeping the word visible. | Expression cards are taller than word cards; on a short window they no longer open partly off-screen. |
 | 2026-09-30 | Let the library own its cards' category links: provisioning replaces a card's links with the library's. | A card taken off a category page in the library leaves it in every database. Links added to library cards by other means would be replaced; revisit if M5 adds editing of category pages. |
+| 2026-10-14 | Budget article pages for the longest article the product spec allows, C1 at 900 English words: at most 600 elements plus one per English word, a 50 KB HTML download and 175 KB of JavaScript, all compressed; in the phone profile, at most 200 ms of blocking while loading and 100 ms of script per tap (§17). Claude proposed the limits from measurements, and the user left the numbers to Claude. | A browser test enforces the size limits on every demo article. Timings are measured again when M7 sets article lengths and before launch. |
+| 2026-10-14 | Authenticate admins with Better Auth: an email, a password and an authenticator-app code, with public sign-up disabled and sessions in PostgreSQL (ADR-003). Chosen by the user. | No third-party service or host dependency. M5 starts by confirming that Better Auth's Prisma adapter works with Prisma 7.10.0. |
 
 ### Open decisions
 
@@ -2071,7 +2084,7 @@ Learning-product analytics such as article completion and words clicked can be a
 | Image policy/provider | Before using production images | Omit unless rights are explicit. |
 | AI provider/model | Before M7 | Provider decided on 2026-09-25 (Claude). Still open: the model for each task, chosen by the ML roadmap's comparison. |
 | Dictionary fallback | Before live M4 integration | Resolved on 2026-09-25: contextual Claude lookup, cache-first (see Accepted). |
-| Admin authentication | Before M5 | Simple, secure admin-only auth; no general user model yet. |
+| Admin authentication | Before M5 | Resolved on 2026-10-14: Better Auth with an email, a password and an authenticator-app code (ADR-003). |
 | Hosting and managed PostgreSQL | Before M8/M9 | Choose based on operational simplicity and regional needs. |
 | Scheduler | Before M8 | Vercel Cron for simple hosting alignment or Trigger.dev for richer runs. |
 | CEFR assignment mix and verification rule | Before M7 | Fill inventory deficits, then classify every finished article independently. |
@@ -2187,10 +2200,11 @@ M4 and M5 may run in parallel per the dependency map.
 
 **M4, contextual vocabulary and Real English: every work item is built.** Done: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, clickable words and expressions with a desktop popover, a mobile bottom sheet and keyboard access, 97 reviewed Real English cards with 30 occurrences marked in the demo articles, the article's "Key vocabulary" and "Real English" sections, and the category expression pages. Before the exit gate:
 
-- the user's sample review of the editorial dictionary's Turkish;
-- a manual check on a real phone of words, expressions and both lists;
-- the verification item "Long C1 articles stay within the agreed DOM/performance budget": no budget has been agreed yet, so agree one and measure the longest demo article against it.
+- the user's sample review of the editorial dictionary's Turkish, from the sheet in `docs/reviews/2026-10-14-editorial-dictionary.md`: all 42 key vocabulary words plus 40 entries drawn at random;
+- a manual check on a real phone of words, expressions and both lists.
 
-**M5, moderation,** needs the admin-authentication decision from M0 first.
+The page budget was set and met on 2026-10-14 (§17).
+
+**M5, moderation,** can start: admin authentication was decided on 2026-10-14 (ADR-003).
 
 Do not begin live news or AI integration before their milestones.

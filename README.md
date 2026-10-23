@@ -109,6 +109,8 @@ Seeding is split by what is safe where:
 
 Every seed command is idempotent: rerunning it updates rows in place and never duplicates them. The demo articles are original, invented educational fixtures attributed to "Newslingo demo fixture" with URLs on the reserved `demo.newslingo.example` domain, so they cannot be mistaken for real or ingested news. Their CEFR levels are the author's intent, not verified labels, so they must not be used as evaluation data. Live news fetching is a later milestone.
 
+The demo dictionary's Turkish is reviewed by sample. `pnpm exec tsx scripts/sample-dictionary-review.ts [size] [seed]` prints a review sheet with every key vocabulary word and a seeded random sample of the other entries, each in a sentence that uses it. Completed reviews are kept in `docs/reviews/`.
+
 Commands whose names end in `:test`, `pnpm test:integration`, and `pnpm test:e2e` run through `scripts/with-test-database.ts`. It points `DATABASE_URL` at `TEST_DATABASE_URL` only after checking that the two are different databases and that the test database's name contains a distinct `test` token.
 
 ## Verification
@@ -129,7 +131,7 @@ pnpm db:migrate:test
 pnpm test:integration
 ```
 
-Browser tests run Playwright in your installed Google Chrome, on a desktop and a phone viewport, including axe accessibility scans. They reset the test database to the demo dataset, build the app, and serve it on port 3100:
+Browser tests run Playwright in your installed Google Chrome, on a desktop and a phone viewport, including axe accessibility scans and a check that every article page stays within the page budget in `IMPLEMENTATION_PLAN.md` §17. They reset the test database to the demo dataset, build the app, and serve it on port 3100:
 
 ```bash
 pnpm test:e2e
