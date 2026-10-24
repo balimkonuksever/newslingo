@@ -8,6 +8,11 @@ const testDatabaseNamePattern = /(^|[-_])test(?:[-_]|$)/i;
 
 const localDatabaseHosts = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
+/** Whether a database URL's host is this machine. */
+export function isLocalDatabaseHost(hostname: string) {
+  return localDatabaseHosts.has(hostname.toLowerCase());
+}
+
 function databaseIdentity(connectionString: string) {
   const url = new URL(connectionString);
   const databaseName = decodeURIComponent(url.pathname.replace(/^\//, ""));
@@ -116,7 +121,7 @@ export function assertDemoSeedAllowed({
 
   const { hostname } = new URL(databaseUrl);
 
-  if (!localDatabaseHosts.has(hostname.toLowerCase())) {
+  if (!isLocalDatabaseHost(hostname)) {
     throw new Error(
       `Refusing to seed demo articles into a non-local database (host "${hostname}"). Demo articles are development/test fixtures only.`,
     );

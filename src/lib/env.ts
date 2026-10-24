@@ -124,3 +124,57 @@ export function getDictionaryEnv() {
 
   return Object.freeze(settings.data);
 }
+
+/**
+ * The sign-in secret for development and tests, so that local work needs no
+ * setup. Production refuses it.
+ */
+export const DEVELOPMENT_AUTH_SECRET =
+  "newslingo-development-only-secret-never-deploy";
+
+const authEnvironmentSchema = z
+  .object({
+    /** Signs session cookies and encrypts authenticator secrets. */
+    BETTER_AUTH_SECRET: z.preprocess(
+      unsetIfBlank,
+      z.string().min(32, "must be at least 32 characters").optional(),
+    ),
+    /** The site's origin. Defaults to NEXT_PUBLIC_SITE_URL. */
+    BETTER_AUTH_URL: z.preprocess(unsetIfBlank, z.string().url().optional()),
+  })
+  .superRefine((settings, context) => {
+    if (
+      env.NODE_ENV === "production" &&
+      (!settings.BETTER_AUTH_SECRET ||
+        settings.BETTER_AUTH_SECRET === DEVELOPMENT_AUTH_SECRET)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["BETTER_AUTH_SECRET"],
+        message: "must be set to a private value in production",
+      });
+    }
+  })
+  .transform((settings) => ({
+    secret: settings.BETTER_AUTH_SECRET ?? DEVELOPMENT_AUTH_SECRET,
+    baseURL: settings.BETTER_AUTH_URL ?? env.NEXT_PUBLIC_SITE_URL,
+  }));
+
+/**
+ * Admin sign-in settings, validated when first needed so that pages and
+ * builds without sign-in run without them.
+ */
+export function getAuthEnv() {
+  const settings = authEnvironmentSchema.safeParse({
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
+  });
+
+  if (!settings.success) {
+    throw new Error(
+      `Invalid sign-in configuration: ${describeIssues(settings.error)}`,
+    );
+  }
+
+  return Object.freeze(settings.data);
+}

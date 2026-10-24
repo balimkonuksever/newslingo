@@ -114,6 +114,20 @@ The demo dictionary's Turkish is reviewed by sample. `pnpm exec tsx scripts/samp
 
 Commands whose names end in `:test`, `pnpm test:integration`, and `pnpm test:e2e` run through `scripts/with-test-database.ts`. It points `DATABASE_URL` at `TEST_DATABASE_URL` only after checking that the two are different databases and that the test database's name contains a distinct `test` token.
 
+## Admin accounts
+
+Admins sign in with an email, a password and a code from an authenticator app (ADR-003). There is no public sign-up: an admin is created, or given a new password and authenticator app, only from the command line:
+
+```bash
+pnpm admin:create
+```
+
+```bash
+pnpm admin:reset
+```
+
+Each command shows the database it will change and waits for you to type `yes`, or the database's host when it is not on this machine. It asks for the password at a hidden prompt, then shows a setup key and backup codes for your authenticator app and waits for a code from it. A new admin whose setup does not finish is removed. A reset ends every session and removes the old authenticator app first. Run the command with the same `BETTER_AUTH_SECRET` as the site, because it encrypts the authenticator key; locally, both use the development-only secret. The admin pages come later in M5.
+
 ## Verification
 
 ```bash

@@ -623,6 +623,7 @@ newslingo/
 │   └── images/
 │       └── seed/                 # owned/licensed local assets only
 ├── scripts/
+│   ├── admin-account.ts          # create an admin, or reset one's sign-in
 │   ├── reset-test-database.ts    # empty the test database, reload demo data
 │   └── with-test-database.ts     # guarded runner for test-database commands
 ├── src/
@@ -687,7 +688,11 @@ newslingo/
 │   │   └── text/                 # tokenizer, phrases, segments, lookup context
 │   └── server/
 │       ├── articles/queries.ts
-│       ├── auth/config.ts        # admin sign-in with Better Auth (M5)
+│       ├── auth/                 # admin sign-in with Better Auth (M5)
+│       │   ├── access.ts         # the check every admin page and action calls
+│       │   ├── admin-accounts.ts # what the admin command does
+│       │   ├── config.ts
+│       │   └── index.ts          # the site's instance, from the environment
 │       ├── categories/queries.ts
 │       ├── db/client.ts
 │       ├── dictionary/           # contextual lookup (M4)
@@ -751,12 +756,18 @@ DICTIONARY_CACHE_ONLY=false   # the kill switch: serve cached entries only
 ANTHROPIC_API_KEY=
 ```
 
+M5 adds admin sign-in. The production secret goes only in the host's secret store:
+
+```env
+BETTER_AUTH_SECRET=   # signs sessions and encrypts authenticator secrets
+BETTER_AUTH_URL=      # the site's origin; defaults to NEXT_PUBLIC_SITE_URL
+```
+
 Later milestones add variables only when required:
 
 ```env
 NEWS_API_KEY=
 CRON_SECRET=
-ADMIN_AUTH_SECRET=
 ```
 
 Rules:
@@ -770,6 +781,7 @@ Rules:
 - CI sets database variables before any Prisma configuration, generation, migration, or test command evaluates them.
 - Dictionary settings are validated on the first lookup, so builds and pages need no API key.
 - Tests never call a live model: `scripts/with-test-database.ts` sets `DICTIONARY_PROVIDER=none` and removes `ANTHROPIC_API_KEY`, and `NODE_ENV=test` refuses the live provider.
+- Sign-in settings are validated when first needed. Outside production, a blank `BETTER_AUTH_SECRET` falls back to a development-only secret, so local work needs no setup; production refuses a missing secret and that one.
 
 ### 10.2 Planned package scripts
 
@@ -802,7 +814,11 @@ db:seed:demo
 db:reset:test
 db:reset
 db:studio
+admin:create
+admin:reset
 ```
+
+`admin:create` creates an admin and `admin:reset` gives one a new password and authenticator app; no page can do either (ADR-003). Both show the target database and wait for a typed confirmation, which is the database host when it is not on this machine. They take passwords at a hidden prompt, never as arguments. Both set up the authenticator app before finishing: a creation whose setup does not finish is removed, and an admin whose reset stops half-way opens no admin page until it is run again.
 
 `postinstall` may generate the Prisma client. CI still calls generation explicitly so the dependency is visible.
 
@@ -1271,7 +1287,7 @@ M3 reader components and workflow schema. Admin authentication was decided on 20
 
 ### Work items
 
-- [ ] Add admin authentication and role authorization. Started on 2026-10-24: Better Auth 1.7.12 is pinned, the admin tables are migrated, and `tests/integration/admin-auth.test.ts` confirms that its Prisma adapter works with Prisma 7.10.0 (ADR-003). Still to come: the `admin` role and its server-only check, the guarded command that creates an admin, and the sign-in pages.
+- [ ] Add admin authentication and role authorization. Started on 2026-10-24: Better Auth 1.7.12 is pinned, and `tests/integration/admin-auth.test.ts` confirms that its Prisma adapter works with Prisma 7.10.0 (ADR-003). The `admin` role, the server-only access check (`src/server/auth/access.ts`) and the admin command (`pnpm admin:create`, `pnpm admin:reset`) are built. Still to come: the auth route handler and the sign-in pages.
 - [ ] Protect both admin pages and server actions/handlers.
 - [ ] Add `ModerationEvent` or an equivalent audit record.
 - [ ] Define allowed state transitions server-side.
@@ -2077,6 +2093,9 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-10-14 | Budget article pages for the longest article the product spec allows, C1 at 900 English words: at most 600 elements plus one per English word, a 50 KB HTML download and 175 KB of JavaScript, all compressed; in the phone profile, at most 200 ms of blocking while loading and 100 ms of script per tap (§17). Claude proposed the limits from measurements, and the user left the numbers to Claude. | A browser test enforces the size limits on every demo article. Timings are measured again when M7 sets article lengths and before launch. |
 | 2026-10-14 | Authenticate admins with Better Auth: an email, a password and an authenticator-app code, with public sign-up disabled and sessions in PostgreSQL (ADR-003). Chosen by the user. | No third-party service or host dependency. M5 starts by confirming that Better Auth's Prisma adapter works with Prisma 7.10.0. |
 | 2026-10-24 | Pin Better Auth 1.7.12 and use its minimal build, without Kysely, with the Prisma adapter running multi-row changes in transactions. Its five tables keep Better Auth's model names, and Better Auth generates their IDs. CHECK constraints keep emails in lower case and give every password login a password. | Confirmed the adapter with Prisma 7.10.0 (ADR-003). Better Auth checks the generated Prisma client against its schema at startup, so a missing column stops it instead of failing a query later. |
+| 2026-10-24 | Give `User` a nullable `role` whose only value is `admin`, set only by the admin command; Better Auth never writes it (`input: false`). The access check also requires an authenticator app. | A sign-up switched on by mistake, or reader accounts later, get no admin access. |
+| 2026-10-24 | Set up an admin's authenticator app in the admin command, through Better Auth's own two-factor endpoints, not on a page. The auth route handler, still to come, exposes only sign-in, the code check, sign-out and the session. | No request can add or remove an authenticator, so a stolen password alone opens nothing. Recovery needs database access, as ADR-003 requires. |
+| 2026-10-24 | Require admin passwords of at least 12 characters, above Better Auth's default of 8. Outside production, a blank `BETTER_AUTH_SECRET` falls back to a development-only secret; production refuses a missing secret and that one. | Local work and tests need no setup, as with the development-only database password, and a production start without its own secret fails clearly. |
 
 ### Open decisions
 
@@ -2204,6 +2223,6 @@ M4 and M5 may run in parallel per the dependency map.
 
 - a manual check on a real phone of words, expressions and both lists.
 
-**M5, moderation,** has started. On 2026-10-24 Better Auth 1.7.12 was pinned, the admin tables were migrated, and its Prisma adapter was confirmed to work with Prisma 7.10.0 (ADR-003). Next: the `admin` role and the server-only check every admin page and action calls, the guarded command that creates an admin, and the sign-in pages.
+**M5, moderation,** has started. On 2026-10-24 Better Auth 1.7.12 was pinned and its Prisma adapter confirmed with Prisma 7.10.0 (ADR-003), then the `admin` role, the server-only access check and the admin command were built. Next: the auth route handler, limited to sign-in, the code check, sign-out and the session, and the sign-in pages, with browser tests.
 
 Do not begin live news or AI integration before their milestones.

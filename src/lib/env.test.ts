@@ -99,3 +99,76 @@ describe("getDictionaryEnv", () => {
     expect((error as Error).message).not.toContain("secret-test-value");
   });
 });
+
+async function authEnv(settings: Record<string, string>) {
+  const values = {
+    NODE_ENV: "test",
+    NEXT_PUBLIC_SITE_URL: "https://newslingo.example",
+    BETTER_AUTH_SECRET: "",
+    BETTER_AUTH_URL: "",
+    ...settings,
+  };
+
+  for (const [name, value] of Object.entries(values)) {
+    vi.stubEnv(name, value);
+  }
+
+  vi.resetModules();
+  const { DEVELOPMENT_AUTH_SECRET, getAuthEnv } = await import("./env");
+
+  return { getAuthEnv, DEVELOPMENT_AUTH_SECRET };
+}
+
+describe("getAuthEnv", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("uses the development secret and the site's URL outside production", async () => {
+    for (const NODE_ENV of ["development", "test"]) {
+      const { getAuthEnv, DEVELOPMENT_AUTH_SECRET } = await authEnv({
+        NODE_ENV,
+      });
+
+      expect(getAuthEnv()).toEqual({
+        secret: DEVELOPMENT_AUTH_SECRET,
+        baseURL: "https://newslingo.example",
+      });
+    }
+  });
+
+  it("uses a configured secret and URL", async () => {
+    const { getAuthEnv } = await authEnv({
+      NODE_ENV: "production",
+      BETTER_AUTH_SECRET: "a-private-secret-of-forty-characters-123",
+      BETTER_AUTH_URL: "https://admin.newslingo.example",
+    });
+
+    expect(getAuthEnv()).toEqual({
+      secret: "a-private-secret-of-forty-characters-123",
+      baseURL: "https://admin.newslingo.example",
+    });
+  });
+
+  it("refuses production without a private secret", async () => {
+    const missing = await authEnv({ NODE_ENV: "production" });
+    expect(() => missing.getAuthEnv()).toThrow(
+      "BETTER_AUTH_SECRET: must be set to a private value in production",
+    );
+
+    const development = await authEnv({ NODE_ENV: "production" });
+    vi.stubEnv("BETTER_AUTH_SECRET", development.DEVELOPMENT_AUTH_SECRET);
+    expect(() => development.getAuthEnv()).toThrow(
+      "must be set to a private value in production",
+    );
+  });
+
+  it("refuses a short secret without echoing it", async () => {
+    const { getAuthEnv } = await authEnv({
+      BETTER_AUTH_SECRET: "short-secret-value",
+    });
+
+    expect(() => getAuthEnv()).toThrow(/at least 32 characters/u);
+    expect(() => getAuthEnv()).not.toThrow(/short-secret-value/u);
+  });
+});
