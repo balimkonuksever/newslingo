@@ -1,16 +1,18 @@
-import { spawn } from "node:child_process";
-
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { getAdminAccess } from "@/server/auth/access";
 import { createAuth } from "@/server/auth/config";
 import { db } from "@/server/db/client";
 
-import { authenticatorCode, nextRequest } from "../support/sign-in";
+import {
+  type Answer,
+  codeFromApp,
+  runAdminCommand,
+} from "../support/admin-command";
+import { nextRequest } from "../support/sign-in";
 import { resetDatabase } from "./database";
 
-// Runs the admin command as an admin would, against the test database,
-// answering each prompt when it appears.
+// Runs the admin command as an admin would, against the test database.
 
 const SECRET = "integration-tests-only-secret-0123456789";
 const BASE_URL = "http://localhost:3100";
@@ -24,63 +26,12 @@ const ADMIN = {
 
 beforeEach(resetDatabase);
 
-/** An answer, or a way to work one out from what the command has printed. */
-type Answer = string | ((output: string) => string);
-
-/** The code for the setup key the command printed last. */
-function codeFromApp(output: string) {
-  const setupKey = [...output.matchAll(/Setup key: ([A-Z2-7 ]+)/g)].at(-1)?.[1];
-
-  return authenticatorCode(setupKey?.replace(/ /g, "") ?? "");
-}
-
-/**
- * Runs `scripts/admin-account.ts` the way `pnpm admin:create` and
- * `pnpm admin:reset` do, answering prompts in order. When the answers run
- * out, the input ends.
- */
+/** Runs the command with the same secret as the `auth` instance above. */
 function runCommand(action: "create" | "reset", answers: Answer[]) {
-  const child = spawn(
-    "node_modules/.bin/tsx",
-    ["--conditions=react-server", "scripts/admin-account.ts", action],
-    {
-      // DATABASE_URL already names the test database.
-      env: {
-        ...process.env,
-        BETTER_AUTH_SECRET: SECRET,
-        BETTER_AUTH_URL: BASE_URL,
-      },
-    },
-  );
-  const pending = [...answers];
-  let output = "";
-  let answeredAt = 0;
-
-  child.stdout.setEncoding("utf8");
-  child.stderr.setEncoding("utf8");
-  child.stderr.on("data", (chunk: string) => {
-    output += chunk;
-  });
-  child.stdout.on("data", (chunk: string) => {
-    output += chunk;
-
-    // A prompt is the last thing printed, ending in ": ", until it is answered.
-    if (output.length > answeredAt && output.endsWith(": ")) {
-      const answer = pending.shift();
-      answeredAt = output.length;
-
-      if (answer === undefined) {
-        child.stdin.end();
-      } else {
-        child.stdin.write(
-          `${typeof answer === "function" ? answer(output) : answer}\n`,
-        );
-      }
-    }
-  });
-
-  return new Promise<{ exitCode: number | null; output: string }>((resolve) => {
-    child.on("close", (exitCode) => resolve({ exitCode, output }));
+  return runAdminCommand(action, answers, {
+    ...process.env,
+    BETTER_AUTH_SECRET: SECRET,
+    BETTER_AUTH_URL: BASE_URL,
   });
 }
 

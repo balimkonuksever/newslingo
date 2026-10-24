@@ -19,7 +19,7 @@ import {
   providerResultSchema,
   type ProviderUsage,
 } from "@/server/dictionary/provider";
-import type { RateLimiter } from "@/server/dictionary/rate-limit";
+import type { RateLimiter } from "@/server/rate-limit";
 
 export type LookupDependencies = {
   /** Who answers words without an entry; `null` means nobody does. */

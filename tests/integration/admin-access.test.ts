@@ -8,62 +8,22 @@ import {
   resetAdminSignIn,
   startAuthenticatorSetup,
 } from "@/server/auth/admin-accounts";
-import { createAuth } from "@/server/auth/config";
 import { db } from "@/server/db/client";
 
-import { authenticatorCode, nextRequest } from "../support/sign-in";
+import { authenticatorCode } from "../support/sign-in";
+import {
+  createFinishedAdmin,
+  signIn,
+  signInWithCode,
+  TEST_ADMIN as ADMIN,
+  testAuth as auth,
+} from "./admins";
 import { resetDatabase } from "./database";
 
 // The access check that every admin page, action and route handler calls,
 // and the account functions behind the admin command (ADR-003).
 
-const auth = createAuth({
-  secret: "integration-tests-only-secret-0123456789",
-  baseURL: "http://localhost:3100",
-});
-
-const ADMIN = {
-  name: "Test Admin",
-  email: "admin@example.test",
-  password: "correct horse battery staple",
-};
-
 beforeEach(resetDatabase);
-
-async function signIn(email = ADMIN.email, password = ADMIN.password) {
-  const { headers, response } = await auth.api.signInEmail({
-    body: { email, password },
-    returnHeaders: true,
-  });
-
-  return { session: nextRequest(headers), response };
-}
-
-/** Creates an admin and sets up their authenticator, as the command does. */
-async function createFinishedAdmin() {
-  const admin = await createAdmin(auth, ADMIN);
-  const setup = await startAuthenticatorSetup(auth, ADMIN);
-  await finishAuthenticatorSetup(auth, {
-    session: setup.session,
-    code: authenticatorCode(setup.setupKey),
-  });
-
-  return { ...admin, setupKey: setup.setupKey };
-}
-
-/** Signs in as an admin with an authenticator does: password, then code. */
-async function signInWithCode(setupKey: string) {
-  const { session: challenge, response } = await signIn();
-  expect(response).toMatchObject({ twoFactorRedirect: true });
-
-  const verified = await auth.api.verifyTOTP({
-    body: { code: authenticatorCode(setupKey) },
-    headers: challenge,
-    returnHeaders: true,
-  });
-
-  return nextRequest(verified.headers, challenge);
-}
 
 describe("getAdminAccess", () => {
   it("turns away a request without a session", async () => {

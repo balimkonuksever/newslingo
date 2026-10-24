@@ -4,7 +4,7 @@ import { getDictionaryEnv } from "@/lib/env";
 import { createAnthropicDictionaryProvider } from "@/server/dictionary/anthropic-provider";
 import { fixtureDictionaryProvider } from "@/server/dictionary/fixture-provider";
 import type { LookupDependencies } from "@/server/dictionary/lookup";
-import { createRateLimiter } from "@/server/dictionary/rate-limit";
+import { createRateLimiter } from "@/server/rate-limit";
 
 let configured: LookupDependencies | undefined;
 

@@ -6,7 +6,18 @@ export type RateLimitDecision =
 export type RateLimiter = {
   /** Counts one request for `key` and says whether it may go ahead. */
   take(key: string): RateLimitDecision;
+  /** Says whether `key` is under its limit, without counting anything. */
+  check(key: string): RateLimitDecision;
 };
+
+/**
+ * The last `x-forwarded-for` entry, which the nearest proxy adds. Without a
+ * proxy that sets the header, clients can choose their own address, so a
+ * per-client limit is a courtesy, never the only limit.
+ */
+export function clientAddress(headers: Headers) {
+  return headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() || "unknown";
+}
 
 /**
  * A fixed-window counter held in this server process's memory. With several
@@ -58,18 +69,29 @@ export function createRateLimiter({
       }
 
       if (window.count >= limit) {
-        return {
-          allowed: false,
-          retryAfterSeconds: Math.max(
-            1,
-            Math.ceil((window.resetAt - time) / 1000),
-          ),
-        };
+        return refusal(window.resetAt, time);
       }
 
       window.count += 1;
 
       return { allowed: true };
     },
+    check(key) {
+      const time = now();
+      const window = windows.get(key);
+
+      if (!window || window.resetAt <= time || window.count < limit) {
+        return { allowed: true };
+      }
+
+      return refusal(window.resetAt, time);
+    },
+  };
+}
+
+function refusal(resetAt: number, time: number): RateLimitDecision {
+  return {
+    allowed: false,
+    retryAfterSeconds: Math.max(1, Math.ceil((resetAt - time) / 1000)),
   };
 }

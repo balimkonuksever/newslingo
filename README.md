@@ -8,7 +8,7 @@ The **Reader Release** (milestones M1–M3) is in place. It runs entirely on Pos
 - category pages
 - a bilingual reader that alternates English paragraphs with their Turkish translations, with controls to hide the translation and change the text size
 
-M4, contextual vocabulary and Real English expressions, is complete: every English word in the reader can be looked up, and marked expressions open their Real English cards. M5, moderation, has started with the database tables for admin sign-in. Licensed news ingestion and AI adaptation are later milestones.
+M4, contextual vocabulary and Real English expressions, is complete: every English word in the reader can be looked up, and marked expressions open their Real English cards. M5, moderation, has started: admins can sign in at `/admin/sign-in`. Licensed news ingestion and AI adaptation are later milestones.
 
 ## Stack
 
@@ -126,7 +126,9 @@ pnpm admin:create
 pnpm admin:reset
 ```
 
-Each command shows the database it will change and waits for you to type `yes`, or the database's host when it is not on this machine. It asks for the password at a hidden prompt, then shows a setup key and backup codes for your authenticator app and waits for a code from it. A new admin whose setup does not finish is removed. A reset ends every session and removes the old authenticator app first. Run the command with the same `BETTER_AUTH_SECRET` as the site, because it encrypts the authenticator key; locally, both use the development-only secret. The admin pages come later in M5.
+Each command shows the database it will change and waits for you to type `yes`, or the database's host when it is not on this machine. It asks for the password at a hidden prompt, then shows a setup key and backup codes for your authenticator app and waits for a code from it. A new admin whose setup does not finish is removed. A reset ends every session and removes the old authenticator app first. Run the command with the same `BETTER_AUTH_SECRET` as the site, because it encrypts the authenticator key; locally, both use the development-only secret.
+
+Admins sign in at `/admin/sign-in`: the password first, then the six-digit code from the app or one of the backup codes. Repeated failures are refused for a while, counted per email address and per client. `pnpm start` runs in production mode, which refuses the development-only secret, so set your own `BETTER_AUTH_SECRET` in `.env.local` before signing in to a local production build, and create its admin with that secret.
 
 ## Verification
 
@@ -146,7 +148,7 @@ pnpm db:migrate:test
 pnpm test:integration
 ```
 
-Browser tests run Playwright in your installed Google Chrome, on a desktop and a phone viewport, including axe accessibility scans and a check that every article page stays within the page budget in `IMPLEMENTATION_PLAN.md` §17. They reset the test database to the demo dataset, build the app, and serve it on port 3100:
+Browser tests run Playwright in your installed Google Chrome, on a desktop and a phone viewport, including axe accessibility scans and a check that every article page stays within the page budget in `IMPLEMENTATION_PLAN.md` §17. They reset the test database to the demo dataset, create one test admin per viewport with the admin command, build the app, and serve it on port 3100:
 
 ```bash
 pnpm test:e2e

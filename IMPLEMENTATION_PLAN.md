@@ -638,6 +638,9 @@ newslingo/
 │   │   │   ├── page.tsx
 │   │   │   └── expressions/page.tsx  # the category's Real English (M4)
 │   │   ├── admin/                # moderation milestone
+│   │   │   ├── actions.ts        # sign-in, code check and sign-out (M5)
+│   │   │   ├── page.tsx          # admin home; checks access itself
+│   │   │   └── sign-in/          # password page, then code/page.tsx
 │   │   ├── api/                  # added by owning feature phases
 │   │   │   └── dictionary/route.ts   # POST: one word lookup (M4)
 │   │   ├── error.tsx
@@ -646,6 +649,7 @@ newslingo/
 │   │   ├── layout.tsx
 │   │   └── not-found.tsx
 │   ├── components/
+│   │   ├── admin/sign-in-forms.tsx   # client: the password and code forms
 │   │   ├── article/
 │   │   │   ├── article-reader.tsx    # client: controls + reading position
 │   │   │   ├── paragraph-pair.tsx
@@ -693,7 +697,10 @@ newslingo/
 │       │   ├── access.ts         # the check every admin page and action calls
 │       │   ├── admin-accounts.ts # what the admin command does
 │       │   ├── config.ts
-│       │   └── index.ts          # the site's instance, from the environment
+│       │   ├── index.ts          # the site's instance, from the environment
+│       │   ├── responses.ts      # reading Better Auth's responses
+│       │   ├── session.ts        # requireAdmin() for pages and actions
+│       │   └── sign-in.ts        # the sign-in steps, with their limits
 │       ├── categories/queries.ts
 │       ├── db/client.ts
 │       ├── dictionary/           # contextual lookup (M4)
@@ -702,8 +709,8 @@ newslingo/
 │       │   ├── fixture-provider.ts
 │       │   ├── log.ts            # outcome, latency and cost lines
 │       │   ├── lookup.ts         # cache-first lookup service
-│       │   ├── provider.ts
-│       │   └── rate-limit.ts
+│       │   └── provider.ts
+│       ├── rate-limit.ts         # in-memory limits for lookups and sign-in
 │       ├── ingestion/            # ingestion milestone
 │       │   └── providers/
 │       └── ai/                   # generation milestone
@@ -1288,8 +1295,8 @@ M3 reader components and workflow schema. Admin authentication was decided on 20
 
 ### Work items
 
-- [ ] Add admin authentication and role authorization. Started on 2026-10-24: Better Auth 1.7.12 is pinned, and `tests/integration/admin-auth.test.ts` confirms that its Prisma adapter works with Prisma 7.10.0 (ADR-003). The `admin` role, the server-only access check (`src/server/auth/access.ts`) and the admin command (`pnpm admin:create`, `pnpm admin:reset`) are built. Still to come: the auth route handler and the sign-in pages.
-- [ ] Protect both admin pages and server actions/handlers.
+- [x] Add admin authentication and role authorization. Done on 2026-10-24 with Better Auth 1.7.12, whose Prisma adapter `tests/integration/admin-auth.test.ts` confirms with Prisma 7.10.0 (ADR-003): the `admin` role, the server-only access check (`src/server/auth/access.ts`), the admin command (`pnpm admin:create`, `pnpm admin:reset`), and sign-in at `/admin/sign-in` with a password and then an authenticator code or a backup code, run as server actions.
+- [ ] Protect both admin pages and server actions/handlers. `requireAdmin()` in `src/server/auth/session.ts` guards the admin home; every later admin page and action must call it.
 - [ ] Add `ModerationEvent` or an equivalent audit record.
 - [ ] Define allowed state transitions server-side.
 - [ ] Add a deterministic non-public draft fixture for admin workflow tests.
@@ -2095,8 +2102,9 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-10-14 | Authenticate admins with Better Auth: an email, a password and an authenticator-app code, with public sign-up disabled and sessions in PostgreSQL (ADR-003). Chosen by the user. | No third-party service or host dependency. M5 starts by confirming that Better Auth's Prisma adapter works with Prisma 7.10.0. |
 | 2026-10-24 | Pin Better Auth 1.7.12 and use its minimal build, without Kysely, with the Prisma adapter running multi-row changes in transactions. Its five tables keep Better Auth's model names, and Better Auth generates their IDs. CHECK constraints keep emails in lower case and give every password login a password. | Confirmed the adapter with Prisma 7.10.0 (ADR-003). Better Auth checks the generated Prisma client against its schema at startup, so a missing column stops it instead of failing a query later. |
 | 2026-10-24 | Give `User` a nullable `role` whose only value is `admin`, set only by the admin command; Better Auth never writes it (`input: false`). The access check also requires an authenticator app. | A sign-up switched on by mistake, or reader accounts later, get no admin access. |
-| 2026-10-24 | Set up an admin's authenticator app in the admin command, through Better Auth's own two-factor endpoints, not on a page. The auth route handler, still to come, exposes only sign-in, the code check, sign-out and the session. | No request can add or remove an authenticator, so a stolen password alone opens nothing. Recovery needs database access, as ADR-003 requires. |
+| 2026-10-24 | Set up an admin's authenticator app in the admin command, through Better Auth's own two-factor endpoints, not on a page. Better Auth gets no HTTP route handler (next row but one). | No request can add or remove an authenticator, so a stolen password alone opens nothing. Recovery needs database access, as ADR-003 requires. |
 | 2026-10-24 | Require admin passwords of at least 12 characters, above Better Auth's default of 8. Outside production, a blank `BETTER_AUTH_SECRET` falls back to a development-only secret; production refuses a missing secret and that one. | Local work and tests need no setup, as with the development-only database password, and a production start without its own secret fails clearly. |
+| 2026-10-24 | Run sign-in, the code check and sign-out as server actions, with Better Auth's `nextCookies` plugin writing the cookies, and mount no `/api/auth` route handler. Failed passwords are limited to 10 per email address and 20 per client in 15 minutes, and failed codes to 20 per client, in memory; Better Auth itself locks an account for 15 minutes after ten wrong codes. | Better Auth has no HTTP endpoints, so no request reaches its other routes, such as setting up two-factor sign-in. Next.js checks every server action's origin, and the forms work without JavaScript. Better Auth's own rate limiter guards only its HTTP routes, so the project's limiter takes over; it counts failures only, so a correct sign-in never slows an admin down. |
 
 ### Open decisions
 
@@ -2222,6 +2230,6 @@ M4 and M5 may run in parallel per the dependency map.
 
 **M4, contextual vocabulary and Real English, is complete.** Built: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, clickable words and expressions with a desktop popover, a mobile bottom sheet and keyboard access, 97 reviewed Real English cards with 30 occurrences marked in the demo articles, the article's "Key vocabulary" and "Real English" sections, and the category expression pages. The page budget was set and met on 2026-10-14 (§17). On 2026-10-24 the user reviewed the editorial dictionary's Turkish from the sheet in `docs/reviews/2026-10-14-editorial-dictionary.md`, all 42 key vocabulary words plus 40 entries drawn at random: 81 were correct, and “atmosphere” gained “atmosfer”. The same day the reader passed a manual check on the user's phone: words, marked expressions, both lists and the category expression page, which closed the exit gate.
 
-**M5, moderation,** has started. On 2026-10-24 Better Auth 1.7.12 was pinned and its Prisma adapter confirmed with Prisma 7.10.0 (ADR-003), then the `admin` role, the server-only access check and the admin command were built. Next: the auth route handler, limited to sign-in, the code check, sign-out and the session, and the sign-in pages, with browser tests.
+**M5, moderation,** has started. On 2026-10-24 Better Auth 1.7.12 was pinned and its Prisma adapter confirmed with Prisma 7.10.0 (ADR-003), then the `admin` role, the server-only access check and the admin command were built, followed by sign-in at `/admin/sign-in` (a password, then an authenticator code or a backup code) and an admin home at `/admin`. Next: the moderation workflow itself, with the audit record, server-side state transitions, a non-public draft fixture, the admin article list and preview, and the publish and archive actions.
 
 Do not begin live news or AI integration before their milestones.

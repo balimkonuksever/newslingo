@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createRateLimiter } from "./rate-limit";
+import { clientAddress, createRateLimiter } from "./rate-limit";
 
 function limiter(limit: number, maxKeys?: number) {
   let time = 0;
@@ -58,5 +58,31 @@ describe("createRateLimiter", () => {
     // "a" was forgotten, so it starts over; "c" is still limited.
     expect(limits.take("a").allowed).toBe(true);
     expect(limits.take("c").allowed).toBe(false);
+  });
+});
+
+describe("RateLimiter.check", () => {
+  it("reports the limit without counting a request", () => {
+    const { limiter: limits, advance } = limiter(1);
+
+    expect(limits.check("a")).toEqual({ allowed: true });
+    expect(limits.check("a")).toEqual({ allowed: true });
+    expect(limits.take("a")).toEqual({ allowed: true });
+    advance(20_000);
+    expect(limits.check("a")).toEqual({
+      allowed: false,
+      retryAfterSeconds: 40,
+    });
+    advance(40_000);
+    expect(limits.check("a")).toEqual({ allowed: true });
+  });
+});
+
+describe("clientAddress", () => {
+  it("takes the address the nearest proxy added", () => {
+    expect(
+      clientAddress(new Headers({ "x-forwarded-for": "1.1.1.1, 2.2.2.2" })),
+    ).toBe("2.2.2.2");
+    expect(clientAddress(new Headers())).toBe("unknown");
   });
 });

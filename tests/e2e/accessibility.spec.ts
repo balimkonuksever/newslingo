@@ -1,20 +1,7 @@
-import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { DEMO_ARTICLES } from "../../prisma/fixtures/articles";
-
-const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
-
-/** Serious and critical axe violations, summarised for a readable failure. */
-async function seriousViolations(page: Page) {
-  const { violations } = await new AxeBuilder({ page })
-    .withTags(WCAG_TAGS)
-    .analyze();
-
-  return violations
-    .filter(({ impact }) => impact === "serious" || impact === "critical")
-    .map(({ id, help, nodes }) => `${id}: ${help} (${nodes.length} nodes)`);
-}
+import { seriousViolations } from "./axe";
 
 const article = DEMO_ARTICLES[0];
 
@@ -25,6 +12,9 @@ for (const path of [
   "/category/world/expressions",
   `/article/${article.slug}`,
   "/article/no-such-article",
+  "/admin/sign-in",
+  "/admin/sign-in?expired",
+  "/admin/sign-in/code",
 ]) {
   test(`${path} has no serious accessibility violations`, async ({ page }) => {
     await page.goto(path);

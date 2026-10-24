@@ -38,6 +38,9 @@ const exitCode = await new Promise<number>((resolve, reject) => {
       ...environment,
       DATABASE_URL: TEST_DATABASE_URL,
       DICTIONARY_PROVIDER: "none",
+      // The browser tests run a production build, which refuses the
+      // development secret. This one is for tests only.
+      BETTER_AUTH_SECRET: "test-only-secret-for-integration-and-browser-tests",
     },
     stdio: "inherit",
   });
