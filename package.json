@@ -35,7 +35,9 @@
     "db:seed:reference": "tsx prisma/seed.ts reference",
     "db:seed:demo": "tsx prisma/seed.ts demo",
     "db:reset:test": "tsx scripts/with-test-database.ts tsx scripts/reset-test-database.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "admin:create": "tsx --conditions=react-server scripts/admin-account.ts create",
+    "admin:reset": "tsx --conditions=react-server scripts/admin-account.ts reset"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
