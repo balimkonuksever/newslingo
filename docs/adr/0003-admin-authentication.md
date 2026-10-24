@@ -36,6 +36,16 @@ Use option 2, chosen by the user on 2026-10-14:
 - The owner keeps a password and an authenticator app safe. M5 must provide a recovery path that needs database access, such as resetting an admin's password and second factor with the same guarded command.
 - Better Auth 1.7.7 (released 2026-09-30) is the current version and declares support for Next.js 16, React 19 and Prisma 7. The first M5 slice pins an exact version and confirms that the adapter works with this project's Prisma 7.10.0 `prisma-client` generator and driver adapter before anything is built on it. If it does not, this decision is revisited before M5 continues.
 
+## Confirmation
+
+On 2026-10-24 the first M5 slice pinned Better Auth 1.7.12, the latest stable release, which adds the cookie and token hardening released since 1.7.7. `tests/integration/admin-auth.test.ts` confirmed that its Prisma adapter works with Prisma 7.10.0's `prisma-client` generator and the `pg` driver adapter:
+
+- an admin created on the server signs in with a password, and the session is stored in PostgreSQL and deleted at sign-out;
+- public sign-up and a wrong password are refused;
+- once an authenticator app is set up, sign-in waits for its code, and the secret is stored encrypted.
+
+When Better Auth starts, it also compares the generated Prisma client with the tables it expects, and refuses to run if a table or column is missing. The decision stands.
+
 ## References
 
 - `IMPLEMENTATION_PLAN.md` M0, M5, §15 (security plan) and §19 (decision log)
