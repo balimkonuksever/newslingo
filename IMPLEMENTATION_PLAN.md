@@ -2198,12 +2198,9 @@ Slices 1–5 are complete, and with them the Reader Release (M1–M3). On 2026-0
 
 M4 and M5 may run in parallel per the dependency map.
 
-**M4, contextual vocabulary and Real English: every work item is built.** Done: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, clickable words and expressions with a desktop popover, a mobile bottom sheet and keyboard access, 97 reviewed Real English cards with 30 occurrences marked in the demo articles, the article's "Key vocabulary" and "Real English" sections, and the category expression pages. Before the exit gate:
+**M4, contextual vocabulary and Real English: every work item is built.** Done: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, clickable words and expressions with a desktop popover, a mobile bottom sheet and keyboard access, 97 reviewed Real English cards with 30 occurrences marked in the demo articles, the article's "Key vocabulary" and "Real English" sections, and the category expression pages. The page budget was set and met on 2026-10-14 (§17). On 2026-10-24 the user reviewed the editorial dictionary's Turkish from the sheet in `docs/reviews/2026-10-14-editorial-dictionary.md`, all 42 key vocabulary words plus 40 entries drawn at random: 81 were correct, and “atmosphere” gained “atmosfer”. Before the exit gate:
 
-- the user's sample review of the editorial dictionary's Turkish, from the sheet in `docs/reviews/2026-10-14-editorial-dictionary.md`: all 42 key vocabulary words plus 40 entries drawn at random;
 - a manual check on a real phone of words, expressions and both lists.
-
-The page budget was set and met on 2026-10-14 (§17).
 
 **M5, moderation,** can start: admin authentication was decided on 2026-10-14 (ADR-003).
 

@@ -496,7 +496,7 @@ export const WORDS_A_C: EditorialSense[] = [
     lemma: "atmosphere",
     pos: "noun",
     ipa: "/ˈætməsfɪə/",
-    tr: "ortam, hava (bir yerin havası)",
+    tr: "ortam, atmosfer, hava (bir yerin havası)",
     en: "The feeling or mood that a place or situation has.",
     example: "The café has a relaxed atmosphere.",
   },
