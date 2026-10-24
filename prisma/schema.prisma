@@ -192,3 +192,85 @@ model ArticleExpression {
   @@index([articleId, displayOrder])
   @@index([expressionId])
 }
+
+// Admin sign-in (ADR-003). Better Auth reads and writes these five models
+// through its Prisma adapter and generates their IDs itself. They hold admins
+// only: readers have no accounts.
+
+/// An admin who can sign in. Created on the server, never by public sign-up.
+model User {
+  id               String      @id
+  name             String
+  email            String      @unique
+  emailVerified    Boolean     @default(false)
+  image            String?
+  twoFactorEnabled Boolean?    @default(false)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @default(now()) @updatedAt
+  sessions         Session[]
+  accounts         Account[]
+  twoFactors       TwoFactor[]
+}
+
+/// A signed-in session. Deleting the row revokes it.
+model Session {
+  id        String   @id
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// A way to sign in. An email-and-password login is the `credential` provider,
+/// with a hashed password.
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// A short-lived value Better Auth checks later, such as a verification token.
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([identifier])
+}
+
+/// An admin's authenticator-app secret and backup codes, stored encrypted.
+model TwoFactor {
+  id                      String    @id
+  secret                  String
+  backupCodes             String
+  userId                  String
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime?
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([secret])
+  @@index([userId])
+}

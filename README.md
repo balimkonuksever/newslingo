@@ -8,7 +8,7 @@ The **Reader Release** (milestones M1–M3) is in place. It runs entirely on Pos
 - category pages
 - a bilingual reader that alternates English paragraphs with their Turkish translations, with controls to hide the translation and change the text size
 
-M4, contextual vocabulary and Real English expressions, is in progress: every English word in the reader can already be looked up. Moderation, licensed news ingestion, and AI adaptation are later milestones.
+M4, contextual vocabulary and Real English expressions, is in progress: every English word in the reader can already be looked up. M5, moderation, has started with the database tables for admin sign-in. Licensed news ingestion and AI adaptation are later milestones.
 
 ## Stack
 
@@ -17,6 +17,7 @@ M4, contextual vocabulary and Real English expressions, is in progress: every En
 - TypeScript in strict mode
 - Tailwind CSS
 - PostgreSQL 18 and Prisma ORM 7
+- Better Auth, for admin sign-in
 - ESLint
 - Prettier
 - Vitest and React Testing Library
@@ -92,7 +93,7 @@ pnpm db:logs
 pnpm db:down
 ```
 
-The committed reader-core migrations create the `Category`, `Article`, and `ArticleParagraph` tables plus their enums, relationships, indexes, and safety constraints.
+The committed migrations create the reader tables (`Category`, `Article`, `ArticleParagraph`), the vocabulary and Real English tables, and Better Auth's admin sign-in tables, plus their enums, relationships, indexes, and safety constraints.
 
 Database data persists in the Docker volume named `newslingo_postgres_data`. `docker compose down -v` permanently deletes that local data and should only be used for an intentional reset. Initialization scripts run only when the volume is empty.
 
@@ -157,4 +158,4 @@ The public site URL and database URLs are validated through the environment boun
 
 - `IMPLEMENTATION_PLAN.md` — executable engineering roadmap and release gates
 - `bilingual_news_english_learning_plan.md` — product and technical specification
-- `docs/adr/0001-prisma-workflow.md` — pinned Prisma workflow for M2
+- `docs/adr/` — pinned decisions: the Prisma workflow (ADR-001), where ML code lives (ADR-002) and admin sign-in (ADR-003)

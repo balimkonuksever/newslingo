@@ -588,7 +588,7 @@ Initial generation may create a normal `DRAFT` Article. Regenerating an unpublis
 ### 8.6 Moderation and post-MVP models
 
 - `ModerationEvent`: actor, action, reason, before/after snapshot, timestamp.
-- `User`: added only after the auth solution is selected.
+- `User`, `Session`, `Account`, `Verification` and `TwoFactor`: Better Auth's tables for admin sign-in, added in M5 by the `admin_auth` migration (ADR-003). They hold admins only.
 - `SavedArticle`, `SavedWord`, and `ReadingProgress`: user learning state.
 - `Quiz`, `QuizQuestion`, `QuizAttempt`: quiz feature.
 - `AudioAsset`: article/paragraph/word TTS metadata.
@@ -687,6 +687,7 @@ newslingo/
 │   │   └── text/                 # tokenizer, phrases, segments, lookup context
 │   └── server/
 │       ├── articles/queries.ts
+│       ├── auth/config.ts        # admin sign-in with Better Auth (M5)
 │       ├── categories/queries.ts
 │       ├── db/client.ts
 │       ├── dictionary/           # contextual lookup (M4)
@@ -1270,7 +1271,7 @@ M3 reader components and workflow schema. Admin authentication was decided on 20
 
 ### Work items
 
-- [ ] Add admin authentication and role authorization.
+- [ ] Add admin authentication and role authorization. Started on 2026-10-24: Better Auth 1.7.12 is pinned, the admin tables are migrated, and `tests/integration/admin-auth.test.ts` confirms that its Prisma adapter works with Prisma 7.10.0 (ADR-003). Still to come: the `admin` role and its server-only check, the guarded command that creates an admin, and the sign-in pages.
 - [ ] Protect both admin pages and server actions/handlers.
 - [ ] Add `ModerationEvent` or an equivalent audit record.
 - [ ] Define allowed state transitions server-side.
@@ -2075,6 +2076,7 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-09-30 | Let the library own its cards' category links: provisioning replaces a card's links with the library's. | A card taken off a category page in the library leaves it in every database. Links added to library cards by other means would be replaced; revisit if M5 adds editing of category pages. |
 | 2026-10-14 | Budget article pages for the longest article the product spec allows, C1 at 900 English words: at most 600 elements plus one per English word, a 50 KB HTML download and 175 KB of JavaScript, all compressed; in the phone profile, at most 200 ms of blocking while loading and 100 ms of script per tap (§17). Claude proposed the limits from measurements, and the user left the numbers to Claude. | A browser test enforces the size limits on every demo article. Timings are measured again when M7 sets article lengths and before launch. |
 | 2026-10-14 | Authenticate admins with Better Auth: an email, a password and an authenticator-app code, with public sign-up disabled and sessions in PostgreSQL (ADR-003). Chosen by the user. | No third-party service or host dependency. M5 starts by confirming that Better Auth's Prisma adapter works with Prisma 7.10.0. |
+| 2026-10-24 | Pin Better Auth 1.7.12 and use its minimal build, without Kysely, with the Prisma adapter running multi-row changes in transactions. Its five tables keep Better Auth's model names, and Better Auth generates their IDs. CHECK constraints keep emails in lower case and give every password login a password. | Confirmed the adapter with Prisma 7.10.0 (ADR-003). Better Auth checks the generated Prisma client against its schema at startup, so a missing column stops it instead of failing a query later. |
 
 ### Open decisions
 
@@ -2202,6 +2204,6 @@ M4 and M5 may run in parallel per the dependency map.
 
 - a manual check on a real phone of words, expressions and both lists.
 
-**M5, moderation,** can start: admin authentication was decided on 2026-10-14 (ADR-003).
+**M5, moderation,** has started. On 2026-10-24 Better Auth 1.7.12 was pinned, the admin tables were migrated, and its Prisma adapter was confirmed to work with Prisma 7.10.0 (ADR-003). Next: the `admin` role and the server-only check every admin page and action calls, the guarded command that creates an admin, and the sign-in pages.
 
 Do not begin live news or AI integration before their milestones.
