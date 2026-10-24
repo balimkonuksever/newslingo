@@ -8,7 +8,7 @@ The **Reader Release** (milestones M1–M3) is in place. It runs entirely on Pos
 - category pages
 - a bilingual reader that alternates English paragraphs with their Turkish translations, with controls to hide the translation and change the text size
 
-M4, contextual vocabulary and Real English expressions, is in progress: every English word in the reader can already be looked up. M5, moderation, has started with the database tables for admin sign-in. Licensed news ingestion and AI adaptation are later milestones.
+M4, contextual vocabulary and Real English expressions, is complete: every English word in the reader can be looked up, and marked expressions open their Real English cards. M5, moderation, has started with the database tables for admin sign-in. Licensed news ingestion and AI adaptation are later milestones.
 
 ## Stack
 

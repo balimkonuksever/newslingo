@@ -71,7 +71,7 @@ The experience should feel like a high-quality news reader with learning built i
 
 ## 3. Current repository baseline
 
-As of 2026-09-25, M1–M3 are complete, which makes up the Reader Release. The repository contains:
+M1–M3, which make up the Reader Release, were complete on 2026-09-25, and M4 on 2026-10-24. The repository contains:
 
 - the Next.js/TypeScript/Tailwind scaffold with pinned Node and pnpm, one lockfile, and lint, format, typecheck, Vitest, and build commands
 - Docker Compose PostgreSQL 18 with isolated `newslingo` and `newslingo_test` databases
@@ -79,6 +79,7 @@ As of 2026-09-25, M1–M3 are complete, which makes up the Reader Release. The r
 - idempotent reference provisioning for the six categories and a local-only demo seed of six bilingual articles
 - server-only queries for the homepage, filters, categories, and articles
 - the editorial homepage with URL-backed filters, category pages, and the bilingual article reader
+- contextual word lookups from editorial dictionary entries, reviewed Real English cards, and each article's key vocabulary and Real English lists (M4)
 - unit, component, database integration, and Playwright browser and accessibility tests, all run by GitHub Actions
 - no deployment configuration
 
@@ -2219,9 +2220,7 @@ Slices 1–5 are complete, and with them the Reader Release (M1–M3). On 2026-0
 
 M4 and M5 may run in parallel per the dependency map.
 
-**M4, contextual vocabulary and Real English: every work item is built.** Done: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, clickable words and expressions with a desktop popover, a mobile bottom sheet and keyboard access, 97 reviewed Real English cards with 30 occurrences marked in the demo articles, the article's "Key vocabulary" and "Real English" sections, and the category expression pages. The page budget was set and met on 2026-10-14 (§17). On 2026-10-24 the user reviewed the editorial dictionary's Turkish from the sheet in `docs/reviews/2026-10-14-editorial-dictionary.md`, all 42 key vocabulary words plus 40 entries drawn at random: 81 were correct, and “atmosphere” gained “atmosfer”. Before the exit gate:
-
-- a manual check on a real phone of words, expressions and both lists.
+**M4, contextual vocabulary and Real English, is complete.** Built: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, clickable words and expressions with a desktop popover, a mobile bottom sheet and keyboard access, 97 reviewed Real English cards with 30 occurrences marked in the demo articles, the article's "Key vocabulary" and "Real English" sections, and the category expression pages. The page budget was set and met on 2026-10-14 (§17). On 2026-10-24 the user reviewed the editorial dictionary's Turkish from the sheet in `docs/reviews/2026-10-14-editorial-dictionary.md`, all 42 key vocabulary words plus 40 entries drawn at random: 81 were correct, and “atmosphere” gained “atmosfer”. The same day the reader passed a manual check on the user's phone: words, marked expressions, both lists and the category expression page, which closed the exit gate.
 
 **M5, moderation,** has started. On 2026-10-24 Better Auth 1.7.12 was pinned and its Prisma adapter confirmed with Prisma 7.10.0 (ADR-003), then the `admin` role, the server-only access check and the admin command were built. Next: the auth route handler, limited to sign-in, the code check, sign-out and the session, and the sign-in pages, with browser tests.
 
