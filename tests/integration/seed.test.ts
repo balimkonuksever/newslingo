@@ -19,6 +19,7 @@ import {
   DEMO_DICTIONARY,
   DEMO_SENSE_CHOICES,
 } from "../../prisma/fixtures/dictionary";
+import { DEMO_DRAFTS } from "../../prisma/fixtures/drafts";
 import { DEMO_EXPRESSION_OCCURRENCES } from "../../prisma/fixtures/expression-occurrences";
 import { DEMO_KEY_VOCABULARY } from "../../prisma/fixtures/key-vocabulary";
 import { resolveKeyVocabulary } from "../../prisma/key-vocabulary";
@@ -26,9 +27,12 @@ import {
   provisionReferenceData,
   seedDemoArticles,
   seedDemoDictionary,
+  seedDemoDrafts,
   seedDemoExpressions,
   seedDemoKeyVocabulary,
 } from "../../prisma/seeders";
+import { publicationProblems } from "@/domain/moderation";
+import { publicArticleWhere } from "@/server/articles/queries";
 import { lookupWord } from "@/server/dictionary/lookup";
 import { resetDatabase } from "./database";
 
@@ -299,6 +303,63 @@ describe("demo seed", () => {
     await seedDemoArticles(db);
 
     expect(await snapshotArticles()).toEqual(expected);
+  });
+});
+
+describe("demo draft seeding", () => {
+  beforeEach(resetDatabase);
+
+  it("writes each demo draft unpublished, out of public view, and ready to publish", async () => {
+    await provisionReferenceData(db);
+
+    await expect(seedDemoDrafts(db)).resolves.toMatchObject({
+      drafts: DEMO_DRAFTS.length,
+    });
+
+    for (const fixture of DEMO_DRAFTS) {
+      const draft = await db.article.findUniqueOrThrow({
+        where: { slug: fixture.slug },
+        include: {
+          category: { select: { isActive: true } },
+          paragraphs: { orderBy: { order: "asc" } },
+        },
+      });
+
+      expect(draft).toMatchObject({
+        status: "DRAFT",
+        publishedOnSiteAt: null,
+        sourceName: DEMO_SOURCE_NAME,
+        sourceUrl: demoSourceUrl(fixture.slug),
+      });
+      expect(
+        await db.article.count({
+          where: { id: draft.id, ...publicArticleWhere },
+        }),
+      ).toBe(0);
+      expect(
+        publicationProblems({
+          ...draft,
+          categoryIsActive: draft.category.isActive,
+          expressions: [],
+        }),
+      ).toEqual([]);
+    }
+  });
+
+  it("makes a published demo draft a draft again", async () => {
+    await provisionReferenceData(db);
+    await seedDemoDrafts(db);
+    const [fixture] = DEMO_DRAFTS;
+    await db.article.update({
+      where: { slug: fixture?.slug },
+      data: { status: "PUBLISHED", publishedOnSiteAt: new Date() },
+    });
+
+    await seedDemoDrafts(db);
+
+    expect(
+      await db.article.findUniqueOrThrow({ where: { slug: fixture?.slug } }),
+    ).toMatchObject({ status: "DRAFT", publishedOnSiteAt: null });
   });
 });
 

@@ -19,8 +19,9 @@ const newsreader = Newsreader({
   axes: ["opsz"],
 });
 
-// Every page reads PostgreSQL at request time. Caching with explicit
-// invalidation arrives with publishing in M5; see IMPLEMENTATION_PLAN.md §19.
+// Every page reads PostgreSQL at request time, so a published or archived
+// article shows at once. Caching waits for hosting and a measured need; see
+// IMPLEMENTATION_PLAN.md §19 (2026-10-25).
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
