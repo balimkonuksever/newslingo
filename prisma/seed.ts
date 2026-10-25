@@ -15,6 +15,7 @@ import {
   provisionReferenceData,
   seedDemoArticles,
   seedDemoDictionary,
+  seedDemoDrafts,
   seedDemoExpressions,
   seedDemoKeyVocabulary,
 } from "./seeders";
@@ -61,6 +62,9 @@ try {
     console.log(
       `Seeded ${articles} demo articles with ${paragraphs} paragraph pairs.`,
     );
+
+    const { drafts } = await seedDemoDrafts(db);
+    console.log(`Seeded ${drafts} unpublished demo draft for the admin pages.`);
 
     const { entries, senses } = await seedDemoDictionary(db);
     console.log(

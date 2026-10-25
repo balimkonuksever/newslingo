@@ -34,6 +34,15 @@ enum ExpressionType {
   NEWS_ENGLISH
 }
 
+/// A material change an admin makes to an article (M5).
+enum ModerationAction {
+  PUBLISH
+  ARCHIVE
+  RESTORE
+  CHANGE_CATEGORY
+  CHANGE_DIFFICULTY
+}
+
 model Category {
   id           String               @id @default(cuid())
   slug         String               @unique
@@ -71,6 +80,7 @@ model Article {
   paragraphs         ArticleParagraph[]
   expressions        ArticleExpression[]
   vocabulary         ArticleVocabulary[]
+  moderationEvents   ModerationEvent[]
 
   @@index([categoryId, status, sourcePublishedAt])
   @@index([status, publishedOnSiteAt])
@@ -199,20 +209,21 @@ model ArticleExpression {
 
 /// An admin who can sign in. Created on the server, never by public sign-up.
 model User {
-  id               String      @id
+  id               String            @id
   name             String
-  email            String      @unique
-  emailVerified    Boolean     @default(false)
+  email            String            @unique
+  emailVerified    Boolean           @default(false)
   image            String?
-  twoFactorEnabled Boolean?    @default(false)
+  twoFactorEnabled Boolean?          @default(false)
   /// `admin`, set only by the admin command. Empty for any other account,
   /// which can open no admin page.
   role             String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @default(now()) @updatedAt
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @default(now()) @updatedAt
   sessions         Session[]
   accounts         Account[]
   twoFactors       TwoFactor[]
+  moderationEvents ModerationEvent[]
 }
 
 /// A signed-in session. Deleting the row revokes it.
@@ -276,4 +287,25 @@ model TwoFactor {
 
   @@index([secret])
   @@index([userId])
+}
+
+/// One admin action on an article, written in the same transaction as the
+/// change itself. Rows are never edited or deleted, and neither the article
+/// nor the admin can be deleted while a row names them.
+model ModerationEvent {
+  id        String           @id @default(cuid())
+  articleId String
+  actorId   String
+  action    ModerationAction
+  /// Why the admin did it. Required for every action except publishing.
+  reason    String?
+  /// The changed fields before and after, such as `{ "status": "DRAFT" }`.
+  before    Json
+  after     Json
+  createdAt DateTime         @default(now())
+  article   Article          @relation(fields: [articleId], references: [id], onDelete: Restrict)
+  actor     User             @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([articleId, createdAt])
+  @@index([actorId])
 }

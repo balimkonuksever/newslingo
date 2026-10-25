@@ -16,6 +16,7 @@ import {
   demoSourceUrl,
 } from "./fixtures/articles";
 import { DEMO_DICTIONARY, DEMO_SENSE_CHOICES } from "./fixtures/dictionary";
+import { DEMO_DRAFTS, type DemoDraft } from "./fixtures/drafts";
 import { DEMO_EXPRESSION_OCCURRENCES } from "./fixtures/expression-occurrences";
 import { DEMO_KEY_VOCABULARY } from "./fixtures/key-vocabulary";
 import { resolveKeyVocabulary } from "./key-vocabulary";
@@ -70,47 +71,68 @@ export async function provisionReferenceData(db: PrismaClient) {
  * callers must pass `assertDemoSeedAllowed` first.
  */
 export async function seedDemoArticles(db: PrismaClient) {
+  return writeDemoArticles(db, DEMO_ARTICLES, "PUBLISHED");
+}
+
+/**
+ * Writes the demo drafts (M5) as unpublished drafts, returning any that an
+ * admin has published or archived to draft. The same caller rules as
+ * `seedDemoArticles` apply.
+ */
+export async function seedDemoDrafts(db: PrismaClient) {
+  const { articles, paragraphs } = await writeDemoArticles(
+    db,
+    DEMO_DRAFTS.map((draft) => ({ ...draft, publishedOnSiteAt: null })),
+    "DRAFT",
+  );
+
+  return { drafts: articles, paragraphs };
+}
+
+async function writeDemoArticles(
+  db: PrismaClient,
+  fixtures: ReadonlyArray<DemoDraft & { publishedOnSiteAt: Date | null }>,
+  status: "PUBLISHED" | "DRAFT",
+) {
   const categories = await db.category.findMany({
-    where: { slug: { in: DEMO_ARTICLES.map((a) => a.categorySlug) } },
+    where: { slug: { in: fixtures.map((a) => a.categorySlug) } },
     select: { id: true, slug: true },
   });
   const categoryIds = new Map(categories.map(({ id, slug }) => [slug, id]));
 
-  const articles = DEMO_ARTICLES.map(
-    ({ categorySlug, paragraphs, ...article }) => {
-      const categoryId = categoryIds.get(categorySlug);
+  const articles = fixtures.map(({ categorySlug, paragraphs, ...article }) => {
+    const categoryId = categoryIds.get(categorySlug);
 
-      if (!categoryId) {
-        throw new Error(
-          `Category "${categorySlug}" does not exist. Run pnpm db:seed:reference before seeding demo articles.`,
-        );
-      }
-
-      const wordCount = paragraphs.reduce(
-        (total, { english }) => total + countWords(english),
-        0,
+    if (!categoryId) {
+      throw new Error(
+        `Category "${categorySlug}" does not exist. Run pnpm db:seed:reference before seeding demo articles.`,
       );
+    }
 
-      return {
-        data: {
-          ...article,
-          categoryId,
-          status: "PUBLISHED" as const,
-          sourceName: DEMO_SOURCE_NAME,
-          sourceUrl: demoSourceUrl(article.slug),
-          sourceImageUrl: null,
-          imageAttribution: null,
-          wordCount,
-          readingTimeMinutes: estimateReadingMinutes(wordCount),
-        },
-        paragraphs: paragraphs.map(({ english, turkish }, index) => ({
-          order: index + 1,
-          english,
-          turkish,
-        })),
-      };
-    },
-  );
+    const wordCount = paragraphs.reduce(
+      (total, { english }) => total + countWords(english),
+      0,
+    );
+
+    return {
+      data: {
+        ...article,
+        categoryId,
+        status,
+        sourceName: DEMO_SOURCE_NAME,
+        sourceUrl: demoSourceUrl(article.slug),
+        sourceImageUrl: null,
+        imageAttribution: null,
+        wordCount,
+        readingTimeMinutes: estimateReadingMinutes(wordCount),
+      },
+      paragraphs: paragraphs.map(({ english, turkish }, index) => ({
+        order: index + 1,
+        english,
+        turkish,
+      })),
+    };
+  });
 
   await db.$transaction(async (tx) => {
     for (const { data, paragraphs } of articles) {

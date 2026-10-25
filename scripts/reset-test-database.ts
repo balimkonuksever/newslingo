@@ -10,6 +10,7 @@ import {
   provisionReferenceData,
   seedDemoArticles,
   seedDemoDictionary,
+  seedDemoDrafts,
   seedDemoExpressions,
   seedDemoKeyVocabulary,
 } from "../prisma/seeders";
@@ -38,11 +39,14 @@ try {
   await emptyDatabase(db);
   await provisionReferenceData(db);
   const { articles } = await seedDemoArticles(db);
+  const { drafts } = await seedDemoDrafts(db);
   await seedDemoDictionary(db);
   await seedDemoKeyVocabulary(db);
   await seedDemoExpressions(db);
 
-  console.log(`Reset the test database and loaded ${articles} demo articles.`);
+  console.log(
+    `Reset the test database and loaded ${articles} demo articles and ${drafts} draft.`,
+  );
 } finally {
   await db.$disconnect();
 }
