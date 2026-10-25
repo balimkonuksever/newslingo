@@ -11,6 +11,7 @@ Conventions:
 - Return deliberately shaped data-transfer objects from this boundary. Do not pass database records, secrets, or provider payloads wholesale into Client Components.
 - Validate untrusted route, form, provider, and AI inputs before they enter domain or persistence code.
 - Filter every public article query through `publicArticleWhere` in `articles/queries.ts`, so drafts, archived articles, and inactive categories cannot leak. Validate route slugs with `slugSchema` before querying.
+- The admin queries in `moderation/queries.ts` see every status and every category, so only admin pages call them, after `requireAdmin()`. Public pages never import them.
 - Every admin page, server action and route handler calls `getAdminAccess` in `auth/access.ts` itself and proceeds only for the `admin` status. A layout or `proxy.ts` is never the only check (ADR-003).
 
 Database URLs are validated lazily: static builds can run without database credentials, while importing the Prisma client requires `DATABASE_URL`. Integration-test tooling must call the guarded test accessor before using `TEST_DATABASE_URL`.

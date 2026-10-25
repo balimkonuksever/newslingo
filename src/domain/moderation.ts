@@ -36,6 +36,29 @@ export function canModerate(action: ModerationAction, status: ArticleStatus) {
   return MODERATION_RULES[action].from.includes(status);
 }
 
+/** The longest reason or note an admin can give, in characters. */
+export const MAX_REASON_LENGTH = 500;
+
+/** Every status, in the order admin pages list them: the review queue first. */
+export const ARTICLE_STATUSES: readonly ArticleStatus[] = [
+  "DRAFT",
+  "PUBLISHED",
+  "ARCHIVED",
+  "FETCHED",
+  "PROCESSING",
+  "FAILED",
+];
+
+/** A status's name on its own, as in a list or a badge. */
+export const ARTICLE_STATUS_NAMES: Record<ArticleStatus, string> = {
+  FETCHED: "Fetched",
+  PROCESSING: "Processing",
+  DRAFT: "Draft",
+  PUBLISHED: "Published",
+  FAILED: "Failed",
+  ARCHIVED: "Archived",
+};
+
 export const MODERATION_ACTION_LABELS: Record<ModerationAction, string> = {
   PUBLISH: "Publishing",
   ARCHIVE: "Archiving",
@@ -44,6 +67,7 @@ export const MODERATION_ACTION_LABELS: Record<ModerationAction, string> = {
   CHANGE_DIFFICULTY: "Changing the level",
 };
 
+/** A status as it reads after "an article that is". */
 export const ARTICLE_STATUS_LABELS: Record<ArticleStatus, string> = {
   FETCHED: "fetched",
   PROCESSING: "being processed",
@@ -78,7 +102,8 @@ function isBlank(text: string) {
   return !/\S/.test(text);
 }
 
-function isWebAddress(value: string) {
+/** Whether `value` is an http or https address, safe to link to. */
+export function isWebAddress(value: string) {
   try {
     const { protocol } = new URL(value);
 

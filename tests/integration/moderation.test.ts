@@ -85,7 +85,10 @@ describe("publishArticle", () => {
 
     await expect(
       publishArticle(admin, { articleId: draft.id }),
-    ).resolves.toEqual({ ok: true });
+    ).resolves.toEqual({
+      ok: true,
+      article: { id: draft.id, slug: draft.slug, categorySlugs: ["world"] },
+    });
 
     const article = await db.article.findUniqueOrThrow({
       where: { id: draft.id },
@@ -190,7 +193,7 @@ describe("archiveArticle and restoreArticle", () => {
         articleId: article.id,
         reason: "The source corrected the story.",
       }),
-    ).resolves.toEqual({ ok: true });
+    ).resolves.toMatchObject({ ok: true });
 
     expect(await isPublic(article.id)).toBe(false);
     expect(await eventsFor(article.id)).toEqual([
@@ -208,7 +211,7 @@ describe("archiveArticle and restoreArticle", () => {
 
     await expect(
       archiveArticle(admin, { articleId: draft.id, reason: "Off topic." }),
-    ).resolves.toEqual({ ok: true });
+    ).resolves.toMatchObject({ ok: true });
     expect(
       await db.article.findUniqueOrThrow({ where: { id: draft.id } }),
     ).toMatchObject({ status: "ARCHIVED" });
@@ -224,7 +227,7 @@ describe("archiveArticle and restoreArticle", () => {
 
     await expect(
       restoreArticle(admin, { articleId: draft.id, reason: "Fixed." }),
-    ).resolves.toEqual({ ok: true });
+    ).resolves.toMatchObject({ ok: true });
     expect(
       await db.article.findUniqueOrThrow({ where: { id: draft.id } }),
     ).toMatchObject({ status: "DRAFT" });
@@ -270,13 +273,21 @@ describe("changeArticleCategory and changeArticleDifficulty", () => {
         reason: "Same.",
       }),
     ).resolves.toMatchObject({ ok: false, refusal: "invalid" });
+    // The result names both categories, whose pages both change.
     await expect(
       changeArticleCategory(admin, {
         articleId: article.id,
         categorySlug: "business",
         reason: "It is about a company.",
       }),
-    ).resolves.toEqual({ ok: true });
+    ).resolves.toEqual({
+      ok: true,
+      article: {
+        id: article.id,
+        slug: article.slug,
+        categorySlugs: ["world", "business"],
+      },
+    });
 
     expect(await eventsFor(article.id)).toEqual([
       expect.objectContaining({
@@ -309,7 +320,7 @@ describe("changeArticleCategory and changeArticleDifficulty", () => {
         difficulty: "B2",
         reason: "Long sentences.",
       }),
-    ).resolves.toEqual({ ok: true });
+    ).resolves.toMatchObject({ ok: true });
 
     expect(
       await db.article.findUniqueOrThrow({ where: { id: article.id } }),

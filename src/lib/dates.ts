@@ -23,6 +23,20 @@ export function formatArticleDate(date: Date): string {
   return articleDateFormat.format(date);
 }
 
+const dateTimeFormat = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: DISPLAY_TIME_ZONE,
+});
+
+/** Formats a timestamp to the minute, for example "25 October 2026 at 18:40". */
+export function formatDateTime(date: Date): string {
+  return dateTimeFormat.format(date);
+}
+
 /** The instant an Istanbul calendar day (`YYYY-MM-DD`) begins. */
 export function startOfDisplayDay(isoDate: string): Date {
   return new Date(`${isoDate}T00:00:00${DISPLAY_UTC_OFFSET}`);

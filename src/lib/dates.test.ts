@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatArticleDate,
+  formatDateTime,
   startOfDisplayDay,
   startOfNextDisplayDay,
 } from "./dates";
@@ -22,6 +23,17 @@ describe("formatArticleDate", () => {
 
   it("rejects an invalid date", () => {
     expect(() => formatArticleDate(new Date("not a date"))).toThrow(RangeError);
+  });
+});
+
+describe("formatDateTime", () => {
+  it("formats a timestamp to the minute in Istanbul time", () => {
+    expect(formatDateTime(new Date("2026-10-25T15:40:30Z"))).toBe(
+      "25 October 2026 at 18:40",
+    );
+    expect(formatDateTime(new Date("2026-09-19T21:05:00Z"))).toBe(
+      "20 September 2026 at 00:05",
+    );
   });
 });
 

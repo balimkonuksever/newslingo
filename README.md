@@ -8,7 +8,7 @@ The **Reader Release** (milestones M1–M3) is in place. It runs entirely on Pos
 - category pages
 - a bilingual reader that alternates English paragraphs with their Turkish translations, with controls to hide the translation and change the text size
 
-M4, contextual vocabulary and Real English expressions, is complete: every English word in the reader can be looked up, and marked expressions open their Real English cards. M5, moderation, has started: admins can sign in at `/admin/sign-in`. Licensed news ingestion and AI adaptation are later milestones.
+M4, contextual vocabulary and Real English expressions, is complete: every English word in the reader can be looked up, and marked expressions open their Real English cards. M5 adds moderation: admins sign in at `/admin/sign-in`, review every article in any status, and publish, reject, archive or restore it, with each change recorded. Licensed news ingestion and AI adaptation are later milestones.
 
 ## Stack
 
@@ -130,6 +130,20 @@ Each command shows the database it will change and waits for you to type `yes`, 
 
 Admins sign in at `/admin/sign-in`: the password first, then the six-digit code from the app or one of the backup codes. Repeated failures are refused for a while, counted per email address and per client. `pnpm start` runs in production mode, which refuses the development-only secret, so set your own `BETTER_AUTH_SECRET` in `.env.local` before signing in to a local production build, and create its admin with that secret.
 
+## Moderation
+
+After signing in, `/admin` shows how many articles each status holds, and `/admin/articles` lists every article, newest story first. Filter the list by status and category; the filters live in the URL, as in `/admin/articles?status=draft&category=world`, and the count beside each choice is the number of articles it would show.
+
+An article's page shows it exactly as readers will see it, through the same reader components as the public page, beside its source details and its moderation history. It offers only the actions the article's status allows:
+
+| Status    | Actions                                                              |
+| --------- | -------------------------------------------------------------------- |
+| Draft     | Publish, with an optional note; reject; change the category or level |
+| Published | Archive, which takes it off the site; change the category or level   |
+| Archived  | Restore to draft; change the category or level                       |
+
+Every action except publishing asks for a reason. Publishing first checks that the article is complete and lists anything to fix. Each change is recorded with the admin who made it, the reason, and the fields before and after, and nothing is ever deleted. Word lookups in the preview answer only once an article is on the site.
+
 ## Verification
 
 ```bash
@@ -148,7 +162,7 @@ pnpm db:migrate:test
 pnpm test:integration
 ```
 
-Browser tests run Playwright in your installed Google Chrome, on a desktop and a phone viewport, including axe accessibility scans and a check that every article page stays within the page budget in `IMPLEMENTATION_PLAN.md` §17. They reset the test database to the demo dataset, create one test admin per viewport with the admin command, build the app, and serve it on port 3100:
+Browser tests run Playwright in your installed Google Chrome, on a desktop and a phone viewport, including axe accessibility scans and a check that every article page stays within the page budget in `IMPLEMENTATION_PLAN.md` §17. They reset the test database to the demo dataset, create one test admin per viewport with the admin command, build the app, and serve it on port 3100. The moderation tests publish and archive copies of the demo draft, one per viewport, so the two viewports never change the same article:
 
 ```bash
 pnpm test:e2e

@@ -89,7 +89,13 @@ export async function seedDemoDrafts(db: PrismaClient) {
   return { drafts: articles, paragraphs };
 }
 
-async function writeDemoArticles(
+/**
+ * Upserts articles by slug with the given status and replaces their
+ * paragraphs, in one transaction. The browser tests also use it to reset
+ * the copies of the demo draft they moderate. The same caller rules as
+ * `seedDemoArticles` apply.
+ */
+export async function writeDemoArticles(
   db: PrismaClient,
   fixtures: ReadonlyArray<DemoDraft & { publishedOnSiteAt: Date | null }>,
   status: "PUBLISHED" | "DRAFT",

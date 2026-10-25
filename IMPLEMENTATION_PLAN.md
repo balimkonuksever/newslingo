@@ -1,7 +1,7 @@
 # Newslingo Implementation Plan
 
 > Status: Working draft  
-> Last updated: 2026-09-25  
+> Last updated: 2026-10-25  
 > Product specification: `bilingual_news_english_learning_plan.md`  
 > Immediate target: seeded bilingual Reader Release  
 > Launch target: automated ingestion and draft generation with moderated publication
@@ -80,6 +80,7 @@ M1–M3, which make up the Reader Release, were complete on 2026-09-25, and M4 o
 - server-only queries for the homepage, filters, categories, and articles
 - the editorial homepage with URL-backed filters, category pages, and the bilingual article reader
 - contextual word lookups from editorial dictionary entries, reviewed Real English cards, and each article's key vocabulary and Real English lists (M4)
+- admin sign-in with a password and an authenticator code, and the moderation pages: an article list filtered by status and category, a preview through the public reader with the source details and history, and audited publish, archive, restore and edit actions (M5)
 - unit, component, database integration, and Playwright browser and accessibility tests, all run by GitHub Actions
 - no deployment configuration
 
@@ -129,7 +130,7 @@ These are the working defaults. Items marked **Open** must be resolved before th
 | News provider | One licensed RSS/API provider | Open | Licensing must be confirmed before ingestion work. |
 | AI provider/model | Anthropic Claude through the official SDK, `claude-opus-5` by default | Provider accepted | Structured outputs are supported. The model for each task is chosen by measured comparison (ML roadmap item 3) before M7. |
 | Dictionary fallback | Contextual Claude lookup, cache-first | Accepted | Word plus sentence gives the contextual Turkish sense; results are cached in `VocabularyEntry`. |
-| Admin authentication | Provider/mechanism to be selected | Open | Must be resolved before the admin milestone. |
+| Admin authentication | Better Auth: an email, a password and an authenticator-app code (ADR-003) | Accepted | Decided on 2026-10-14; no third-party service or host dependency. |
 | Hosting/database | Provider-neutral until deployment planning | Open | Does not block local Reader Release work. |
 | Scheduler | Vercel Cron or Trigger.dev | Open | Depends on hosting and operational needs. |
 | CEFR inventory mix | Assignment and verification policy to be defined | Open | Production generation needs an explicit level target and balance rule. |
@@ -282,9 +283,9 @@ Added during the moderation milestone:
 
 | Route | Responsibility |
 |---|---|
-| `/admin` | Operational summary and failure counts. |
-| `/admin/articles` | Filtered article list; raw-candidate views are added in M6. |
-| `/admin/articles/[id]` | Preview, source lineage, generation attempts, moderation actions. |
+| `/admin` | Operational summary and failure counts. Built in M5: article counts by status, failed included, each linking to the filtered list. |
+| `/admin/articles` | Filtered article list; raw-candidate views are added in M6. Built in M5: every article in any status, newest story first, filtered by status and category in the URL, with counts that match the filters, at most 50 at a time. |
+| `/admin/articles/[id]` | Preview, source lineage, generation attempts, moderation actions. Built in M5: the preview through the public reader, the source details, the moderation history and the actions the article's status allows; generation attempts arrive with M7. |
 | `/admin/jobs` | Ingestion/generation runs and failures. |
 
 Authentication and authorization must protect both the pages and their server actions/handlers.
@@ -303,6 +304,8 @@ POST /api/cron/news-ingestion
 ```
 
 `POST /api/dictionary` is preferred over a query-string GET because sentence context may be long. Its input and output must be schema validated, rate limited, and bounded in size.
+
+Publishing and archiving were built in M5 as server actions on the admin article page instead of the two `/api/admin/articles/[id]/…` handlers above (decision 2026-10-25). Ingestion, regeneration and cron handlers are decided in their own milestones.
 
 ---
 
@@ -638,9 +641,13 @@ newslingo/
 │   │   ├── category/[slug]/
 │   │   │   ├── page.tsx
 │   │   │   └── expressions/page.tsx  # the category's Real English (M4)
-│   │   ├── admin/                # moderation milestone
+│   │   ├── admin/                # moderation milestone; each page checks access itself
 │   │   │   ├── actions.ts        # sign-in, code check and sign-out (M5)
-│   │   │   ├── page.tsx          # admin home; checks access itself
+│   │   │   ├── articles/         # moderation pages (M5)
+│   │   │   │   ├── actions.ts    # server actions: publish, archive, restore, edits
+│   │   │   │   ├── page.tsx      # the list, filtered by status and category
+│   │   │   │   └── [id]/page.tsx # preview, source details, history and actions
+│   │   │   ├── page.tsx          # admin home: article counts by status
 │   │   │   └── sign-in/          # password page, then code/page.tsx
 │   │   ├── api/                  # added by owning feature phases
 │   │   │   └── dictionary/route.ts   # POST: one word lookup (M4)
@@ -650,9 +657,15 @@ newslingo/
 │   │   ├── layout.tsx
 │   │   └── not-found.tsx
 │   ├── components/
-│   │   ├── admin/sign-in-forms.tsx   # client: the password and code forms
+│   │   ├── admin/                # M5
+│   │   │   ├── admin-nav.tsx         # the admin pages' links and sign-out
+│   │   │   ├── moderation-forms.tsx  # client: one form per moderation action
+│   │   │   ├── moderation-history.tsx  # audit rows, newest first
+│   │   │   ├── sign-in-forms.tsx     # client: the password and code forms
+│   │   │   └── status-badge.tsx
 │   │   ├── article/
 │   │   │   ├── article-reader.tsx    # client: controls + reading position
+│   │   │   ├── article-view.tsx      # the article as readers see it, also the admin preview
 │   │   │   ├── paragraph-pair.tsx
 │   │   │   ├── reading-anchor.ts
 │   │   │   └── source-attribution.tsx
@@ -684,6 +697,7 @@ newslingo/
 │   ├── generated/prisma/         # generated and ignored
 │   ├── jobs/                     # scheduled orchestration later
 │   ├── lib/
+│   │   ├── admin-article-filters.ts  # the admin list's URL filters (M5)
 │   │   ├── article-filters.ts
 │   │   ├── database-env.ts
 │   │   ├── dates.ts
@@ -712,7 +726,9 @@ newslingo/
 │       │   ├── log.ts            # outcome, latency and cost lines
 │       │   ├── lookup.ts         # cache-first lookup service
 │       │   └── provider.ts
-│       ├── moderation/workflow.ts  # publish, archive, restore, edits (M5)
+│       ├── moderation/           # M5
+│       │   ├── queries.ts        # admin reads: every status, counts, history
+│       │   └── workflow.ts       # publish, archive, restore, edits
 │       ├── rate-limit.ts         # in-memory limits for lookups and sign-in
 │       ├── ingestion/            # ingestion milestone
 │       │   └── providers/
@@ -1299,23 +1315,23 @@ M3 reader components and workflow schema. Admin authentication was decided on 20
 ### Work items
 
 - [x] Add admin authentication and role authorization. Done on 2026-10-24 with Better Auth 1.7.12, whose Prisma adapter `tests/integration/admin-auth.test.ts` confirms with Prisma 7.10.0 (ADR-003): the `admin` role, the server-only access check (`src/server/auth/access.ts`), the admin command (`pnpm admin:create`, `pnpm admin:reset`), and sign-in at `/admin/sign-in` with a password and then an authenticator code or a backup code, run as server actions.
-- [ ] Protect both admin pages and server actions/handlers. `requireAdmin()` in `src/server/auth/session.ts` guards the admin home; every later admin page and action must call it.
+- [x] Protect both admin pages and server actions/handlers. Done on 2026-10-25: `/admin`, `/admin/articles` and `/admin/articles/[id]` call `requireAdmin()` from `src/server/auth/session.ts` before anything else, and so does every moderation server action in `src/app/admin/articles/actions.ts`. A browser test ends the session on an open article page and confirms that publishing is refused and changes nothing. There are no admin route handlers.
 - [x] Add `ModerationEvent` or an equivalent audit record. An append-only table, written in the same transaction as each change (2026-10-25).
 - [x] Define allowed state transitions server-side. `MODERATION_RULES` in `src/domain/moderation.ts`; publishing starts only from `DRAFT`, archiving from `DRAFT` (a rejection) or `PUBLISHED`, restoring from `ARCHIVED` to `DRAFT`, and no admin action starts from a pipeline status.
 - [x] Add a deterministic non-public draft fixture for admin workflow tests. `prisma/fixtures/drafts.ts`, written by the demo seed as a `DRAFT` that reseeding resets.
-- [ ] Build an admin article list with status and category filters.
-- [ ] Build an article preview using the public reader components.
-- [ ] Show article source metadata.
-- [ ] Implement safe actions:
+- [x] Build an admin article list with status and category filters. Done on 2026-10-25: `/admin/articles` lists every article in any status, newest story first, filtered through validated URL parameters (`?status=draft&category=world`), at most 50 at a time with the total shown. Each filter's choices show their counts within the other filter, read from one database snapshot together with the rows (`src/server/moderation/queries.ts`).
+- [x] Build an article preview using the public reader components. Done on 2026-10-25: the public article page's body became `ArticleView` (`src/components/article/article-view.tsx`), which the admin preview renders too, from a server-only admin query that loads any status through the reader's own select (`getArticleForAdmin`). Word lookups answer only for public articles, and the preview says so.
+- [x] Show article source metadata. Done on 2026-10-25: the source's name, the original article as a link only when its address is http or https, the source's publication time, when the article was added and last changed, its length and its address on the site.
+- [x] Implement safe actions:
   - publish a valid draft
   - archive/unpublish
   - adjust category/difficulty under policy
 
-  The server side is built (`src/server/moderation/workflow.ts`): each action checks its input, the article's status and, for publishing, `publicationProblems`, then changes the article and writes its audit row in one transaction that refuses to run if the article changed meanwhile. The buttons arrive with the admin pages.
+  The server side is built (`src/server/moderation/workflow.ts`): each action checks its input, the article's status and, for publishing, `publicationProblems`, then changes the article and writes its audit row in one transaction that refuses to run if the article changed meanwhile. Since 2026-10-25 the article page offers only the forms `canModerate` allows: publish with an optional note, reject a draft or archive a published article, restore an archived one to draft, and change the category (to an active one) or the level, each asking for a reason where `MODERATION_RULES` requires one.
 - [x] Prefer archive over destructive deletion for published content. No action deletes an article, and an article or admin named by an audit row cannot be deleted.
-- [ ] Do not show ingestion/regeneration controls until those actions exist.
+- [x] Do not show ingestion/regeneration controls until those actions exist. The admin pages have none (2026-10-25).
 - [x] Record actor, action, reason, and timestamp for material changes. Each `ModerationEvent` also keeps the changed fields before and after; a reason is required for everything except publishing.
-- [ ] Add failure-safe user feedback without leaking secrets or stack traces.
+- [x] Add failure-safe user feedback without leaking secrets or stack traces. Done on 2026-10-25: a refusal stays on its form through `useActionState`, with the list of problems for a draft that can't be published yet; an unexpected error is logged on the server, and the form says only that something went wrong and to reload. A success reloads the article with a notice.
 
 ### Verification
 
@@ -1324,6 +1340,14 @@ M3 reader components and workflow schema. Admin authentication was decided on 20
 - Draft preview matches the public article view.
 - Publish/archive actions are persisted and auditable.
 - Published articles cannot be edited into invalid EN/TR alignment.
+
+Checked on 2026-10-25:
+
+- Signed-out visitors to `/admin`, `/admin/articles` and an article's page go to sign-in, and an action sent after the session ends is refused without a change (`tests/e2e/admin-sign-in.spec.ts`, `tests/e2e/admin-moderation.spec.ts`).
+- Refused and concurrent changes leave the article and its history untouched, and a failed audit row undoes its change (`tests/integration/moderation.test.ts`).
+- The preview is the public page's own `ArticleView`, and `tests/integration/admin-queries.test.ts` compares the admin query with the public one field for field.
+- The browser tests publish and archive an article, then check the public page, the newest history row and the audit rows in the database.
+- No M5 action edits an article's text; publishing checks the paragraph pairs with `publicationProblems`. A text editor added later must keep that check.
 
 ### Exit gate
 
@@ -2114,6 +2138,10 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-10-25 | Make `ModerationEvent` append-only with a database trigger, and refuse to delete an article or admin that an event names. | The audit trail holds even against a bug or a hand-written query; only the test-database reset, which truncates, empties it. |
 | 2026-10-25 | Check publication on the server with `publicationProblems`: a title, an active category, complete attribution, paragraphs numbered from 1 with both languages, a word count and reading time that match the English, and expression marks that still match their words. | The database refuses blank text and missing columns but cannot compare fields with each other. Generated drafts (M7) will pass the same check. |
 | 2026-10-25 | Keep public pages rendered on every request for now. The caching with invalidation that was to arrive with publishing (2026-09-25) waits for hosting (M8) and a measured need. | With no host or traffic yet, one query per request costs little, while a missed invalidation would leave an archived article public, which is the very error moderation exists to prevent. Admin actions will still refresh the pages they change. |
+| 2026-10-25 | List admin articles newest story first, filtered by status and category in the URL, 50 at a time with the total shown. Each filter's choices are counted within the other filter, and the rows and counts come from one `REPEATABLE READ` snapshot, read in an interactive transaction. | The counts always agree with the rows, even while another admin acts. Prisma 7.10 sends a batch `$transaction` that holds a single query without a transaction, dropping its isolation level, so the list uses the interactive form, which always opens one. |
+| 2026-10-25 | Preview articles through the public page's own body, moved into `ArticleView`, from an admin query that reuses the reader's select and mapping but loads any status. Word lookups stay limited to public articles. | A draft looks exactly as it will once published, and the two views cannot drift apart. Looking up a draft's words would need the dictionary route to recognise admins; the preview says lookups start once the article is on the site. |
+| 2026-10-25 | Run the moderation forms as server actions instead of the `/api/admin/articles/[id]/…` handlers in §7.3. Each calls `requireAdmin()` first, then the workflow. A refusal stays on its form; a success refreshes every admin and public path that shows the article with `revalidatePath`, then reloads the article's page with a notice. | The forms work without JavaScript, and Next.js checks each action's origin, as with sign-in. While pages render on every request, `revalidatePath` changes nothing visible; it keeps the pages right once caching arrives. The workflow's success result now names the article's slug and categories for it. |
+| 2026-10-25 | Give each Playwright project its own copies of the demo draft for the tests that publish and archive, reset before each test, and leave the seeded draft to the list tests. | The desktop and phone runs share one database and run at once, other specs read the demo articles, and a retry starts from the same state. Audit rows from an earlier attempt stay, so the tests check that exactly one row was added. |
 
 ### Open decisions
 
@@ -2239,6 +2267,6 @@ M4 and M5 may run in parallel per the dependency map.
 
 **M4, contextual vocabulary and Real English, is complete.** Built: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, clickable words and expressions with a desktop popover, a mobile bottom sheet and keyboard access, 97 reviewed Real English cards with 30 occurrences marked in the demo articles, the article's "Key vocabulary" and "Real English" sections, and the category expression pages. The page budget was set and met on 2026-10-14 (§17). On 2026-10-24 the user reviewed the editorial dictionary's Turkish from the sheet in `docs/reviews/2026-10-14-editorial-dictionary.md`, all 42 key vocabulary words plus 40 entries drawn at random: 81 were correct, and “atmosphere” gained “atmosfer”. The same day the reader passed a manual check on the user's phone: words, marked expressions, both lists and the category expression page, which closed the exit gate.
 
-**M5, moderation,** has started. On 2026-10-24 Better Auth 1.7.12 was pinned and its Prisma adapter confirmed with Prisma 7.10.0 (ADR-003), then the `admin` role, the server-only access check and the admin command were built, followed by sign-in at `/admin/sign-in` (a password, then an authenticator code or a backup code) and an admin home at `/admin`. On 2026-10-25 the server side of the moderation workflow followed: the append-only audit record, the status rules, the publication checks, the demo draft, and the publish, archive, restore and edit functions. Next: the admin pages for it, with an article list filtered by status and category, a preview through the public reader with the source details, and the action buttons, all with browser tests.
+**M5, moderation,** has started. On 2026-10-24 Better Auth 1.7.12 was pinned and its Prisma adapter confirmed with Prisma 7.10.0 (ADR-003), then the `admin` role, the server-only access check and the admin command were built, followed by sign-in at `/admin/sign-in` (a password, then an authenticator code or a backup code) and an admin home at `/admin`. On 2026-10-25 the server side of the moderation workflow followed: the append-only audit record, the status rules, the publication checks, the demo draft, and the publish, archive, restore and edit functions. The admin pages came the same day: the admin home's counts by status, the article list filtered by status and category, and each article's preview through the public reader with its source details, history and the actions its status allows, all with browser tests on desktop and phone. Every M5 work item is done. Next: check M5's exit gate with the user; nothing beyond M5 starts before that.
 
 Do not begin live news or AI integration before their milestones.

@@ -24,6 +24,20 @@
         "3002"
       ],
       "port": 3002
+    },
+    {
+      "name": "newslingo-dev-test-database",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "exec",
+        "tsx",
+        "scripts/with-test-database.ts",
+        "next",
+        "dev",
+        "--port",
+        "3200"
+      ],
+      "port": 3200
     }
   ]
 }
