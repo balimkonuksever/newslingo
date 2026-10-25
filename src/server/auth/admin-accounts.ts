@@ -9,6 +9,7 @@ import {
   type Auth,
   MIN_PASSWORD_LENGTH,
 } from "@/server/auth/config";
+import { cookieHeader, hasErrorCode } from "@/server/auth/responses";
 import { db } from "@/server/db/client";
 
 // What the admin command does (ADR-003). Nothing here is reachable from a
@@ -50,28 +51,6 @@ async function newId(auth: Auth, model: "user" | "account") {
   const context = await auth.$context;
 
   return context.generateId({ model }) || randomUUID();
-}
-
-/** The Cookie header a browser would send after this response. */
-function cookieHeader(response: Headers) {
-  const pairs = response
-    .getSetCookie()
-    .map((setCookie) => setCookie.split(";")[0]?.trim() ?? "")
-    .filter((pair) => /^[^=]+=.+/.test(pair));
-
-  return new Headers({ cookie: pairs.join("; ") });
-}
-
-function hasErrorCode(error: unknown, code: string) {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "body" in error &&
-    typeof error.body === "object" &&
-    error.body !== null &&
-    "code" in error.body &&
-    error.body.code === code
-  );
 }
 
 /**

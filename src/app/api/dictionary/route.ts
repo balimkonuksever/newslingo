@@ -5,12 +5,13 @@ import {
 } from "@/domain/dictionary";
 import { getLookupDependencies } from "@/server/dictionary/config";
 import { lookupWord } from "@/server/dictionary/lookup";
-import { createRateLimiter } from "@/server/dictionary/rate-limit";
+import { clientAddress, createRateLimiter } from "@/server/rate-limit";
 
 /** A lookup is four small fields; larger bodies are refused unread. */
 const MAX_BODY_BYTES = 1024;
 
 // Roomy for a person reading, tight enough to slow down scripted scraping.
+// The lookup service's provider-call limit is the hard cap.
 const clientLimiter = createRateLimiter({ limit: 30, windowMs: 60_000 });
 
 const STATUS: Record<DictionaryLookupError, number> = {
@@ -59,15 +60,6 @@ function respond(body: DictionaryLookupResponse, headers?: HeadersInit) {
     status: "error" in body ? STATUS[body.error] : 200,
     headers: { "Cache-Control": "no-store", ...headers },
   });
-}
-
-/**
- * The last `x-forwarded-for` entry, which the nearest proxy adds. Without a
- * proxy that sets the header, clients can choose their own address, so the
- * per-client limit is a courtesy; the provider-call limit is the hard cap.
- */
-function clientAddress(headers: Headers) {
-  return headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() || "unknown";
 }
 
 /** Parses a JSON body of at most `maxBytes`, or returns `undefined`. */

@@ -2,6 +2,7 @@ import "server-only";
 
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { betterAuth } from "better-auth/minimal";
+import { nextCookies } from "better-auth/next-js";
 import { twoFactor } from "better-auth/plugins/two-factor";
 
 import { db } from "@/server/db/client";
@@ -45,7 +46,9 @@ export function createAuth({ secret, baseURL }: AuthSettings) {
         role: { type: "string", required: false, input: false },
       },
     },
-    plugins: [twoFactor()],
+    // nextCookies writes the cookies of sign-in calls made in server actions.
+    // It must come last, after every plugin that sets cookies.
+    plugins: [twoFactor(), nextCookies()],
   });
 }
 

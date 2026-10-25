@@ -17,7 +17,7 @@ import {
   DictionaryProviderError,
   type ProviderInput,
 } from "@/server/dictionary/provider";
-import { createRateLimiter } from "@/server/dictionary/rate-limit";
+import { createRateLimiter } from "@/server/rate-limit";
 
 import {
   createArticle,
