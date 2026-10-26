@@ -1,7 +1,7 @@
 # Newslingo Implementation Plan
 
 > Status: Working draft  
-> Last updated: 2026-10-25  
+> Last updated: 2026-10-26  
 > Product specification: `bilingual_news_english_learning_plan.md`  
 > Immediate target: seeded bilingual Reader Release  
 > Launch target: automated ingestion and draft generation with moderated publication
@@ -71,7 +71,7 @@ The experience should feel like a high-quality news reader with learning built i
 
 ## 3. Current repository baseline
 
-M1–M3, which make up the Reader Release, were complete on 2026-09-25, and M4 on 2026-10-24. The repository contains:
+M1–M3, which make up the Reader Release, were complete on 2026-09-25, M4 on 2026-10-24, and M5 on 2026-10-26. The repository contains:
 
 - the Next.js/TypeScript/Tailwind scaffold with pinned Node and pnpm, one lockfile, and lint, format, typecheck, Vitest, and build commands
 - Docker Compose PostgreSQL 18 with isolated `newslingo` and `newslingo_test` databases
@@ -1353,6 +1353,8 @@ Checked on 2026-10-25:
 
 Only authorized admins can move content through the lifecycle, and no article can reach `PUBLISHED` without server-side validation and an auditable action.
 
+Met on 2026-10-26: the user created their own admin with the admin command, tried the admin pages in the development database, and confirmed the gate.
+
 ---
 
 ## M6 — Licensed news ingestion
@@ -2263,10 +2265,10 @@ Gate: complete Reader Release definition of done passes.
 
 Slices 1–5 are complete, and with them the Reader Release (M1–M3). On 2026-09-25 a native Turkish speaker reviewed the demo translations in `prisma/fixtures/articles.ts` and found them correct. The reader also passed a manual check on a real phone, covering filters, the translation and text-size controls, landscape, and larger text.
 
-M4 and M5 may run in parallel per the dependency map.
-
 **M4, contextual vocabulary and Real English, is complete.** Built: the text-analysis layer, the vocabulary and expression schema, `POST /api/dictionary` with editorial entries for every word of the six demo articles (`prisma/fixtures/dictionary/`, validated by `prisma/editorial-dictionary.ts`) and an optional Claude provider, clickable words and expressions with a desktop popover, a mobile bottom sheet and keyboard access, 97 reviewed Real English cards with 30 occurrences marked in the demo articles, the article's "Key vocabulary" and "Real English" sections, and the category expression pages. The page budget was set and met on 2026-10-14 (§17). On 2026-10-24 the user reviewed the editorial dictionary's Turkish from the sheet in `docs/reviews/2026-10-14-editorial-dictionary.md`, all 42 key vocabulary words plus 40 entries drawn at random: 81 were correct, and “atmosphere” gained “atmosfer”. The same day the reader passed a manual check on the user's phone: words, marked expressions, both lists and the category expression page, which closed the exit gate.
 
-**M5, moderation,** has started. On 2026-10-24 Better Auth 1.7.12 was pinned and its Prisma adapter confirmed with Prisma 7.10.0 (ADR-003), then the `admin` role, the server-only access check and the admin command were built, followed by sign-in at `/admin/sign-in` (a password, then an authenticator code or a backup code) and an admin home at `/admin`. On 2026-10-25 the server side of the moderation workflow followed: the append-only audit record, the status rules, the publication checks, the demo draft, and the publish, archive, restore and edit functions. The admin pages came the same day: the admin home's counts by status, the article list filtered by status and category, and each article's preview through the public reader with its source details, history and the actions its status allows, all with browser tests on desktop and phone. Every M5 work item is done. Next: check M5's exit gate with the user; nothing beyond M5 starts before that.
+**M5, moderation, is complete.** On 2026-10-24 Better Auth 1.7.12 was pinned and its Prisma adapter confirmed with Prisma 7.10.0 (ADR-003), then the `admin` role, the server-only access check and the admin command were built, followed by sign-in at `/admin/sign-in` (a password, then an authenticator code or a backup code) and an admin home at `/admin`. On 2026-10-25 the server side of the moderation workflow followed: the append-only audit record, the status rules, the publication checks, the demo draft, and the publish, archive, restore and edit functions. The admin pages were built the same day and merged on 2026-10-26: the admin home's counts by status, the article list filtered by status and category, and each article's preview through the public reader with its source details, history and the actions its status allows, all with browser tests on desktop and phone. On 2026-10-26 the user tried the admin pages with their own admin and confirmed the exit gate.
+
+Next, M6, licensed news ingestion, needs two M0 decisions first (§19 open decisions): a licensed news provider with explicit usage rights, and the editorial policy for sensitive news.
 
 Do not begin live news or AI integration before their milestones.
