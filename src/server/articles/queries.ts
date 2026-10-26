@@ -50,7 +50,11 @@ export const expressionCardSelect = {
   literalWarning: true,
 } satisfies Prisma.ExpressionSelect;
 
-const articleDetailSelect = {
+/**
+ * What the reader shows of an article. The admin preview loads the same
+ * fields, so a draft looks exactly as it will once published.
+ */
+export const articleDetailSelect = {
   ...articleSummarySelect,
   publishedOnSiteAt: true,
   sourceUrl: true,
@@ -111,7 +115,7 @@ export type ArticleDetail = Omit<
   keyVocabulary: KeyWord[];
 };
 
-function toArticleDetail({
+export function toArticleDetail({
   paragraphs,
   expressions,
   vocabulary,

@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
   ARTICLE_STATUS_LABELS,
   canModerate,
+  MAX_REASON_LENGTH,
   MODERATION_ACTION_LABELS,
   MODERATION_RULES,
   publicationProblems,
@@ -23,8 +24,16 @@ import { db } from "@/server/db/client";
 export type ModerationRefusal =
   "invalid" | "not-found" | "not-allowed" | "not-publishable" | "changed";
 
+/** The article a change touched, so callers can refresh the pages showing it. */
+export type ModeratedArticle = {
+  id: string;
+  slug: string;
+  /** Its category, then the new one when the change moved it. */
+  categorySlugs: string[];
+};
+
 export type ModerationResult =
-  | { ok: true }
+  | { ok: true; article: ModeratedArticle }
   | {
       ok: false;
       refusal: ModerationRefusal;
@@ -32,8 +41,6 @@ export type ModerationResult =
       /** For `not-publishable`: what to fix first. */
       problems?: string[];
     };
-
-const MAX_REASON_LENGTH = 500;
 
 const articleIdSchema = z.string().trim().min(1).max(64);
 const reasonSchema = z
@@ -58,10 +65,13 @@ type Change = {
   data: Prisma.ArticleUncheckedUpdateManyInput;
   before: Prisma.InputJsonObject;
   after: Prisma.InputJsonObject;
+  /** The new category's slug, when the change moves the article. */
+  movedTo?: string;
 };
 
 const loadedArticleSelect = {
   id: true,
+  slug: true,
   status: true,
   categoryId: true,
   difficulty: true,
@@ -164,7 +174,17 @@ async function moderate(
     throw error;
   }
 
-  return { ok: true };
+  return {
+    ok: true,
+    article: {
+      id: article.id,
+      slug: article.slug,
+      categorySlugs: [
+        article.category.slug,
+        ...(change.movedTo ? [change.movedTo] : []),
+      ],
+    },
+  };
 }
 
 /**
@@ -282,6 +302,7 @@ export function changeArticleCategory(
       data: { categoryId: category.id },
       before: { category: article.category.slug },
       after: { category: category.slug },
+      movedTo: category.slug,
     };
   });
 }

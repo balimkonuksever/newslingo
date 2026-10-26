@@ -1,33 +1,13 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { authenticatorCode } from "../support/sign-in";
-import { type TestAdmin, testAdminFor } from "./admins";
+import { enterCode, enterPassword, refusal } from "./admin-session";
+import { testAdminFor } from "./admins";
 import { seriousViolations } from "./axe";
 
 // Admin sign-in in the browser (ADR-003): a password, then a code from the
 // authenticator app or a backup code. Each project signs in as its own test
 // admin, made by the global setup with the admin command.
-
-async function enterPassword(
-  page: Page,
-  admin: TestAdmin,
-  password = admin.password,
-) {
-  await page.goto("/admin/sign-in");
-  await page.getByLabel("Email address").fill(admin.email);
-  await page.getByLabel("Password").fill(password);
-  await page.getByRole("button", { name: "Continue" }).click();
-}
-
-/** The form's refusal message. Next.js's route announcer is an alert too. */
-function refusal(page: Page) {
-  return page.getByRole("main").getByRole("alert");
-}
-
-async function enterCode(page: Page, code: string) {
-  await page.getByLabel("Code").fill(code);
-  await page.getByRole("button", { name: "Sign in" }).click();
-}
 
 test("sends a signed-out visitor from the admin pages to sign-in", async ({
   page,
@@ -68,7 +48,10 @@ test("signs in with a password and an authenticator code, then signs out", async
   await enterCode(page, authenticatorCode(admin.setupKey));
   await expect(page).toHaveURL(/\/admin$/);
   await expect(
-    page.getByRole("heading", { level: 1, name: `Signed in as ${admin.name}` }),
+    page.getByRole("heading", { level: 1, name: "Overview" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("main").getByText(`Signed in as ${admin.name}`),
   ).toBeVisible();
   expect(await seriousViolations(page)).toEqual([]);
 
