@@ -9,8 +9,9 @@ export function SiteFooter() {
           helps Turkish speakers learn English by reading the news.
         </p>
         <p className="mt-2 max-w-2xl">
-          Every article is an educational adaptation written for English
-          learners. Each one names its original source and links to it.
+          Every article is written for English learners. News stories are
+          adapted from an original source, which each one names and links to.
+          Explainers list the sources their facts can be checked in.
         </p>
       </div>
     </footer>

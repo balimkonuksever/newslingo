@@ -49,16 +49,24 @@ describe("ArticleCard", () => {
     expect(date).toHaveAttribute("dateTime", "2026-09-19T21:45:00.000Z");
   });
 
-  it("shows an explainer's date without a source", () => {
+  it("marks an explainer and shows its date without a source", () => {
     render(
       <ArticleCard
         article={{ ...article, kind: "EXPLAINER", sourceName: null }}
       />,
     );
 
+    expect(screen.getByText("Explainer")).toBeInTheDocument();
+
     const date = screen.getByText("20 September 2026");
 
     expect(date.parentElement).toHaveTextContent(/^20 September 2026$/);
+  });
+
+  it("gives news no kind badge", () => {
+    render(<ArticleCard article={article} />);
+
+    expect(screen.queryByText("Explainer")).not.toBeInTheDocument();
   });
 
   it("uses the requested heading level and copes without a summary", () => {

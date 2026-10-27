@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 import { countWords } from "../../src/lib/reading-time";
 import { slugSchema } from "../../src/lib/slug";
 import { REFERENCE_CATEGORIES } from "../reference/categories";
-import { DEMO_ARTICLES, demoSourceUrl } from "./articles";
+import {
+  DEMO_ARTICLES,
+  demoDatedAt,
+  demoReferenceUrl,
+  demoSourceUrl,
+} from "./articles";
 
 // These checks enforce the seed-content quality rules in IMPLEMENTATION_PLAN.md (M2).
 describe("demo article fixtures", () => {
@@ -69,22 +74,47 @@ describe("demo article fixtures", () => {
     );
   });
 
-  it("orders publication times deterministically after the source time", () => {
+  it("orders publication times deterministically after the article's date", () => {
     const siteTimes = DEMO_ARTICLES.map((a) => a.publishedOnSiteAt.getTime());
 
     expect(new Set(siteTimes).size).toBe(DEMO_ARTICLES.length);
 
     for (const article of DEMO_ARTICLES) {
       expect(article.publishedOnSiteAt.getTime(), article.slug).toBeGreaterThan(
-        article.sourcePublishedAt.getTime(),
+        demoDatedAt(article).getTime(),
       );
     }
   });
 
-  it("attributes fixtures to a reserved example domain", () => {
-    const url = new URL(demoSourceUrl("any-slug"));
+  it("includes news and an explainer with at least one reference", () => {
+    const explainers = DEMO_ARTICLES.filter(
+      (article) => article.kind === "EXPLAINER",
+    );
 
-    expect(url.protocol).toBe("https:");
-    expect(url.hostname.endsWith(".example")).toBe(true);
+    expect(explainers.length).toBeGreaterThanOrEqual(1);
+    expect(DEMO_ARTICLES.some((article) => article.kind === "NEWS")).toBe(true);
+
+    for (const { slug, references } of explainers) {
+      expect(references.length, slug).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it("attributes fixtures and references to a reserved example domain", () => {
+    const urls = [
+      demoSourceUrl("any-slug"),
+      demoReferenceUrl("any-slug"),
+      ...DEMO_ARTICLES.flatMap((article) =>
+        article.kind === "EXPLAINER"
+          ? article.references.map(({ url }) => url)
+          : [],
+      ),
+    ];
+
+    for (const address of urls) {
+      const url = new URL(address);
+
+      expect(url.protocol, address).toBe("https:");
+      expect(url.hostname.endsWith(".example"), address).toBe(true);
+    }
   });
 });

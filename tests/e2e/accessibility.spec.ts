@@ -4,6 +4,7 @@ import { DEMO_ARTICLES } from "../../prisma/fixtures/articles";
 import { seriousViolations } from "./axe";
 
 const article = DEMO_ARTICLES[0];
+const explainer = DEMO_ARTICLES.find(({ kind }) => kind === "EXPLAINER")!;
 
 for (const path of [
   "/",
@@ -11,6 +12,7 @@ for (const path of [
   "/category/world",
   "/category/world/expressions",
   `/article/${article.slug}`,
+  `/article/${explainer.slug}`,
   "/article/no-such-article",
   "/admin/sign-in",
   "/admin/sign-in?expired",

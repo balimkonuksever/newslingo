@@ -1,6 +1,9 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
-import { DEMO_ARTICLES } from "../../prisma/fixtures/articles";
+import {
+  DEMO_ARTICLES,
+  type DemoExplainer,
+} from "../../prisma/fixtures/articles";
 import { DEMO_DRAFTS } from "../../prisma/fixtures/drafts";
 import { signIn } from "./admin-session";
 import { testAdminFor } from "./admins";
@@ -19,6 +22,9 @@ import {
 const [draftFixture] = DEMO_DRAFTS;
 const technologyArticle = DEMO_ARTICLES.find(
   ({ categorySlug }) => categorySlug === "technology",
+)!;
+const explainer = DEMO_ARTICLES.find(
+  (article): article is DemoExplainer => article.kind === "EXPLAINER",
 )!;
 
 function articleRows(page: Page) {
@@ -103,6 +109,35 @@ test("filters the article list by status and category", async ({
   await expect(
     page.getByRole("link", { name: draftFixture!.title, exact: true }),
   ).toBeVisible();
+});
+
+test("shows each article's kind and what it credits", async ({
+  page,
+}, testInfo) => {
+  await signIn(page, testAdminFor(testInfo.project.name));
+  await page.goto(`/admin/articles?category=${explainer.categorySlug}`);
+
+  const row = articleRows(page).filter({ hasText: explainer.title });
+  await expect(row).toContainText("Written");
+  await row.getByRole("link", { name: explainer.title, exact: true }).click();
+
+  const details = page.getByRole("region", { name: "Details" });
+  await expect(details).toContainText("Explainer, written by Newslingo");
+
+  for (const { title, url } of explainer.references) {
+    await expect(details.getByRole("link", { name: title })).toHaveAttribute(
+      "href",
+      url,
+    );
+  }
+
+  await page.goto(`/admin/articles?category=${technologyArticle.categorySlug}`);
+  await page
+    .getByRole("link", { name: technologyArticle.title, exact: true })
+    .click();
+
+  await expect(details).toContainText("News, adapted from one source");
+  await expect(details.getByText("None recorded")).toBeVisible();
 });
 
 test("publishing a draft puts it on the site and records who did it", async ({

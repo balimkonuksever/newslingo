@@ -3,6 +3,7 @@ import { expect, type Page, test } from "@playwright/test";
 import {
   DEMO_ARTICLES,
   DEMO_SOURCE_NAME,
+  type DemoExplainer,
   demoSourceUrl,
 } from "../../prisma/fixtures/articles";
 import { REFERENCE_CATEGORIES } from "../../prisma/reference/categories";
@@ -194,6 +195,49 @@ test.describe("article reader", () => {
     await expect(link).toHaveAttribute("href", demoSourceUrl(article.slug));
     await expect(link).toHaveAttribute("target", "_blank");
     await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+});
+
+test.describe("explainers", () => {
+  const explainer = DEMO_ARTICLES.find(
+    (article): article is DemoExplainer => article.kind === "EXPLAINER",
+  )!;
+
+  test("are marked on their card and page, and credit their references", async ({
+    page,
+  }) => {
+    await page.goto(`/category/${explainer.categorySlug}`);
+
+    const card = page
+      .getByRole("article")
+      .filter({ has: page.getByRole("link", { name: explainer.title }) });
+    await expect(card.getByText("Explainer", { exact: true })).toBeVisible();
+
+    await card.getByRole("link", { name: explainer.title }).click();
+    await expect(page).toHaveURL(`/article/${explainer.slug}`);
+
+    const header = page.locator("article > header");
+    await expect(header.getByText("Explainer", { exact: true })).toBeVisible();
+    await expect(header.getByText(/^Written \d/)).toBeVisible();
+    await expect(header.getByText(/^Source:/)).toHaveCount(0);
+
+    const about = page.getByRole("complementary", {
+      name: "About this article",
+    });
+    await expect(about).toContainText("Newslingo wrote this explainer");
+    await expect(
+      about.getByRole("link", { name: /Read the original article/ }),
+    ).toHaveCount(0);
+
+    const items = about.getByRole("listitem");
+    await expect(items).toHaveCount(explainer.references.length);
+
+    for (const [index, { title, url }] of explainer.references.entries()) {
+      const link = items.nth(index).getByRole("link", { name: title });
+      await expect(link).toHaveAttribute("href", url);
+      await expect(link).toHaveAttribute("target", "_blank");
+      await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    }
   });
 });
 

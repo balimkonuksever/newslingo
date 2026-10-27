@@ -59,6 +59,11 @@ export const articleDetailSelect = {
   ...articleSummarySelect,
   publishedOnSiteAt: true,
   sourceUrl: true,
+  sourceLicence: true,
+  references: {
+    orderBy: { order: "asc" },
+    select: { title: true, publisher: true, url: true, checkedAt: true },
+  },
   wordCount: true,
   paragraphs: {
     orderBy: { order: "asc" },

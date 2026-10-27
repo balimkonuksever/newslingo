@@ -4,10 +4,11 @@
  * must not be read as real news. The CEFR levels record the author's intent
  * and are not verified labels, so never use these articles as evaluation data.
  *
- * Every demo article is attributed to DEMO_SOURCE_NAME with a URL on a
+ * Every demo news article is attributed to DEMO_SOURCE_NAME with a URL on a
  * reserved `.example` domain, so a fixture can never be mistaken for ingested
- * news. Word count and reading time are derived from the English paragraphs
- * when the seed runs.
+ * news. The demo explainer's references are fixtures on the same domain.
+ * Word count and reading time are derived from the English paragraphs when
+ * the seed runs.
  */
 
 import type { Difficulty } from "../../src/generated/prisma/enums";
@@ -21,16 +22,52 @@ export function demoSourceUrl(slug: string) {
   return `${DEMO_SOURCE_ORIGIN}/articles/${slug}`;
 }
 
-export type DemoArticle = {
+export function demoReferenceUrl(slug: string) {
+  return `${DEMO_SOURCE_ORIGIN}/references/${slug}`;
+}
+
+type DemoArticleContent = {
   slug: string;
   title: string;
   shortSummary: string | null;
   categorySlug: ReferenceCategorySlug;
   difficulty: Difficulty;
-  sourcePublishedAt: Date;
   publishedOnSiteAt: Date;
   paragraphs: ReadonlyArray<{ english: string; turkish: string }>;
 };
+
+/** News, attributed to DEMO_SOURCE_NAME when seeded. */
+export type DemoNews = DemoArticleContent & {
+  kind: "NEWS";
+  sourcePublishedAt: Date;
+};
+
+export type DemoReference = {
+  title: string;
+  publisher: string;
+  url: string;
+  checkedAt: Date;
+};
+
+/** An explainer, with no source, dated the day it was written. */
+export type DemoExplainer = DemoArticleContent & {
+  kind: "EXPLAINER";
+  writtenAt: Date;
+  references: ReadonlyArray<DemoReference>;
+};
+
+export type DemoArticle = DemoNews | DemoExplainer;
+
+/** The date readers see: news is dated by its source, an explainer by its writing. */
+export function demoDatedAt(
+  article:
+    | Pick<DemoNews, "kind" | "sourcePublishedAt">
+    | Pick<DemoExplainer, "kind" | "writtenAt">,
+) {
+  return article.kind === "NEWS"
+    ? article.sourcePublishedAt
+    : article.writtenAt;
+}
 
 export const DEMO_ARTICLES: ReadonlyArray<DemoArticle> = [
   {
@@ -41,6 +78,7 @@ export const DEMO_ARTICLES: ReadonlyArray<DemoArticle> = [
       "The deal ties each country's share of water to the river's actual flow and creates a joint commission to monitor pollution, but critics question how it will be enforced.",
     categorySlug: "world",
     difficulty: "C1",
+    kind: "NEWS",
     sourcePublishedAt: new Date("2026-09-19T21:45:00Z"),
     publishedOnSiteAt: new Date("2026-09-20T07:30:00Z"),
     paragraphs: [
@@ -95,6 +133,7 @@ export const DEMO_ARTICLES: ReadonlyArray<DemoArticle> = [
       "Small farms are using AI tools that predict rain and frost for a single field, but many growers still trust their own eyes before making the final call.",
     categorySlug: "ai",
     difficulty: "B2",
+    kind: "NEWS",
     sourcePublishedAt: new Date("2026-09-18T06:30:00Z"),
     publishedOnSiteAt: new Date("2026-09-18T11:00:00Z"),
     paragraphs: [
@@ -150,6 +189,7 @@ export const DEMO_ARTICLES: ReadonlyArray<DemoArticle> = [
       "Higher prices, easier-to-find spare parts and volunteer repair cafés are helping people keep their phones for longer.",
     categorySlug: "technology",
     difficulty: "B1",
+    kind: "NEWS",
     sourcePublishedAt: new Date("2026-09-17T08:15:00Z"),
     publishedOnSiteAt: new Date("2026-09-17T13:40:00Z"),
     paragraphs: [
@@ -197,6 +237,7 @@ export const DEMO_ARTICLES: ReadonlyArray<DemoArticle> = [
     shortSummary: null,
     categorySlug: "business",
     difficulty: "A2",
+    kind: "NEWS",
     sourcePublishedAt: new Date("2026-09-16T05:00:00Z"),
     publishedOnSiteAt: new Date("2026-09-16T09:20:00Z"),
     paragraphs: [
@@ -239,6 +280,7 @@ export const DEMO_ARTICLES: ReadonlyArray<DemoArticle> = [
       "Five years after it closed, a neighbourhood cinema is back — and local members vote on the films it shows.",
     categorySlug: "entertainment",
     difficulty: "B1",
+    kind: "NEWS",
     sourcePublishedAt: new Date("2026-09-15T17:30:00Z"),
     publishedOnSiteAt: new Date("2026-09-16T08:10:00Z"),
     paragraphs: [
@@ -281,7 +323,23 @@ export const DEMO_ARTICLES: ReadonlyArray<DemoArticle> = [
       "After years of ten-step routines, many people are cutting back to a few basic products — and dermatologists say that can be good for the skin.",
     categorySlug: "beauty",
     difficulty: "B2",
-    sourcePublishedAt: new Date("2026-09-14T10:00:00Z"),
+    // The demo explainer, so the reader and its tests cover both kinds.
+    kind: "EXPLAINER",
+    writtenAt: new Date("2026-09-14T10:00:00Z"),
+    references: [
+      {
+        title: "How to build a simple skincare routine",
+        publisher: DEMO_SOURCE_NAME,
+        url: demoReferenceUrl("simple-skincare-routine"),
+        checkedAt: new Date("2026-09-12"),
+      },
+      {
+        title: "Sunscreen and ultraviolet light",
+        publisher: DEMO_SOURCE_NAME,
+        url: demoReferenceUrl("sunscreen-and-ultraviolet-light"),
+        checkedAt: new Date("2026-09-12"),
+      },
+    ],
     publishedOnSiteAt: new Date("2026-09-14T15:45:00Z"),
     // This article uses typographic apostrophes so later text processing is
     // exercised with both apostrophe forms.

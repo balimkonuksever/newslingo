@@ -13,10 +13,12 @@ import {
 import {
   DEMO_ARTICLES,
   DEMO_SOURCE_NAME,
+  type DemoExplainer,
+  type DemoNews,
   demoSourceUrl,
 } from "./fixtures/articles";
 import { DEMO_DICTIONARY, DEMO_SENSE_CHOICES } from "./fixtures/dictionary";
-import { DEMO_DRAFTS, type DemoDraft } from "./fixtures/drafts";
+import { DEMO_DRAFTS } from "./fixtures/drafts";
 import { DEMO_EXPRESSION_OCCURRENCES } from "./fixtures/expression-occurrences";
 import { DEMO_KEY_VOCABULARY } from "./fixtures/key-vocabulary";
 import { resolveKeyVocabulary } from "./key-vocabulary";
@@ -65,8 +67,8 @@ export async function provisionReferenceData(db: PrismaClient) {
 }
 
 /**
- * Upserts the demo articles by slug and replaces their paragraphs, all in one
- * transaction, so reruns never duplicate anything. Requires the reference
+ * Upserts the demo articles by slug and replaces their paragraphs and
+ * references, all in one transaction, so reruns never duplicate anything. Requires the reference
  * categories. This function cannot tell which database it is writing to:
  * callers must pass `assertDemoSeedAllowed` first.
  */
@@ -89,15 +91,39 @@ export async function seedDemoDrafts(db: PrismaClient) {
   return { drafts: articles, paragraphs };
 }
 
+/** A demo article of either kind, published or not. */
+type DemoFixture = (
+  Omit<DemoNews, "publishedOnSiteAt"> | Omit<DemoExplainer, "publishedOnSiteAt">
+) & { publishedOnSiteAt: Date | null };
+
+/** News credits DEMO_SOURCE_NAME and is dated by its source; an explainer has no source. */
+function demoCredit(fixture: DemoFixture) {
+  return fixture.kind === "NEWS"
+    ? {
+        kind: "NEWS" as const,
+        sourceName: DEMO_SOURCE_NAME,
+        sourceUrl: demoSourceUrl(fixture.slug),
+        sourcePublishedAt: fixture.sourcePublishedAt,
+        datedAt: fixture.sourcePublishedAt,
+      }
+    : {
+        kind: "EXPLAINER" as const,
+        sourceName: null,
+        sourceUrl: null,
+        sourcePublishedAt: null,
+        datedAt: fixture.writtenAt,
+      };
+}
+
 /**
  * Upserts articles by slug with the given status and replaces their
- * paragraphs, in one transaction. The browser tests also use it to reset
- * the copies of the demo draft they moderate. The same caller rules as
- * `seedDemoArticles` apply.
+ * paragraphs and references, in one transaction. The browser tests also use
+ * it to reset the copies of the demo draft they moderate. The same caller
+ * rules as `seedDemoArticles` apply.
  */
 export async function writeDemoArticles(
   db: PrismaClient,
-  fixtures: ReadonlyArray<DemoDraft & { publishedOnSiteAt: Date | null }>,
+  fixtures: ReadonlyArray<DemoFixture>,
   status: "PUBLISHED" | "DRAFT",
 ) {
   const categories = await db.category.findMany({
@@ -106,7 +132,8 @@ export async function writeDemoArticles(
   });
   const categoryIds = new Map(categories.map(({ id, slug }) => [slug, id]));
 
-  const articles = fixtures.map(({ categorySlug, paragraphs, ...article }) => {
+  const articles = fixtures.map((fixture) => {
+    const { categorySlug, paragraphs } = fixture;
     const categoryId = categoryIds.get(categorySlug);
 
     if (!categoryId) {
@@ -122,13 +149,15 @@ export async function writeDemoArticles(
 
     return {
       data: {
-        ...article,
+        slug: fixture.slug,
+        title: fixture.title,
+        shortSummary: fixture.shortSummary,
+        difficulty: fixture.difficulty,
+        publishedOnSiteAt: fixture.publishedOnSiteAt,
+        ...demoCredit(fixture),
+        sourceLicence: null,
         categoryId,
         status,
-        sourceName: DEMO_SOURCE_NAME,
-        sourceUrl: demoSourceUrl(article.slug),
-        // Demo articles are news, which is dated by its source.
-        datedAt: article.sourcePublishedAt,
         sourceImageUrl: null,
         imageAttribution: null,
         wordCount,
@@ -139,11 +168,18 @@ export async function writeDemoArticles(
         english,
         turkish,
       })),
+      references:
+        fixture.kind === "EXPLAINER"
+          ? fixture.references.map((reference, index) => ({
+              ...reference,
+              order: index + 1,
+            }))
+          : [],
     };
   });
 
   await db.$transaction(async (tx) => {
-    for (const { data, paragraphs } of articles) {
+    for (const { data, paragraphs, references } of articles) {
       const { id: articleId } = await tx.article.upsert({
         where: { slug: data.slug },
         create: data,
@@ -155,6 +191,10 @@ export async function writeDemoArticles(
       await tx.articleParagraph.deleteMany({ where: { articleId } });
       await tx.articleParagraph.createMany({
         data: paragraphs.map((paragraph) => ({ ...paragraph, articleId })),
+      });
+      await tx.articleReference.deleteMany({ where: { articleId } });
+      await tx.articleReference.createMany({
+        data: references.map((reference) => ({ ...reference, articleId })),
       });
     }
   });
