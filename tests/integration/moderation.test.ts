@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import type { Prisma } from "@/generated/prisma/client";
 import type { AdminIdentity } from "@/server/auth/access";
 import { createAdmin } from "@/server/auth/admin-accounts";
 import { db } from "@/server/db/client";
@@ -42,8 +43,14 @@ const PARAGRAPHS = [
   },
 ];
 
-/** A complete draft, ready to publish, with two paragraph pairs. */
-async function createDraft(paragraphs = PARAGRAPHS) {
+/**
+ * A complete news draft, ready to publish, with two paragraph pairs. `data`
+ * overrides any article field, to make an explainer for instance.
+ */
+async function createDraft(
+  paragraphs = PARAGRAPHS,
+  data: Partial<Prisma.ArticleUncheckedCreateInput> = {},
+) {
   const wordCount = paragraphs.reduce(
     (total, { english }) => total + countWords(english),
     0,
@@ -53,6 +60,7 @@ async function createDraft(paragraphs = PARAGRAPHS) {
     publishedOnSiteAt: null,
     wordCount,
     readingTimeMinutes: estimateReadingMinutes(wordCount),
+    ...data,
   });
 
   await db.articleParagraph.createMany({
@@ -132,6 +140,63 @@ describe("publishArticle", () => {
       await db.article.findUniqueOrThrow({ where: { id: draft.id } }),
     ).toMatchObject({ status: "DRAFT", publishedOnSiteAt: null });
     expect(await eventsFor(draft.id)).toEqual([]);
+  });
+
+  it("publishes an explainer only once it lists a reference", async () => {
+    const draft = await createDraft(PARAGRAPHS, {
+      kind: "EXPLAINER",
+      sourceName: null,
+      sourceUrl: null,
+      sourcePublishedAt: null,
+    });
+
+    await expect(
+      publishArticle(admin, { articleId: draft.id }),
+    ).resolves.toMatchObject({
+      ok: false,
+      problems: ["It is an explainer with no references."],
+    });
+
+    await db.articleReference.create({
+      data: {
+        articleId: draft.id,
+        order: 1,
+        title: "Tool libraries",
+        publisher: "Example Encyclopedia",
+        url: "https://www.example.org/libraries",
+        checkedAt: new Date("2026-10-27"),
+      },
+    });
+
+    await expect(
+      publishArticle(admin, { articleId: draft.id }),
+    ).resolves.toMatchObject({ ok: true });
+    expect(await isPublic(draft.id)).toBe(true);
+  });
+
+  it("publishes a GOV.UK story only once it records the licence", async () => {
+    const draft = await createDraft(PARAGRAPHS, {
+      sourceName: "Department for Culture, Media and Sport",
+      sourceUrl: "https://www.gov.uk/government/news/library-tools",
+    });
+
+    await expect(
+      publishArticle(admin, { articleId: draft.id }),
+    ).resolves.toMatchObject({
+      ok: false,
+      problems: [
+        "Its source is published under the Open Government Licence v3.0, which the article does not record.",
+      ],
+    });
+
+    await db.article.update({
+      where: { id: draft.id },
+      data: { sourceLicence: "OGL_3_0" },
+    });
+
+    await expect(
+      publishArticle(admin, { articleId: draft.id }),
+    ).resolves.toMatchObject({ ok: true });
   });
 
   it("refuses an article that is not a draft", async () => {

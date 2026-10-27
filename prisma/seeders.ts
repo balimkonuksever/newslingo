@@ -127,6 +127,8 @@ export async function writeDemoArticles(
         status,
         sourceName: DEMO_SOURCE_NAME,
         sourceUrl: demoSourceUrl(article.slug),
+        // Demo articles are news, which is dated by its source.
+        datedAt: article.sourcePublishedAt,
         sourceImageUrl: null,
         imageAttribution: null,
         wordCount,

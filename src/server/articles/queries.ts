@@ -5,7 +5,7 @@ import { cache } from "react";
 import type { KeyWord } from "@/domain/dictionary";
 import type { ExpressionCard, ExpressionMark } from "@/domain/expressions";
 import type { Prisma } from "@/generated/prisma/client";
-import { type ArticleFilters, sourceDateRange } from "@/lib/article-filters";
+import { type ArticleFilters, datedAtRange } from "@/lib/article-filters";
 import { READING_TIME_BANDS } from "@/lib/reading-time";
 import { slugSchema } from "@/lib/slug";
 import { db } from "@/server/db/client";
@@ -26,8 +26,9 @@ export const articleSummarySelect = {
   title: true,
   shortSummary: true,
   difficulty: true,
+  kind: true,
   sourceName: true,
-  sourcePublishedAt: true,
+  datedAt: true,
   readingTimeMinutes: true,
   category: { select: { slug: true, name: true } },
 } satisfies Prisma.ArticleSelect;
@@ -169,8 +170,7 @@ export async function getFeaturedAndLatestArticles(latestLimit: number) {
 }
 
 /**
- * Public articles matching the homepage filters, most recent source
- * publication first.
+ * Public articles matching the homepage filters, newest `datedAt` first.
  */
 export async function listPublicArticles(
   filters: ArticleFilters,
@@ -186,9 +186,9 @@ export async function listPublicArticles(
       readingTimeMinutes: band
         ? { gte: band.minMinutes, lte: band.maxMinutes ?? undefined }
         : undefined,
-      sourcePublishedAt: sourceDateRange(filters),
+      datedAt: datedAtRange(filters),
     },
-    orderBy: [{ sourcePublishedAt: "desc" }, { id: "asc" }],
+    orderBy: [{ datedAt: "desc" }, { id: "asc" }],
     take: limit,
     select: articleSummarySelect,
   });

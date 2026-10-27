@@ -62,7 +62,8 @@ const adminArticleRowSelect = {
   title: true,
   status: true,
   difficulty: true,
-  sourcePublishedAt: true,
+  kind: true,
+  datedAt: true,
   publishedOnSiteAt: true,
   updatedAt: true,
   category: { select: { slug: true, name: true } },
@@ -73,7 +74,7 @@ export type AdminArticleRow = Prisma.ArticleGetPayload<{
 }>;
 
 export type AdminArticleList = {
-  /** Newest source publication first, at most the list's limit. */
+  /** Newest `datedAt` first, at most the list's limit. */
   articles: AdminArticleRow[];
   /** How many articles match the filters, including any past the limit. */
   total: number;
@@ -109,7 +110,7 @@ export async function listArticlesForAdmin(
           status: filters.status,
           category: filters.category ? { slug: filters.category } : undefined,
         },
-        orderBy: [{ sourcePublishedAt: "desc" }, { id: "asc" }],
+        orderBy: [{ datedAt: "desc" }, { id: "asc" }],
         take: limit,
         select: adminArticleRowSelect,
       }),
@@ -178,6 +179,8 @@ export type AdminArticleDetail = ArticleDetail & {
   id: string;
   status: ArticleStatus;
   categoryIsActive: boolean;
+  /** News only. */
+  sourcePublishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   /** Newest first. */
@@ -202,6 +205,7 @@ export const getArticleForAdmin = cache(
         ...articleDetailSelect,
         id: true,
         status: true,
+        sourcePublishedAt: true,
         createdAt: true,
         updatedAt: true,
         category: { select: { slug: true, name: true, isActive: true } },
@@ -219,6 +223,7 @@ export const getArticleForAdmin = cache(
     const {
       id: articleId,
       status,
+      sourcePublishedAt,
       createdAt,
       updatedAt,
       moderationEvents,
@@ -231,6 +236,7 @@ export const getArticleForAdmin = cache(
       id: articleId,
       status,
       categoryIsActive: isActive,
+      sourcePublishedAt,
       createdAt,
       updatedAt,
       history: moderationEvents,

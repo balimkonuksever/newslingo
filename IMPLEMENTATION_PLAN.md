@@ -644,12 +644,13 @@ Initial generation may create a normal `DRAFT` Article. Regenerating an unpublis
 
 ### 8.7 Written-articles migration
 
-Added by milestone W:
+Added by milestone W in the `written_articles` migration (2026-10-27):
 
 - `ArticleKind`: `NEWS` or `EXPLAINER`. `Article.kind` defaults to `NEWS`, so existing articles keep their meaning.
-- `Article.sourceName`, `sourceUrl` and `sourcePublishedAt` become optional for explainers only. A CHECK constraint keeps all three required when the kind is `NEWS`.
-- `Article.sourceLicence`: optional on news, required for GOV.UK adaptations by the publication check, so the "About this article" box can show the Open Government Licence statement and link.
-- `ArticleReference`: an explainer's references, with `articleId`, `order` starting at 1, `title`, `publisher`, `url` and `checkedAt`. Unique `(articleId, order)`, deleted with its article.
+- `Article.sourceName`, `sourceUrl` and `sourcePublishedAt` become optional for explainers only. CHECK constraints keep all three required when the kind is `NEWS` (`Article_news_has_source`) and forbid them, with the licence, on an explainer (`Article_explainer_has_no_source`).
+- `Article.datedAt`, required: the date readers see, and the one lists sort and filter by. News is dated by its source, which `Article_news_has_source` enforces; an explainer by the day it was written. It replaces `sourcePublishedAt` in the `(categoryId, status, …)` index, and existing articles were backfilled from their source date.
+- `Article.sourceLicence`: a `SourceLicence` enum whose one value, `OGL_3_0`, is the Open Government Licence v3.0. Optional on news, and required by the publication check when the source is GOV.UK, so the "About this article" box can show the licence statement and link.
+- `ArticleReference`: an explainer's references, with `articleId`, `order` starting at 1, `title`, `publisher`, `url` and `checkedAt`, a date without a time. Unique `(articleId, order)`, deleted with its article, and CHECK constraints refuse blank text.
 
 ---
 
@@ -750,7 +751,8 @@ newslingo/
 │   ├── domain/                   # boundary schemas/types as needed
 │   │   ├── dictionary.ts
 │   │   ├── expressions.ts        # Real English cards and marks for the reader
-│   │   └── moderation.ts         # admin action rules, publication checks (M5)
+│   │   ├── moderation.ts         # admin action rules, publication checks (M5)
+│   │   └── sources.ts            # source licences, which GOV.UK requires (W)
 │   ├── generated/prisma/         # generated and ignored
 │   ├── jobs/                     # scheduled orchestration, on hold with M8
 │   ├── lib/
@@ -1451,18 +1453,20 @@ Publish articles that Claude writes in Claude Code sessions and the user reviews
 
 ### Work items — data
 
-- [ ] Add an article kind: `NEWS`, adapted from one source as today, or `EXPLAINER`, written from general knowledge. Existing articles become `NEWS`.
-- [ ] Make the source fields optional for explainers only, with a database check that keeps them required for news.
-- [ ] Add `ArticleReference` for an explainer's references: order, title, publisher, web address and the date it was checked.
-- [ ] Record the source's licence on news articles, so a GOV.UK adaptation carries the Open Government Licence statement and link.
-- [ ] Decide how lists that sort by the source's publication time order explainers, which have none.
+- [x] Add an article kind: `NEWS`, adapted from one source as today, or `EXPLAINER`, written from general knowledge. Existing articles become `NEWS`.
+- [x] Make the source fields optional for explainers only, with a database check that keeps them required for news.
+- [x] Add `ArticleReference` for an explainer's references: order, title, publisher, web address and the date it was checked.
+- [x] Record the source's licence on news articles, so a GOV.UK adaptation carries the Open Government Licence statement and link. The licence is recorded; showing it is a reader item below.
+- [x] Decide how lists that sort by the source's publication time order explainers, which have none. Decided on 2026-10-27: every article has a `datedAt`, its source's publication time for news and the day it was written for an explainer, and lists sort and filter by it (§8.7, §19).
+
+The data items and the publication check were built on 2026-10-27 (§8.7). Until the reader items are done, an explainer shows no source and no "About this article" box; none can exist before the import, which comes after them.
 
 ### Work items — reader and admin
 
 - [ ] Show the kind on article cards and pages, so an explainer is never mistaken for news.
 - [ ] Give the "About this article" box a version for each kind: news credits its source, links to it and shows the licence; an explainer says Newslingo wrote it and lists its references.
 - [ ] Show the kind and the references or licence in the admin preview's source details.
-- [ ] Extend `publicationProblems`: news needs complete attribution, and GOV.UK news its licence; an explainer needs at least one reference with a web address.
+- [x] Extend `publicationProblems`: news needs complete attribution, and GOV.UK news its licence; an explainer needs at least one reference with a web address.
 
 ### Work items — content files and import
 
@@ -2319,6 +2323,7 @@ Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code
 | 2026-10-27 | Give every article a kind: news, adapted from one source, or an explainer, written from general knowledge with listed references. Readers see which kind they are reading. | Explainers have no single source, so their source fields become optional for that kind only, and the "About this article" box and the publication check change with them (W). |
 | 2026-10-27 | Keep the six existing categories: AI, Technology, World, Business, Entertainment and Beauty. Chosen by the user. | Every category already has its Real English cards. GOV.UK has no Entertainment or Beauty news, so those two get explainers only. |
 | 2026-10-27 | Approve the sensitive-news policy, and skip every subject it holds for review instead of holding it, until the user decides otherwise. Chosen by the user. | No war, disaster, election, crime, health, religion or migration stories, no story that mentions Turkey, Cyprus or the PKK, and no product launches. The Turkey default needs no lawyer while those stories are skipped, and the question of held subjects at A2 does not arise. |
+| 2026-10-27 | Date every article with a required `datedAt`: its source's publication time for news, which a CHECK constraint enforces, and the day it was written for an explainer. Lists sort and filter by it, and the reader shows it. | Explainers sort among news by their own date with no special case in any query. `sourcePublishedAt` stays as news lineage, shown in the admin preview. |
 | 2026-10-27 | Rotate A2, B1, B2 and C1 within each category, and write A2 at 150–250 English words, B1 at 250–350, B2 at 300–450 and C1 at 450–650, never more than 900. Accepted by the user as proposed. | Every level appears in every category. Lengths stay close to the demo articles and within the page budget (§17). |
 
 ### Open decisions

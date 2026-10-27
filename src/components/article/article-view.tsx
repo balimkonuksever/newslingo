@@ -55,11 +55,11 @@ export function ArticleView({
           <span>{article.readingTimeMinutes} min read</span>
           <span>
             Published{" "}
-            <time dateTime={article.sourcePublishedAt.toISOString()}>
-              {formatArticleDate(article.sourcePublishedAt)}
+            <time dateTime={article.datedAt.toISOString()}>
+              {formatArticleDate(article.datedAt)}
             </time>
           </span>
-          <span>Source: {article.sourceName}</span>
+          {article.sourceName && <span>Source: {article.sourceName}</span>}
         </div>
       </header>
 
@@ -136,10 +136,14 @@ export function ArticleView({
         </section>
       )}
 
-      <SourceAttribution
-        sourceName={article.sourceName}
-        sourceUrl={article.sourceUrl}
-      />
+      {/* Only news has a source. An explainer's box, listing its references,
+          comes with W's reader work. */}
+      {article.sourceName && article.sourceUrl && (
+        <SourceAttribution
+          sourceName={article.sourceName}
+          sourceUrl={article.sourceUrl}
+        />
+      )}
     </article>
   );
 }

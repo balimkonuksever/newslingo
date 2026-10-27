@@ -62,10 +62,14 @@ export function ArticleCard({
           <span>{article.readingTimeMinutes} min read</span>
         </p>
         <p>
-          {article.sourceName}
-          <span aria-hidden="true"> · </span>
-          <time dateTime={article.sourcePublishedAt.toISOString()}>
-            {formatArticleDate(article.sourcePublishedAt)}
+          {article.sourceName && (
+            <>
+              {article.sourceName}
+              <span aria-hidden="true"> · </span>
+            </>
+          )}
+          <time dateTime={article.datedAt.toISOString()}>
+            {formatArticleDate(article.datedAt)}
           </time>
         </p>
       </div>

@@ -77,8 +77,8 @@ export function hasActiveFilters(filters: ArticleFilters) {
   return Object.values(filters).some((value) => value !== undefined);
 }
 
-/** The source-publication instants covered by the filter's date range. */
-export function sourceDateRange({ from, to }: ArticleFilters) {
+/** The `datedAt` instants covered by the filter's date range. */
+export function datedAtRange({ from, to }: ArticleFilters) {
   if (!from && !to) {
     return undefined;
   }

@@ -303,6 +303,7 @@ describe("getArticleForAdmin", () => {
       id,
       status,
       categoryIsActive,
+      sourcePublishedAt,
       createdAt,
       updatedAt,
       history,
@@ -313,10 +314,17 @@ describe("getArticleForAdmin", () => {
       expressionCards: [{ slug: "paragraph" }],
       keyVocabulary: [{ word: entry.surfaceWord }],
     });
-    expect({ id, status, categoryIsActive, history }).toEqual({
+    expect({
+      id,
+      status,
+      categoryIsActive,
+      sourcePublishedAt,
+      history,
+    }).toEqual({
       id: article.id,
       status: "PUBLISHED",
       categoryIsActive: true,
+      sourcePublishedAt: article.sourcePublishedAt,
       history: [],
     });
     expect(createdAt).toBeInstanceOf(Date);

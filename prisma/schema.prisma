@@ -43,6 +43,19 @@ enum ModerationAction {
   CHANGE_DIFFICULTY
 }
 
+/// News is adapted from one source; an explainer is written from general
+/// knowledge and lists its references (W).
+enum ArticleKind {
+  NEWS
+  EXPLAINER
+}
+
+/// A licence a news source is published under, which its adaptation must credit.
+enum SourceLicence {
+  /// The Open Government Licence v3.0, which covers GOV.UK news (ADR-004).
+  OGL_3_0
+}
+
 model Category {
   id           String               @id @default(cuid())
   slug         String               @unique
@@ -66,11 +79,18 @@ model Article {
   categoryId         String
   difficulty         Difficulty
   status             ArticleStatus       @default(DRAFT)
-  sourceName         String
-  sourceUrl          String              @unique
+  kind               ArticleKind         @default(NEWS)
+  /// News only: a CHECK constraint requires the source fields on news and
+  /// forbids them on explainers.
+  sourceName         String?
+  sourceUrl          String?             @unique
+  sourceLicence      SourceLicence?
   sourceImageUrl     String?
   imageAttribution   String?
-  sourcePublishedAt  DateTime
+  sourcePublishedAt  DateTime?
+  /// The date readers see: the source's publication time for news, which a
+  /// CHECK constraint enforces, and the day an explainer was written.
+  datedAt            DateTime
   publishedOnSiteAt  DateTime?
   wordCount          Int
   readingTimeMinutes Int
@@ -78,11 +98,12 @@ model Article {
   updatedAt          DateTime            @updatedAt
   category           Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   paragraphs         ArticleParagraph[]
+  references         ArticleReference[]
   expressions        ArticleExpression[]
   vocabulary         ArticleVocabulary[]
   moderationEvents   ModerationEvent[]
 
-  @@index([categoryId, status, sourcePublishedAt])
+  @@index([categoryId, status, datedAt])
   @@index([status, publishedOnSiteAt])
   @@index([difficulty, status])
 }
@@ -101,6 +122,23 @@ model ArticleParagraph {
   @@unique([articleId, order])
   // Lets an expression occurrence reference its paragraph and article together.
   @@unique([id, articleId])
+}
+
+/// A source an explainer's facts can be checked in (W).
+model ArticleReference {
+  id        String   @id @default(cuid())
+  articleId String
+  order     Int
+  title     String
+  publisher String
+  url       String
+  /// The day the reference was last read and found to support the explainer.
+  checkedAt DateTime @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, order])
 }
 
 /// A contextual word lookup, cached per word, sentence and provider/schema version.
