@@ -157,9 +157,9 @@ export default async function AdminArticlesPage(
                   </Link>
                 </h2>
                 <p className="mt-1 text-sm text-ink-muted">
-                  Story from{" "}
-                  <time dateTime={article.sourcePublishedAt.toISOString()}>
-                    {formatArticleDate(article.sourcePublishedAt)}
+                  {article.kind === "EXPLAINER" ? "Written" : "Story from"}{" "}
+                  <time dateTime={article.datedAt.toISOString()}>
+                    {formatArticleDate(article.datedAt)}
                   </time>
                   {" · "}
                   {article.publishedOnSiteAt ? (

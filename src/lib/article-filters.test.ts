@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   hasActiveFilters,
   parseArticleFilters,
-  sourceDateRange,
+  datedAtRange,
 } from "./article-filters";
 
 const categories = ["ai", "world"];
@@ -70,23 +70,23 @@ describe("hasActiveFilters", () => {
   });
 });
 
-describe("sourceDateRange", () => {
+describe("datedAtRange", () => {
   it("is undefined without dates", () => {
-    expect(sourceDateRange({ level: "A2" })).toBeUndefined();
+    expect(datedAtRange({ level: "A2" })).toBeUndefined();
   });
 
   it("covers whole Istanbul days, including the last one", () => {
-    expect(sourceDateRange({ from: "2026-09-01", to: "2026-09-02" })).toEqual({
+    expect(datedAtRange({ from: "2026-09-01", to: "2026-09-02" })).toEqual({
       gte: new Date("2026-08-31T21:00:00Z"),
       lt: new Date("2026-09-02T21:00:00Z"),
     });
   });
 
   it("supports open-ended ranges", () => {
-    expect(sourceDateRange({ from: "2026-09-01" })).toEqual({
+    expect(datedAtRange({ from: "2026-09-01" })).toEqual({
       gte: new Date("2026-08-31T21:00:00Z"),
     });
-    expect(sourceDateRange({ to: "2026-09-01" })).toEqual({
+    expect(datedAtRange({ to: "2026-09-01" })).toEqual({
       lt: new Date("2026-09-01T21:00:00Z"),
     });
   });

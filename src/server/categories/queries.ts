@@ -34,8 +34,8 @@ export const listCategoriesWithArticleCounts = cache(async () => {
 });
 
 /**
- * An active category with up to `articleLimit` of its public articles, most
- * recent source publication first, and the number of Real English
+ * An active category with up to `articleLimit` of its public articles,
+ * newest `datedAt` first, and the number of Real English
  * expressions on its page, or null when the slug is unknown or the category
  * is inactive. Memoized per request for metadata and the page.
  */
@@ -55,7 +55,7 @@ export const getCategoryWithArticles = cache(
         description: true,
         articles: {
           where: publicArticleWhere,
-          orderBy: [{ sourcePublishedAt: "desc" }, { id: "asc" }],
+          orderBy: [{ datedAt: "desc" }, { id: "asc" }],
           take: articleLimit,
           select: articleSummarySelect,
         },

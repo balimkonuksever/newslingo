@@ -28,6 +28,7 @@ import {
 import {
   createArticle,
   createCategory,
+  createExplainer,
   createExpression,
   resetDatabase,
 } from "./database";
@@ -136,8 +137,9 @@ describe("getFeaturedAndLatestArticles", () => {
       title: "Card title",
       shortSummary: "Summary",
       difficulty: "C1",
+      kind: "NEWS",
       sourceName: "Source",
-      sourcePublishedAt: at(4),
+      datedAt: at(4),
       readingTimeMinutes: 3,
       category: { slug: "ai", name: "AI" },
     });
@@ -226,6 +228,29 @@ describe("listPublicArticles", () => {
     expect(await slugsFor({ from: "2026-09-10", to: "2026-09-11" })).toEqual([
       "last-minute-of-the-11th",
       "first-minute-of-the-10th",
+    ]);
+  });
+
+  it("places and filters explainers by the date readers see, as news", async () => {
+    await createFilterFixtures();
+    const world = await db.category.findUniqueOrThrow({
+      where: { slug: "world" },
+    });
+    // Explainers have no source date; they are dated the day they were written.
+    await createExplainer(world.id, {
+      slug: "world-explainer",
+      datedAt: new Date("2026-09-11T12:00:00Z"),
+    });
+
+    expect(await slugsFor({})).toEqual([
+      "world-c1-long",
+      "world-explainer",
+      "ai-b2-medium",
+      "world-a2-short",
+    ]);
+    expect(await slugsFor({ from: "2026-09-11", to: "2026-09-11" })).toEqual([
+      "world-explainer",
+      "ai-b2-medium",
     ]);
   });
 

@@ -1,4 +1,10 @@
-import type { ArticleStatus, ModerationAction } from "@/generated/prisma/enums";
+import { requiredLicence, SOURCE_LICENCE_NAMES } from "@/domain/sources";
+import type {
+  ArticleKind,
+  ArticleStatus,
+  ModerationAction,
+  SourceLicence,
+} from "@/generated/prisma/enums";
 import { countWords, estimateReadingMinutes } from "@/lib/reading-time";
 
 // What an admin may do to an article, and what an article needs before it
@@ -81,8 +87,13 @@ export const ARTICLE_STATUS_LABELS: Record<ArticleStatus, string> = {
 export type PublicationCandidate = {
   title: string;
   categoryIsActive: boolean;
-  sourceName: string;
-  sourceUrl: string;
+  kind: ArticleKind;
+  /** News only, like the licence. */
+  sourceName: string | null;
+  sourceUrl: string | null;
+  sourceLicence: SourceLicence | null;
+  /** An explainer's. */
+  references: ReadonlyArray<{ title: string; publisher: string; url: string }>;
   wordCount: number;
   readingTimeMinutes: number;
   paragraphs: ReadonlyArray<{
@@ -114,6 +125,49 @@ export function isWebAddress(value: string) {
 }
 
 /**
+ * What is missing from the article's credit: news credits its source, and
+ * the licence when the source requires it; an explainer lists references
+ * that readers can check its facts in.
+ */
+function creditProblems({
+  kind,
+  sourceName,
+  sourceUrl,
+  sourceLicence,
+  references,
+}: PublicationCandidate) {
+  if (kind === "EXPLAINER") {
+    if (references.length === 0) {
+      return ["It is an explainer with no references."];
+    }
+
+    return references.some(
+      ({ title, publisher, url }) =>
+        isBlank(title) || isBlank(publisher) || !isWebAddress(url),
+    )
+      ? ["A reference is missing its title, its publisher or a web address."]
+      : [];
+  }
+
+  if (
+    !sourceName ||
+    isBlank(sourceName) ||
+    !sourceUrl ||
+    !isWebAddress(sourceUrl)
+  ) {
+    return ["Its source attribution is incomplete."];
+  }
+
+  const licence = requiredLicence(sourceUrl);
+
+  return licence && sourceLicence !== licence
+    ? [
+        `Its source is published under ${SOURCE_LICENCE_NAMES[licence]}, which the article does not record.`,
+      ]
+    : [];
+}
+
+/**
  * Why an article may not be published yet; an empty list when it may. The
  * database already refuses blank paragraphs and missing columns, so these
  * checks cover what it cannot see.
@@ -132,9 +186,7 @@ export function publicationProblems(article: PublicationCandidate) {
     );
   }
 
-  if (isBlank(article.sourceName) || !isWebAddress(article.sourceUrl)) {
-    problems.push("Its source attribution is incomplete.");
-  }
+  problems.push(...creditProblems(article));
 
   if (paragraphs.length === 0) {
     problems.push("It has no paragraphs.");

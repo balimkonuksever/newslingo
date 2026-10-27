@@ -10,9 +10,10 @@ const article: ArticleSummary = {
   title: "Three Countries Sign a River Agreement",
   shortSummary: "A deal to share water during droughts.",
   difficulty: "C1",
+  kind: "NEWS",
   sourceName: "Example Source",
   // 21:45 UTC is already the next day in Istanbul.
-  sourcePublishedAt: new Date("2026-09-19T21:45:00Z"),
+  datedAt: new Date("2026-09-19T21:45:00Z"),
   readingTimeMinutes: 4,
   category: { slug: "world", name: "World" },
 };
@@ -46,6 +47,18 @@ describe("ArticleCard", () => {
 
     expect(date.tagName).toBe("TIME");
     expect(date).toHaveAttribute("dateTime", "2026-09-19T21:45:00.000Z");
+  });
+
+  it("shows an explainer's date without a source", () => {
+    render(
+      <ArticleCard
+        article={{ ...article, kind: "EXPLAINER", sourceName: null }}
+      />,
+    );
+
+    const date = screen.getByText("20 September 2026");
+
+    expect(date.parentElement).toHaveTextContent(/^20 September 2026$/);
   });
 
   it("uses the requested heading level and copes without a summary", () => {

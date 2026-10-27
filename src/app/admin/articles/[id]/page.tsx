@@ -70,28 +70,43 @@ function visibility(article: AdminArticleDetail) {
     : "On the site.";
 }
 
-function SourceDetails({ article }: { article: AdminArticleDetail }) {
-  const rows: Array<[string, ReactNode]> = [
-    ["Source", article.sourceName],
+function sourceRows({
+  sourceName,
+  sourceUrl,
+  sourcePublishedAt,
+}: AdminArticleDetail): Array<[string, ReactNode]> {
+  // The database requires all three on news and forbids them on explainers.
+  if (!sourceName || !sourceUrl || !sourcePublishedAt) {
+    return [["Source", "None: an explainer lists references instead"]];
+  }
+
+  return [
+    ["Source", sourceName],
     [
       "Original article",
       // Only a web address becomes a link, so a stored `javascript:` URL or
       // the like is shown as text and never runs.
-      isWebAddress(article.sourceUrl) ? (
+      isWebAddress(sourceUrl) ? (
         <a
-          href={article.sourceUrl}
+          href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
           className={`${textLink} break-all`}
         >
-          {article.sourceUrl}
+          {sourceUrl}
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
       ) : (
-        <span className="break-all">{article.sourceUrl}</span>
+        <span className="break-all">{sourceUrl}</span>
       ),
     ],
-    ["Source published", formatDateTime(article.sourcePublishedAt)],
+    ["Source published", formatDateTime(sourcePublishedAt)],
+  ];
+}
+
+function SourceDetails({ article }: { article: AdminArticleDetail }) {
+  const rows: Array<[string, ReactNode]> = [
+    ...sourceRows(article),
     ["Added", formatDateTime(article.createdAt)],
     ["Last changed", formatDateTime(article.updatedAt)],
     [

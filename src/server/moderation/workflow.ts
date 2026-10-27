@@ -200,8 +200,11 @@ export function publishArticle(
       where: { id: article.id },
       select: {
         title: true,
+        kind: true,
         sourceName: true,
         sourceUrl: true,
+        sourceLicence: true,
+        references: { select: { title: true, publisher: true, url: true } },
         wordCount: true,
         readingTimeMinutes: true,
         category: { select: { isActive: true } },

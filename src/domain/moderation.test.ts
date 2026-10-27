@@ -42,8 +42,11 @@ function candidate(
   return {
     title: "A Town Library Lends Tools",
     categoryIsActive: true,
+    kind: "NEWS",
     sourceName: "Newslingo demo fixture",
     sourceUrl: "https://demo.newslingo.example/articles/library",
+    sourceLicence: null,
+    references: [],
     wordCount: 7,
     readingTimeMinutes: estimateReadingMinutes(7),
     paragraphs: [
@@ -61,9 +64,39 @@ function candidate(
   };
 }
 
+const REFERENCE = {
+  title: "Tool libraries",
+  publisher: "Example Encyclopedia",
+  url: "https://www.example.org/libraries",
+};
+
+/** An explainer has no source, and lists references instead. */
+const EXPLAINER = {
+  kind: "EXPLAINER",
+  sourceName: null,
+  sourceUrl: null,
+  sourceLicence: null,
+  references: [REFERENCE],
+} satisfies Partial<PublicationCandidate>;
+
 describe("publicationProblems", () => {
   it("finds nothing wrong with a complete article", () => {
     expect(publicationProblems(candidate())).toEqual([]);
+  });
+
+  it("finds nothing wrong with a GOV.UK story that records its licence", () => {
+    expect(
+      publicationProblems(
+        candidate({
+          sourceUrl: "https://www.gov.uk/government/news/library-tools",
+          sourceLicence: "OGL_3_0",
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it("finds nothing wrong with an explainer that lists its references", () => {
+    expect(publicationProblems(candidate(EXPLAINER))).toEqual([]);
   });
 
   it.each<[string, Partial<PublicationCandidate>, string]>([
@@ -77,6 +110,34 @@ describe("publicationProblems", () => {
       "a source that is not a web address",
       { sourceUrl: "demo.newslingo.example" },
       "Its source attribution is incomplete.",
+    ],
+    [
+      "news without a source",
+      { sourceName: null, sourceUrl: null },
+      "Its source attribution is incomplete.",
+    ],
+    [
+      "a GOV.UK story without its licence",
+      { sourceUrl: "https://www.gov.uk/government/news/library-tools" },
+      "Its source is published under the Open Government Licence v3.0, which the article does not record.",
+    ],
+    [
+      "an explainer without references",
+      { ...EXPLAINER, references: [] },
+      "It is an explainer with no references.",
+    ],
+    [
+      "an explainer reference without a web address",
+      {
+        ...EXPLAINER,
+        references: [{ ...REFERENCE, url: "www.example.org/libraries" }],
+      },
+      "A reference is missing its title, its publisher or a web address.",
+    ],
+    [
+      "an explainer reference without a publisher",
+      { ...EXPLAINER, references: [{ ...REFERENCE, publisher: " " }] },
+      "A reference is missing its title, its publisher or a web address.",
     ],
     [
       "a paragraph gap",

@@ -70,7 +70,7 @@ export default async function ArticlePage(props: PageProps<"/article/[slug]">) {
     articleSection: article.category.name,
     wordCount: article.wordCount,
     datePublished: article.publishedOnSiteAt?.toISOString(),
-    isBasedOn: article.sourceUrl,
+    isBasedOn: article.sourceUrl ?? undefined,
     publisher: { "@type": "Organization", name: "Newslingo" },
     mainEntityOfPage: new URL(
       `/article/${article.slug}`,

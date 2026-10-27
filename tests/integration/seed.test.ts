@@ -322,6 +322,7 @@ describe("demo draft seeding", () => {
         include: {
           category: { select: { isActive: true } },
           paragraphs: { orderBy: { order: "asc" } },
+          references: true,
         },
       });
 

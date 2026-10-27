@@ -31,12 +31,17 @@ export function createCategory(
   });
 }
 
-/** Creates a published article with valid defaults; override any field. */
+/**
+ * Creates a published news article with valid defaults; override any field.
+ * It is dated by its source, as the database requires of news.
+ */
 export function createArticle(
   categoryId: string,
   data: Partial<Prisma.ArticleUncheckedCreateInput> = {},
 ) {
   sequence += 1;
+  const sourcePublishedAt =
+    data.sourcePublishedAt ?? new Date("2026-09-01T09:00:00Z");
 
   return db.article.create({
     data: {
@@ -47,12 +52,28 @@ export function createArticle(
       status: "PUBLISHED",
       sourceName: "Integration test source",
       sourceUrl: `https://test.newslingo.example/articles/${sequence}`,
-      sourcePublishedAt: new Date("2026-09-01T09:00:00Z"),
+      sourcePublishedAt,
+      datedAt: sourcePublishedAt,
       publishedOnSiteAt: new Date("2026-09-01T12:00:00Z"),
       wordCount: 120,
       readingTimeMinutes: 1,
       ...data,
     },
+  });
+}
+
+/** Creates a published explainer, with no source; override any field. */
+export function createExplainer(
+  categoryId: string,
+  data: Partial<Prisma.ArticleUncheckedCreateInput> = {},
+) {
+  return createArticle(categoryId, {
+    kind: "EXPLAINER",
+    sourceName: null,
+    sourceUrl: null,
+    sourcePublishedAt: null,
+    datedAt: new Date("2026-09-01T09:00:00Z"),
+    ...data,
   });
 }
 
