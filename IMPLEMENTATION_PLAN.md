@@ -52,7 +52,7 @@ The experience should feel like a high-quality news reader with learning built i
 
 ### Launch categories
 
-The user is reviewing the categories with the site's main reader (2026-10-27); this list stands until then.
+The user chose to keep these six on 2026-10-27 (§19).
 
 1. AI
 2. Technology
@@ -139,7 +139,8 @@ These are the working defaults. Items marked **Open** must be resolved before th
 | Admin authentication | Better Auth: an email, a password and an authenticator-app code (ADR-003) | Accepted | Decided on 2026-10-14; no third-party service or host dependency. |
 | Hosting/database | Provider-neutral until deployment planning | Open | Does not block local Reader Release work. |
 | Scheduler | Vercel Cron or Trigger.dev | On hold | Waits with M8. |
-| CEFR inventory mix | Assignment and verification policy to be defined | Open | Written articles need an explicit level target and balance rule before W's first batch. |
+| CEFR inventory mix | Each category rotates A2, B1, B2 and C1, so every level appears | Accepted | Decided on 2026-10-27. Levels are assigned when an article is written; an independent level check waits for the CEFR classifier. |
+| Article length | English words per level: A2 150–250, B1 250–350, B2 300–450, C1 450–650, never more than 900 | Accepted | Decided on 2026-10-27, close to the demo articles. The 900-word ceiling is the one the page budget is set for (§17). |
 
 Version numbers for framework and database dependencies will be verified for compatibility during bootstrap and then pinned in the lockfile. This plan does not assume floating dependency versions.
 
@@ -987,7 +988,7 @@ Turn the remaining launch-sensitive choices into explicit decisions before they 
   - content retention restrictions
 
   Done on 2026-10-27: GOV.UK news under the Open Government Licence v3.0, with stories picked by hand (ADR-004, `docs/sources/gov-uk.md`).
-- [ ] Define the editorial adaptation policy:
+- [x] Define the editorial adaptation policy:
   - no extensive source wording
   - no invented facts or quotations
   - accurate names, dates, quantities, and claims
@@ -995,7 +996,7 @@ Turn the remaining launch-sensitive choices into explicit decisions before they 
   - required attribution
   - unsuitable/sensitive-news handling
 
-  The sensitive-news part was drafted on 2026-10-26 in `docs/editorial/sensitive-news.md` and awaits approval. Milestone W's editorial rules cover the rest for written articles.
+  Done on 2026-10-27 for written articles. The sensitive-news part, drafted on 2026-10-26 in `docs/editorial/sensitive-news.md`, was approved with held subjects skipped for now; milestone W's editorial rules cover the rest. Automated generation would need its own prompt rules if M7 resumes.
 - [ ] Select the AI provider/model and confirm structured-output support. Provider selected on 2026-09-25: Anthropic Claude, with structured outputs. The model for each task is still to be chosen by measured comparison. On hold with M7 since 2026-10-27.
 - [x] Select the contextual dictionary fallback: a contextual Claude lookup, cache-first (2026-09-25).
 - [x] Select admin authentication: Better Auth with an email, a password and an authenticator-app code, for admins only (2026-10-14, ADR-003).
@@ -1011,7 +1012,9 @@ Turn the remaining launch-sensitive choices into explicit decisions before they 
   On hold with M6–M8 since 2026-10-27.
 - [x] Confirm PostgreSQL full-text search as Launch MVP scope.
 - [x] Select and document the compatible Prisma workflow before M2.
-- [ ] Define the production CEFR assignment mix and shortage-filling rule.
+- [x] Define the production CEFR assignment mix and shortage-filling rule.
+
+  Done on 2026-10-27: each category rotates A2, B1, B2 and C1, and the next article in a category takes the level after the last one's, so no level falls short. A shortage rule for generation runs waits with M8.
 - [ ] Define mandatory finished-article difficulty verification.
 - [ ] Define the moderation cadence, maximum draft backlog, and public-freshness SLA. On hold with M8.
 - [ ] Define launch-blocking quality metrics.
@@ -1436,7 +1439,7 @@ Publish articles that Claude writes in Claude Code sessions and the user reviews
 - M4 editorial dictionary, key vocabulary and Real English cards.
 - M5 admin preview, publication checks and audited publishing.
 - ADR-004: GOV.UK news under the Open Government Licence v3.0.
-- Before the first batch: the categories, the sensitive-news policy, the CEFR mix and the target length per level (§19 open decisions).
+- Before the first batch: the categories, the sensitive-news policy, the CEFR mix and the target length per level. All four were settled on 2026-10-27 (§19).
 
 ### How an article is made
 
@@ -1471,10 +1474,10 @@ Publish articles that Claude writes in Claude Code sessions and the user reviews
 
 ### Work items — editorial rules
 
-- [ ] Set the target length per level and the CEFR mix before the first batch, and check every article against them.
+- [ ] Set the target length per level and the CEFR mix before the first batch, and check every article against them. Both were set on 2026-10-27 (§4); the check is still to build.
 - [ ] Explainers use well-established facts only, give date-sensitive figures with their year, offer no advice, and name living people only in their public roles.
 - [ ] GOV.UK adaptations follow ADR-004 and `docs/sources/gov-uk.md`: original wording, no long passages from the page, the department and GOV.UK credited, and the licence statement shown.
-- [ ] Both kinds follow the sensitive-news policy (`docs/editorial/sensitive-news.md`) once it is approved.
+- [ ] Both kinds follow the sensitive-news policy (`docs/editorial/sensitive-news.md`), approved on 2026-10-27. Until the user decides otherwise, subjects it holds for review are skipped, not proposed.
 - [ ] A new category needs at least 10 reviewed Real English cards before it is added, as the card library's unit test requires.
 
 ### Verification
@@ -2238,7 +2241,7 @@ Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code
 | Provider or AI outage breaks browsing | Medium | High | Async separation, timeouts, failure states, existing-content continuity. | Does not block browsing; alerts operations. On hold with M6–M8. |
 | AI costs grow unexpectedly | Low | High | Written articles cost no model calls; for M7–M8 if resumed: pre-filtering, quotas, caps, caching, usage logs, kill switch. | Stops generation at limit. |
 | Writing and reviewing articles takes longer than expected | High | Medium | Batches of about one article per category, each with a time estimate first; a smaller launch inventory with the user's approval. | Slows launch; does not block it. |
-| Readers find the articles dry or narrow | Medium | Medium | Categories and topics chosen with the site's main reader; explainers mixed with news. | Prompts a change of topics or categories. |
+| Readers find the articles dry or narrow | Medium | Medium | Topics chosen with the site's main reader within the six categories kept on 2026-10-27; explainers mixed with news. | Prompts a change of topics or categories. |
 | Context cache returns the wrong word sense | Medium | Medium | Sentence hash, provider/schema version, contextual validation. | Requires cache invalidation/fix. |
 | Expression matching corrupts text or overlaps words | Medium | High | Longest-match algorithm, exact reconstruction fixtures, occurrence offsets. | Blocks M4 exit. |
 | Hundreds of interactive tokens harm accessibility/performance | Medium | High | Keyboard strategy, DOM profiling, mobile/assistive QA. | Blocks M4/launch. |
@@ -2314,6 +2317,9 @@ Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code
 | 2026-10-27 | Write articles in Claude Code sessions instead of ingesting and generating them: explainers written from general knowledge with listed references, and adaptations of GOV.UK stories picked by hand. The user reviews every article before publishing it. Chosen by the user: Newslingo is a small, non-commercial project with no budget for a lawyer, a paid news API or paid model calls. | M6–M8 are on hold, and milestone W comes between M5 and M9. Articles cost no API calls, as with the editorial dictionary, and arrive in batches as fast as they can be written and reviewed. |
 | 2026-10-27 | Use GOV.UK news under the Open Government Licence v3.0 as the only news source, with stories picked by hand (ADR-004). Each adaptation credits the department and GOV.UK and shows the licence statement. | No key, contract or fee. A rough count over four weeks found GOV.UK covers AI, Technology, World and Business thinly and from the UK government's point of view, about two AI stories a week, so explainers fill the gaps and cover the other categories. |
 | 2026-10-27 | Give every article a kind: news, adapted from one source, or an explainer, written from general knowledge with listed references. Readers see which kind they are reading. | Explainers have no single source, so their source fields become optional for that kind only, and the "About this article" box and the publication check change with them (W). |
+| 2026-10-27 | Keep the six existing categories: AI, Technology, World, Business, Entertainment and Beauty. Chosen by the user. | Every category already has its Real English cards. GOV.UK has no Entertainment or Beauty news, so those two get explainers only. |
+| 2026-10-27 | Approve the sensitive-news policy, and skip every subject it holds for review instead of holding it, until the user decides otherwise. Chosen by the user. | No war, disaster, election, crime, health, religion or migration stories, no story that mentions Turkey, Cyprus or the PKK, and no product launches. The Turkey default needs no lawyer while those stories are skipped, and the question of held subjects at A2 does not arise. |
+| 2026-10-27 | Rotate A2, B1, B2 and C1 within each category, and write A2 at 150–250 English words, B1 at 250–350, B2 at 300–450 and C1 at 450–650, never more than 900. Accepted by the user as proposed. | Every level appears in every category. Lengths stay close to the demo articles and within the page budget (§17). |
 
 ### Open decisions
 
@@ -2326,13 +2332,13 @@ Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code
 | Admin authentication | Before M5 | Resolved on 2026-10-14: Better Auth with an email, a password and an authenticator-app code (ADR-003). |
 | Hosting and managed PostgreSQL | Before M9 | Choose based on operational simplicity, cost and regional needs; readers can reach the site only once it is hosted. |
 | Scheduler | Before M8 | On hold with M8. |
-| CEFR assignment mix and verification rule | Before W's first batch | Proposed: in each category, rotate A2, B1, B2 and C1 so every level appears. An independent level check waits for the CEFR classifier. |
-| Target length per level | Before W's first batch | Proposed, close to the demo articles: A2 150–250 English words, B1 250–350, B2 300–450, C1 450–650, never more than 900. |
-| Categories | Before W's first batch | The user decides with the site's main reader. Existing slugs stay and unwanted categories are switched off; a new category needs 10 reviewed Real English cards. |
+| CEFR assignment mix and verification rule | Before W's first batch | Mix resolved on 2026-10-27: in each category, rotate A2, B1, B2 and C1 so every level appears. Still open: the independent level check, which waits for the CEFR classifier. |
+| Target length per level | Before W's first batch | Resolved on 2026-10-27: A2 150–250 English words, B1 250–350, B2 300–450, C1 450–650, never more than 900. |
+| Categories | Before W's first batch | Resolved on 2026-10-27: the six existing categories stay. |
 | Moderation cadence and freshness SLA | Before M8 | On hold with M8. |
 | Active-content archival duration | Before M8 | On hold with M8. Written articles stay published until an admin archives them. |
 | AI daily budget and batch limits | Before M7/M8 | On hold with M7 and M8: written articles use no paid API. |
-| Editorial policy for sensitive news | Before W's first batch | Drafted on 2026-10-26 in `docs/editorial/sensitive-news.md`, awaiting the user's approval. |
+| Editorial policy for sensitive news | Before W's first batch | Resolved on 2026-10-27: `docs/editorial/sensitive-news.md` approved, with held subjects skipped for now. Its audience question stays open; proposed: adults. |
 | Launch inventory | Before M9 | Proposed: 3–5 reviewed articles per category at launch, growing toward the 10–15 target. |
 
 ---
@@ -2444,6 +2450,6 @@ Slices 1–5 are complete, and with them the Reader Release (M1–M3). On 2026-0
 
 **On 2026-10-27 the plan changed course.** Research for M6 found no free news source that covers all six categories and allows adaptation without a licence or a lawyer's opinion. GOV.UK news allows it (ADR-004), but covers only AI, Technology, World and Business, and thinly. Articles are now written in Claude Code sessions, explainers plus GOV.UK stories picked by hand, and M6–M8 are on hold (§19, 2026-10-27).
 
-Next is milestone W, written articles. Four decisions come before its first batch (§19 open decisions): the categories, which the user is choosing with the site's main reader; the sensitive-news policy in `docs/editorial/sensitive-news.md`; the CEFR mix; and the target length per level. The code can start before them: the article kind, the reader and admin changes, and the import command.
+Next is milestone W, written articles. The four decisions its first batch needed were settled the same day (§19): the six categories stay, the sensitive-news policy is approved with held subjects skipped for now, each category rotates A2 to C1, and each level has a target length. What remains is W's code: the article kind, the reader and admin changes, and the import command. Then comes the first batch.
 
 Do not build live news ingestion or automated AI generation while M6–M8 are on hold.
