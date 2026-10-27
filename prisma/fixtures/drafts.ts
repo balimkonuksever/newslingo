@@ -7,9 +7,9 @@
  * have no editorial dictionary entries.
  */
 
-import type { DemoArticle } from "./articles";
+import type { DemoNews } from "./articles";
 
-export type DemoDraft = Omit<DemoArticle, "publishedOnSiteAt">;
+export type DemoDraft = Omit<DemoNews, "publishedOnSiteAt">;
 
 export const DEMO_DRAFTS: ReadonlyArray<DemoDraft> = [
   {
@@ -19,6 +19,7 @@ export const DEMO_DRAFTS: ReadonlyArray<DemoDraft> = [
       "Readers can borrow a drill, a ladder or a sewing machine with the same card they use for books.",
     categorySlug: "world",
     difficulty: "B1",
+    kind: "NEWS",
     sourcePublishedAt: new Date("2026-10-20T06:00:00Z"),
     paragraphs: [
       {

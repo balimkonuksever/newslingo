@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { categoryAccent } from "@/components/news/category-accent";
 import { DifficultyBadge } from "@/components/shared/difficulty-badge";
+import { ExplainerBadge } from "@/components/shared/explainer-badge";
 import { formatArticleDate } from "@/lib/dates";
 import type { ArticleSummary } from "@/server/articles/queries";
 
@@ -26,12 +27,15 @@ export function ArticleCard({
         featured ? "lg:p-8" : ""
       }`}
     >
-      <p
-        className={`text-xs font-semibold tracking-wider uppercase ${
-          categoryAccent(article.category.slug).text
-        }`}
-      >
-        {article.category.name}
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span
+          className={`text-xs font-semibold tracking-wider uppercase ${
+            categoryAccent(article.category.slug).text
+          }`}
+        >
+          {article.category.name}
+        </span>
+        {article.kind === "EXPLAINER" && <ExplainerBadge />}
       </p>
       <Heading
         className={`mt-2 font-serif font-semibold wrap-break-word text-ink ${

@@ -17,6 +17,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { ArticleView } from "@/components/article/article-view";
 import { eyebrow, textLink } from "@/components/ui/styles";
 import { canModerate, isWebAddress } from "@/domain/moderation";
+import { SOURCE_LICENCES } from "@/domain/sources";
 import { ADMIN_ARTICLES_PATH } from "@/lib/admin-article-filters";
 import { formatArticleDate, formatDateTime } from "@/lib/dates";
 import { formatWordCount } from "@/lib/format";
@@ -70,43 +71,82 @@ function visibility(article: AdminArticleDetail) {
     : "On the site.";
 }
 
-function sourceRows({
-  sourceName,
-  sourceUrl,
-  sourcePublishedAt,
-}: AdminArticleDetail): Array<[string, ReactNode]> {
-  // The database requires all three on news and forbids them on explainers.
+/**
+ * A link that opens in a new tab. Only a web address becomes a link, so a
+ * stored `javascript:` URL or the like is shown as text and never runs.
+ */
+function WebAddress({
+  href,
+  children,
+}: {
+  href: string;
+  children?: ReactNode;
+}) {
+  if (!isWebAddress(href)) {
+    return <span className="break-all">{children ?? href}</span>;
+  }
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`${textLink} break-all`}
+    >
+      {children ?? href}
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
+  );
+}
+
+/** What the article is, and what it credits: its source, or its references. */
+function creditRows(article: AdminArticleDetail): Array<[string, ReactNode]> {
+  const { sourceName, sourceUrl, sourcePublishedAt, sourceLicence } = article;
+
+  if (article.kind === "EXPLAINER") {
+    return [
+      ["Kind", "Explainer, written by Newslingo"],
+      ["Written", formatArticleDate(article.datedAt)],
+      [
+        "References",
+        article.references.length > 0 ? (
+          <ol className="list-decimal space-y-1 pl-5">
+            {article.references.map(
+              ({ title, publisher, url, checkedAt }, index) => (
+                <li key={index}>
+                  <WebAddress href={url}>{title}</WebAddress>, {publisher}.
+                  Checked {formatArticleDate(checkedAt)}.
+                </li>
+              ),
+            )}
+          </ol>
+        ) : (
+          "None yet"
+        ),
+      ],
+    ];
+  }
+
+  // The database requires all three on news.
   if (!sourceName || !sourceUrl || !sourcePublishedAt) {
-    return [["Source", "None: an explainer lists references instead"]];
+    return [["Kind", "News"]];
   }
 
   return [
+    ["Kind", "News, adapted from one source"],
     ["Source", sourceName],
-    [
-      "Original article",
-      // Only a web address becomes a link, so a stored `javascript:` URL or
-      // the like is shown as text and never runs.
-      isWebAddress(sourceUrl) ? (
-        <a
-          href={sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`${textLink} break-all`}
-        >
-          {sourceUrl}
-          <span className="sr-only"> (opens in a new tab)</span>
-        </a>
-      ) : (
-        <span className="break-all">{sourceUrl}</span>
-      ),
-    ],
+    ["Original article", <WebAddress key="original" href={sourceUrl} />],
     ["Source published", formatDateTime(sourcePublishedAt)],
+    [
+      "Licence",
+      sourceLicence ? SOURCE_LICENCES[sourceLicence].name : "None recorded",
+    ],
   ];
 }
 
-function SourceDetails({ article }: { article: AdminArticleDetail }) {
+function ArticleDetails({ article }: { article: AdminArticleDetail }) {
   const rows: Array<[string, ReactNode]> = [
-    ...sourceRows(article),
+    ...creditRows(article),
     ["Added", formatDateTime(article.createdAt)],
     ["Last changed", formatDateTime(article.updatedAt)],
     [
@@ -253,15 +293,15 @@ export default async function AdminArticlePage(
               )}
             </section>
 
-            <section aria-labelledby="source-details">
+            <section aria-labelledby="details">
               <h2
-                id="source-details"
+                id="details"
                 className="font-serif text-2xl font-semibold tracking-tight text-ink"
               >
-                Source details
+                Details
               </h2>
               <div className="mt-4">
-                <SourceDetails article={article} />
+                <ArticleDetails article={article} />
               </div>
             </section>
 

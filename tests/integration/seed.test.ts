@@ -6,6 +6,7 @@ import { db } from "@/server/db/client";
 import {
   DEMO_ARTICLES,
   DEMO_SOURCE_NAME,
+  demoDatedAt,
   demoSourceUrl,
 } from "../../prisma/fixtures/articles";
 import { REFERENCE_CATEGORIES } from "../../prisma/reference/categories";
@@ -226,7 +227,7 @@ describe("demo seed", () => {
     expect(await db.article.count()).toBe(0);
   });
 
-  it("seeds every fixture as a published, attributed article with ordered paragraph pairs", async () => {
+  it("seeds every fixture as a published, credited article with ordered paragraph pairs", async () => {
     await provisionReferenceData(db);
     await seedDemoArticles(db);
 
@@ -234,6 +235,7 @@ describe("demo seed", () => {
       include: {
         category: { select: { slug: true } },
         paragraphs: { orderBy: { order: "asc" } },
+        references: { orderBy: { order: "asc" } },
       },
     });
 
@@ -252,14 +254,39 @@ describe("demo seed", () => {
         difficulty: fixture.difficulty,
         status: "PUBLISHED",
         category: { slug: fixture.categorySlug },
-        sourceName: DEMO_SOURCE_NAME,
-        sourceUrl: demoSourceUrl(fixture.slug),
+        kind: fixture.kind,
+        ...(fixture.kind === "NEWS"
+          ? {
+              sourceName: DEMO_SOURCE_NAME,
+              sourceUrl: demoSourceUrl(fixture.slug),
+              sourcePublishedAt: fixture.sourcePublishedAt,
+            }
+          : { sourceName: null, sourceUrl: null, sourcePublishedAt: null }),
+        sourceLicence: null,
         sourceImageUrl: null,
-        sourcePublishedAt: fixture.sourcePublishedAt,
+        datedAt: demoDatedAt(fixture),
         publishedOnSiteAt: fixture.publishedOnSiteAt,
         wordCount,
         readingTimeMinutes: estimateReadingMinutes(wordCount),
       });
+      expect(
+        article?.references.map(
+          ({ order, title, publisher, url, checkedAt }) => ({
+            order,
+            title,
+            publisher,
+            url,
+            checkedAt,
+          }),
+        ),
+      ).toEqual(
+        fixture.kind === "EXPLAINER"
+          ? fixture.references.map((reference, index) => ({
+              order: index + 1,
+              ...reference,
+            }))
+          : [],
+      );
       expect(
         article?.paragraphs.map(({ order, english, turkish }) => ({
           order,
@@ -285,6 +312,14 @@ describe("demo seed", () => {
     const second = await snapshotArticles();
     expect(second).toEqual(first);
     expect(await db.articleParagraph.count()).toBe(demoParagraphCount);
+    expect(await db.articleReference.count()).toBe(
+      DEMO_ARTICLES.reduce(
+        (total, fixture) =>
+          total +
+          (fixture.kind === "EXPLAINER" ? fixture.references.length : 0),
+        0,
+      ),
+    );
   });
 
   it("restores a demo article that was edited in the database", async () => {

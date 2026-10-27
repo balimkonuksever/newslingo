@@ -134,7 +134,7 @@ Admins sign in at `/admin/sign-in`: the password first, then the six-digit code 
 
 After signing in, `/admin` shows how many articles each status holds, and `/admin/articles` lists every article, newest story first. Filter the list by status and category; the filters live in the URL, as in `/admin/articles?status=draft&category=world`, and the count beside each choice is the number of articles it would show.
 
-An article's page shows it exactly as readers will see it, through the same reader components as the public page, beside its source details and its moderation history. It offers only the actions the article's status allows:
+An article's page shows it exactly as readers will see it, through the same reader components as the public page, beside its details, which say whether it is news or an explainer and show its source and licence or its references, and its moderation history. It offers only the actions the article's status allows:
 
 | Status    | Actions                                                              |
 | --------- | -------------------------------------------------------------------- |

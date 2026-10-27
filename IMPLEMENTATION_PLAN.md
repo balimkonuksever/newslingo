@@ -722,11 +722,11 @@ newslingo/
 │   │   │   ├── sign-in-forms.tsx     # client: the password and code forms
 │   │   │   └── status-badge.tsx
 │   │   ├── article/
+│   │   │   ├── about-this-article.tsx  # the credit: a source, its licence, or references (W)
 │   │   │   ├── article-reader.tsx    # client: controls + reading position
 │   │   │   ├── article-view.tsx      # the article as readers see it, also the admin preview
 │   │   │   ├── paragraph-pair.tsx
-│   │   │   ├── reading-anchor.ts
-│   │   │   └── source-attribution.tsx
+│   │   │   └── reading-anchor.ts
 │   │   ├── learning/             # contextual lookup (M4)
 │   │   │   ├── english-text.tsx      # words and expressions as spans, one tab stop
 │   │   │   ├── expression-details.tsx  # a Real English card
@@ -745,6 +745,7 @@ newslingo/
 │   │   │   ├── category-nav.tsx
 │   │   │   ├── difficulty-badge.tsx
 │   │   │   ├── empty-state.tsx
+│   │   │   ├── explainer-badge.tsx   # marks explainers on cards and pages (W)
 │   │   │   ├── site-footer.tsx
 │   │   │   └── site-header.tsx
 │   │   └── ui/                   # shared class lists only
@@ -1459,13 +1460,13 @@ Publish articles that Claude writes in Claude Code sessions and the user reviews
 - [x] Record the source's licence on news articles, so a GOV.UK adaptation carries the Open Government Licence statement and link. The licence is recorded; showing it is a reader item below.
 - [x] Decide how lists that sort by the source's publication time order explainers, which have none. Decided on 2026-10-27: every article has a `datedAt`, its source's publication time for news and the day it was written for an explainer, and lists sort and filter by it (§8.7, §19).
 
-The data items and the publication check were built on 2026-10-27 (§8.7). Until the reader items are done, an explainer shows no source and no "About this article" box; none can exist before the import, which comes after them.
+The data items and the publication check were built on 2026-10-27 (§8.7), and the reader and admin items the same day.
 
 ### Work items — reader and admin
 
-- [ ] Show the kind on article cards and pages, so an explainer is never mistaken for news.
-- [ ] Give the "About this article" box a version for each kind: news credits its source, links to it and shows the licence; an explainer says Newslingo wrote it and lists its references.
-- [ ] Show the kind and the references or licence in the admin preview's source details.
+- [x] Show the kind on article cards and pages, so an explainer is never mistaken for news. An "Explainer" badge sits beside the category, and an explainer's date reads "Written"; news has no badge.
+- [x] Give the "About this article" box a version for each kind: news credits its source, links to it and shows the licence; an explainer says Newslingo wrote it and lists its references. A GOV.UK story also names GOV.UK beside the department and shows the licence statement with a link to the licence (`src/components/article/about-this-article.tsx`, `src/domain/sources.ts`). The site footer no longer says every article names an original source.
+- [x] Show the kind and the references or licence in the admin preview's source details. The section is now called "Details".
 - [x] Extend `publicationProblems`: news needs complete attribution, and GOV.UK news its licence; an explainer needs at least one reference with a web address.
 
 ### Work items — content files and import
@@ -1489,7 +1490,7 @@ The data items and the publication check were built on 2026-10-27 (§8.7). Until
 - The import is idempotent, refuses invalid files without writing anything, and never changes a published or archived article.
 - An explainer and a GOV.UK adaptation each render with the right "About this article" box, and every word opens a dictionary entry.
 - The publication check refuses an explainer without references and a GOV.UK article without its licence.
-- The demo fixtures include an explainer, so the browser tests cover both kinds on desktop and phone.
+- The demo fixtures include an explainer, so the browser tests cover both kinds on desktop and phone. Since 2026-10-27 the skincare demo article is the demo explainer, with two fixture references on the reserved `.example` domain; its words, key vocabulary and reviewed Turkish are unchanged.
 - The demo seed still never runs in production, and the import never writes demo articles.
 
 ### Exit gate

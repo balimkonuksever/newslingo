@@ -1,4 +1,4 @@
-import { requiredLicence, SOURCE_LICENCE_NAMES } from "@/domain/sources";
+import { requiredLicence, SOURCE_LICENCES } from "@/domain/sources";
 import type {
   ArticleKind,
   ArticleStatus,
@@ -162,7 +162,7 @@ function creditProblems({
 
   return licence && sourceLicence !== licence
     ? [
-        `Its source is published under ${SOURCE_LICENCE_NAMES[licence]}, which the article does not record.`,
+        `Its source is published under the ${SOURCE_LICENCES[licence].name}, which the article does not record.`,
       ]
     : [];
 }

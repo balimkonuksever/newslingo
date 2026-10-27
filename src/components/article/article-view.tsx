@@ -3,13 +3,14 @@ import type { ReactNode } from "react";
 
 import { ArticleReader } from "@/components/article/article-reader";
 import { ParagraphPair } from "@/components/article/paragraph-pair";
-import { SourceAttribution } from "@/components/article/source-attribution";
+import { AboutThisArticle } from "@/components/article/about-this-article";
 import { EXPRESSION_SOURCE_NOTE } from "@/components/learning/expression-details";
 import { KeyVocabularyList } from "@/components/learning/key-vocabulary-list";
 import { RealEnglishList } from "@/components/learning/real-english-list";
 import { WordLookup } from "@/components/learning/word-lookup";
 import { categoryAccent } from "@/components/news/category-accent";
 import { DifficultyBadge } from "@/components/shared/difficulty-badge";
+import { ExplainerBadge } from "@/components/shared/explainer-badge";
 import { textLink } from "@/components/ui/styles";
 import { formatArticleDate } from "@/lib/dates";
 import { formatExpressionCount, formatWordCount } from "@/lib/format";
@@ -17,7 +18,8 @@ import type { ArticleDetail } from "@/server/articles/queries";
 
 /**
  * An article as readers see it: the header, the bilingual reader, its key
- * vocabulary and Real English, and the source credit. The public article
+ * vocabulary and Real English, and its credit: the source for news, the
+ * references for an explainer. The public article
  * page and the admin preview both render this, so a draft looks exactly as
  * it will once published.
  */
@@ -34,14 +36,17 @@ export function ArticleView({
       {children}
 
       <header>
-        <Link
-          href={`/category/${article.category.slug}`}
-          className={`text-xs font-semibold tracking-wider uppercase hover:underline ${
-            categoryAccent(article.category.slug).text
-          }`}
-        >
-          {article.category.name}
-        </Link>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Link
+            href={`/category/${article.category.slug}`}
+            className={`text-xs font-semibold tracking-wider uppercase hover:underline ${
+              categoryAccent(article.category.slug).text
+            }`}
+          >
+            {article.category.name}
+          </Link>
+          {article.kind === "EXPLAINER" && <ExplainerBadge />}
+        </p>
         <h1 className="mt-2 font-serif text-4xl leading-tight font-semibold tracking-tight wrap-break-word text-ink sm:text-5xl">
           {article.title}
         </h1>
@@ -54,7 +59,7 @@ export function ArticleView({
           <DifficultyBadge level={article.difficulty} showLabel />
           <span>{article.readingTimeMinutes} min read</span>
           <span>
-            Published{" "}
+            {article.kind === "EXPLAINER" ? "Written" : "Published"}{" "}
             <time dateTime={article.datedAt.toISOString()}>
               {formatArticleDate(article.datedAt)}
             </time>
@@ -136,14 +141,7 @@ export function ArticleView({
         </section>
       )}
 
-      {/* Only news has a source. An explainer's box, listing its references,
-          comes with W's reader work. */}
-      {article.sourceName && article.sourceUrl && (
-        <SourceAttribution
-          sourceName={article.sourceName}
-          sourceUrl={article.sourceUrl}
-        />
-      )}
+      <AboutThisArticle article={article} />
     </article>
   );
 }

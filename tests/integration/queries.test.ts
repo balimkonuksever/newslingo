@@ -448,6 +448,49 @@ describe("getPublicArticleBySlug", () => {
     });
   });
 
+  it("returns an explainer's references in order, and a news article's licence", async () => {
+    const category = await createCategory();
+    const explainer = await createExplainer(category.id, { slug: "explainer" });
+    await createArticle(category.id, {
+      slug: "gov-uk-story",
+      sourceUrl: "https://www.gov.uk/government/news/library-tools",
+      sourceLicence: "OGL_3_0",
+    });
+
+    // Inserted out of order on purpose.
+    for (const order of [2, 1]) {
+      await db.articleReference.create({
+        data: {
+          articleId: explainer.id,
+          order,
+          title: `Reference ${order}`,
+          publisher: "Example Encyclopedia",
+          url: `https://www.example.org/${order}`,
+          checkedAt: new Date("2026-10-27"),
+        },
+      });
+    }
+
+    expect(await getPublicArticleBySlug("explainer")).toMatchObject({
+      kind: "EXPLAINER",
+      sourceName: null,
+      references: [
+        {
+          title: "Reference 1",
+          publisher: "Example Encyclopedia",
+          url: "https://www.example.org/1",
+          checkedAt: new Date("2026-10-27"),
+        },
+        { title: "Reference 2" },
+      ],
+    });
+    expect(await getPublicArticleBySlug("gov-uk-story")).toMatchObject({
+      kind: "NEWS",
+      sourceLicence: "OGL_3_0",
+      references: [],
+    });
+  });
+
   it("marks each paragraph's expressions and gives each card once, in display order", async () => {
     const category = await createCategory();
     const article = await createArticle(category.id, { slug: "phrases" });
