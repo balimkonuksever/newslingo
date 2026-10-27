@@ -8,7 +8,7 @@ The **Reader Release** (milestones M1–M3) is in place. It runs entirely on Pos
 - category pages
 - a bilingual reader that alternates English paragraphs with their Turkish translations, with controls to hide the translation and change the text size
 
-M4, contextual vocabulary and Real English expressions, is complete: every English word in the reader can be looked up, and marked expressions open their Real English cards. M5, moderation, is complete: admins sign in at `/admin/sign-in`, review every article in any status, and publish, reject, archive or restore it, with each change recorded. Licensed news ingestion and AI adaptation are later milestones.
+M4, contextual vocabulary and Real English expressions, is complete: every English word in the reader can be looked up, and marked expressions open their Real English cards. M5, moderation, is complete: admins sign in at `/admin/sign-in`, review every article in any status, and publish, reject, archive or restore it, with each change recorded. Next is milestone W: articles written in Claude Code sessions, both explainers and adapted GOV.UK news, imported as drafts and published through the admin. Licensed news ingestion, automated AI adaptation and scheduled operation (M6–M8) are on hold.
 
 ## Stack
 

@@ -1,10 +1,10 @@
 # Newslingo Implementation Plan
 
 > Status: Working draft  
-> Last updated: 2026-10-26  
+> Last updated: 2026-10-27  
 > Product specification: `bilingual_news_english_learning_plan.md`  
-> Immediate target: seeded bilingual Reader Release  
-> Launch target: automated ingestion and draft generation with moderated publication
+> Immediate target: written articles (milestone W)  
+> Launch target: articles written in Claude Code sessions, explainers and adapted GOV.UK news, published through moderation
 
 ## 1. Purpose
 
@@ -13,13 +13,15 @@ This document converts the product specification into an executable engineering 
 The plan intentionally separates two outcomes:
 
 1. **Reader Release** — a polished bilingual reading experience backed by deterministic seed data.
-2. **Launch MVP** — contextual vocabulary, Real English expressions, moderation, licensed news ingestion, validated AI adaptation, and scheduled operation.
+2. **Launch MVP** — contextual vocabulary, Real English expressions, moderation, and articles written in Claude Code sessions: explainers written from general knowledge and adaptations of hand-picked GOV.UK news.
 
-This separation prevents the ingestion and AI pipeline from hiding usability or data-model problems in the core reader.
+This separation prevents the content pipeline from hiding usability or data-model problems in the core reader.
+
+Until 2026-10-27 the Launch MVP also included licensed news ingestion, automated AI adaptation and scheduled operation (M6–M8). They are on hold: Newslingo is a small, non-commercial project with no budget for a lawyer, a paid news API or paid model calls, so articles are written by hand instead (decision log, 2026-10-27).
 
 ### How to use this plan
 
-- Implementation milestones M1–M9 follow their dependency order unless the dependency map explicitly permits parallel work.
+- Implementation milestones follow their dependency order unless the dependency map explicitly permits parallel work. Milestone W, written articles, follows M5; M6–M8 are on hold, and M9 follows W.
 - M0 is a rolling decision track: an open decision blocks only the milestone that names it as a dependency, and all M0 items must close before launch.
 - A milestone is complete only when its exit gate passes.
 - Deferred features should not appear as non-functional controls in the UI.
@@ -30,7 +32,7 @@ This separation prevents the ingestion and AI pipeline from hiding usability or 
 
 ## 2. Product outcome
 
-Newslingo helps Turkish speakers improve their English by reading current news in a modern editorial experience.
+Newslingo helps Turkish speakers improve their English by reading news and short explainers in a modern editorial experience.
 
 The essential learning loop is:
 
@@ -50,6 +52,8 @@ The experience should feel like a high-quality news reader with learning built i
 
 ### Launch categories
 
+The user is reviewing the categories with the site's main reader (2026-10-27); this list stands until then.
+
 1. AI
 2. Technology
 3. World
@@ -63,7 +67,7 @@ The experience should feel like a high-quality news reader with learning built i
 - One CEFR adaptation per article in Version 1.
 - Supported levels: A2, B1, B2, and C1.
 - Human approval before publication at launch.
-- Clear source attribution and a link to the original source on every article.
+- Clear source attribution and a link to the original source on every news article; every explainer lists its references.
 - At least 10 reviewed Real English expressions per category at launch, growing toward the product target of 10–30.
 - A documented CEFR distribution target so the inventory does not collapse into one level.
 
@@ -118,7 +122,9 @@ These are the working defaults. Items marked **Open** must be resolved before th
 | Local database | Docker Compose | Accepted | Reproducible without a locally installed PostgreSQL server. |
 | Public article route | `/article/[slug]` | Accepted | Resolves the specification's `/article` versus `/news` inconsistency. |
 | Article difficulty | One CEFR level per article in V1 | Accepted | Lower generation cost and simpler storage. |
-| Publication | Generated content enters `DRAFT` | Accepted | Prevents unsafe automatic publishing. |
+| Publication | Imported and generated content enters `DRAFT` | Accepted | Prevents unsafe automatic publishing. |
+| Article writing | Claude writes articles in Claude Code sessions, and the user reviews them (milestone W) | Accepted | No paid API, licence or legal review; the same method as the editorial dictionary. Decided on 2026-10-27. |
+| Article kinds | News, adapted from one source, and explainers, written from general knowledge with references | Accepted | Explainers cover what free news sources cannot. Decided on 2026-10-27. |
 | Launch moderation | Human approval required | Accepted | Reduces factual, translation, and copyright risk. |
 | Seed data | PostgreSQL seed data, not a parallel mock-data path | Accepted | Ensures the first release exercises real queries and relationships. |
 | Images | Local owned placeholders or no image by default | Accepted | Avoids unclear external image rights. |
@@ -127,13 +133,13 @@ These are the working defaults. Items marked **Open** must be resolved before th
 | Search | Not a Reader Release requirement | Accepted | It does not block validation of the core reader. |
 | Search at launch | PostgreSQL full-text search | Accepted | Search is in the product MVP; a separate search service is unnecessary initially. |
 | Prisma workflow | Prisma ORM 7.10.0 with `prisma-client`, `prisma.config.ts`, and the PostgreSQL driver adapter | Accepted | ADR-001 pins the stable M2 generator, runtime, migration, and seeding workflow. |
-| News provider | One licensed RSS/API provider | Open | Licensing must be confirmed before ingestion work. |
-| AI provider/model | Anthropic Claude through the official SDK, `claude-opus-5` by default | Provider accepted | Structured outputs are supported. The model for each task is chosen by measured comparison (ML roadmap item 3) before M7. |
+| News source | GOV.UK news under the Open Government Licence v3.0, picked by hand (ADR-004) | Accepted | Explicit commercial and adaptation rights with no key, contract or fee. Decided on 2026-10-27. |
+| AI provider/model | Anthropic Claude through the official SDK, `claude-opus-5` by default | Provider accepted | Structured outputs are supported. The model for each task is chosen by measured comparison (ML roadmap item 3) before M7, which is on hold. |
 | Dictionary fallback | Contextual Claude lookup, cache-first | Accepted | Word plus sentence gives the contextual Turkish sense; results are cached in `VocabularyEntry`. |
 | Admin authentication | Better Auth: an email, a password and an authenticator-app code (ADR-003) | Accepted | Decided on 2026-10-14; no third-party service or host dependency. |
 | Hosting/database | Provider-neutral until deployment planning | Open | Does not block local Reader Release work. |
-| Scheduler | Vercel Cron or Trigger.dev | Open | Depends on hosting and operational needs. |
-| CEFR inventory mix | Assignment and verification policy to be defined | Open | Production generation needs an explicit level target and balance rule. |
+| Scheduler | Vercel Cron or Trigger.dev | On hold | Waits with M8. |
+| CEFR inventory mix | Assignment and verification policy to be defined | Open | Written articles need an explicit level target and balance rule before W's first batch. |
 
 Version numbers for framework and database dependencies will be verified for compatibility during bootstrap and then pinned in the lockfile. This plan does not assume floating dependency versions.
 
@@ -157,10 +163,13 @@ Version numbers for framework and database dependencies will be verified for com
 | Article-level Real English section | | ✓ | |
 | Category expression libraries | | ✓ | |
 | Protected admin moderation | | ✓ | |
-| One licensed news provider | | ✓ | |
-| Idempotent ingestion | | ✓ | |
-| AI educational rewrite and translation | | ✓ | |
-| Scheduled processing | | ✓ | |
+| Articles written in Claude Code sessions (W) | | ✓ | |
+| Explainers with references | | ✓ | |
+| Adapted GOV.UK news, picked by hand | | ✓ | |
+| Idempotent article import | | ✓ | |
+| Licensed news ingestion (M6, on hold) | | | ✓ |
+| Automated AI rewrite and translation (M7, on hold) | | | ✓ |
+| Scheduled processing (M8, on hold) | | | ✓ |
 | SEO, accessibility, security hardening | Baseline | ✓ | |
 | PostgreSQL full-text search | | ✓ | |
 | General user accounts | | | ✓ |
@@ -205,6 +214,35 @@ Next.js application
 
 ### 6.2 Launch MVP architecture
 
+Since 2026-10-27:
+
+```text
+Claude Code session: Claude writes, the user reviews
+      │
+      ├── explainer: general knowledge, with references
+      └── news: one GOV.UK story picked by hand (Open Government Licence v3.0)
+      │
+      ▼
+Article file in the repository
+(paragraphs, Turkish, dictionary senses, key vocabulary, Real English marks)
+      │
+      ▼
+Import command → validation → DRAFT
+      │
+      ▼
+Admin preview and publish (M5)
+      │
+      ▼
+Public reader routes
+
+Reader word/expression click
+      │
+      ▼
+Editorial dictionary entry, written ahead of time → UI
+```
+
+The automated pipeline that M6–M8 would build, on hold since 2026-10-27:
+
 ```text
 Licensed provider
       │
@@ -241,8 +279,8 @@ Local contextual cache → External fallback → Validate → Cache → UI
 - `src/components`: presentation and tightly scoped interaction components.
 - `src/server`: server-only database and external-service integrations.
 - `src/domain`: shared schemas and domain contracts where a real boundary exists.
-- `src/jobs`: scheduled orchestration added only when ingestion begins.
-- `prisma`: schema, migrations, deterministic fixtures, and seed entry point.
+- `src/jobs`: scheduled orchestration added only when ingestion begins (on hold with M8).
+- `prisma`: schema, migrations, deterministic fixtures, seed entry point, and the written articles with their editorial dictionary (W).
 
 ### 6.4 Engineering rules
 
@@ -284,9 +322,9 @@ Added during the moderation milestone:
 | Route | Responsibility |
 |---|---|
 | `/admin` | Operational summary and failure counts. Built in M5: article counts by status, failed included, each linking to the filtered list. |
-| `/admin/articles` | Filtered article list; raw-candidate views are added in M6. Built in M5: every article in any status, newest story first, filtered by status and category in the URL, with counts that match the filters, at most 50 at a time. |
-| `/admin/articles/[id]` | Preview, source lineage, generation attempts, moderation actions. Built in M5: the preview through the public reader, the source details, the moderation history and the actions the article's status allows; generation attempts arrive with M7. |
-| `/admin/jobs` | Ingestion/generation runs and failures. |
+| `/admin/articles` | Filtered article list; raw-candidate views wait with M6. Built in M5: every article in any status, newest story first, filtered by status and category in the URL, with counts that match the filters, at most 50 at a time. |
+| `/admin/articles/[id]` | Preview, source lineage, generation attempts, moderation actions. Built in M5: the preview through the public reader, the source details, the moderation history and the actions the article's status allows; generation attempts wait with M7. W adds the article's kind and its references or licence. |
+| `/admin/jobs` | Ingestion/generation runs and failures. On hold with M6–M8. |
 
 Authentication and authorization must protect both the pages and their server actions/handlers.
 
@@ -305,7 +343,7 @@ POST /api/cron/news-ingestion
 
 `POST /api/dictionary` is preferred over a query-string GET because sentence context may be long. Its input and output must be schema validated, rate limited, and bounded in size.
 
-Publishing and archiving were built in M5 as server actions on the admin article page instead of the two `/api/admin/articles/[id]/…` handlers above (decision 2026-10-25). Ingestion, regeneration and cron handlers are decided in their own milestones.
+Publishing and archiving were built in M5 as server actions on the admin article page instead of the two `/api/admin/articles/[id]/…` handlers above (decision 2026-10-25). Ingestion, regeneration and cron handlers are decided in their own milestones, which are on hold; written articles reach the database through a command, not an HTTP interface (W).
 
 ---
 
@@ -317,6 +355,7 @@ Publishing and archiving were built in M5 as server actions on the admin article
 - Each later feature adds its models in the milestone that owns them.
 - Never edit a migration that has been applied outside an isolated local reset.
 - Production-safe reference provisioning uses stable identifiers/slugs, is idempotent, and contains categories plus approved expression-library content only.
+- Written articles reach production through the article import (W), which writes them as drafts for review and never includes demo articles.
 - Development/test demo seeding is a separate command containing sample articles and test fixtures.
 - Production is never reset or seeded with demo articles.
 - Production schema changes use forward migrations and an expand/contract approach where needed.
@@ -496,6 +535,8 @@ The article reader uses it for a database-backed “Key vocabulary from this art
 
 ### 8.4 Ingestion migration
 
+On hold with M6 since 2026-10-27.
+
 #### `RawNewsArticle`
 
 Key fields:
@@ -550,6 +591,8 @@ Lineage relations:
 
 ### 8.5 AI-generation migration
 
+On hold with M7 since 2026-10-27.
+
 #### `GenerationAttempt`
 
 Stores:
@@ -598,6 +641,15 @@ Initial generation may create a normal `DRAFT` Article. Regenerating an unpublis
 - `AudioAsset`: article/paragraph/word TTS metadata.
 - PostgreSQL search vector and GIN index: explicit SQL migration in M9.
 
+### 8.7 Written-articles migration
+
+Added by milestone W:
+
+- `ArticleKind`: `NEWS` or `EXPLAINER`. `Article.kind` defaults to `NEWS`, so existing articles keep their meaning.
+- `Article.sourceName`, `sourceUrl` and `sourcePublishedAt` become optional for explainers only. A CHECK constraint keeps all three required when the kind is `NEWS`.
+- `Article.sourceLicence`: optional on news, required for GOV.UK adaptations by the publication check, so the "About this article" box can show the Open Government Licence statement and link.
+- `ArticleReference`: an explainer's references, with `articleId`, `order` starting at 1, `title`, `publisher`, `url` and `checkedAt`. Unique `(articleId, order)`, deleted with its article.
+
 ---
 
 ## 9. Proposed directory structure
@@ -609,10 +661,13 @@ newslingo/
 │       └── ci.yml
 ├── prisma/
 │   ├── migrations/
+│   ├── editorial/                # production content written in sessions (W)
+│   │   ├── articles/             # one file per written article
+│   │   └── dictionary/           # the reviewed editorial dictionary, shared with the demo
 │   ├── fixtures/                 # development/test data only
 │   │   ├── articles.ts           # demo articles
 │   │   ├── drafts.ts             # an unpublished draft for the admin pages (M5)
-│   │   ├── dictionary/           # editorial entries for their words (M4)
+│   │   ├── dictionary/           # editorial entries for their words (M4); moves to editorial/ in W
 │   │   ├── expression-occurrences.ts  # where cards occur in them (M4)
 │   │   └── key-vocabulary.ts     # each article's key words (M4)
 │   ├── reference/                # production reference data
@@ -629,6 +684,7 @@ newslingo/
 │       └── seed/                 # owned/licensed local assets only
 ├── scripts/
 │   ├── admin-account.ts          # create an admin, or reset one's sign-in
+│   ├── import-articles.ts        # validate written articles, write them as drafts (W)
 │   ├── reset-test-database.ts    # empty the test database, reload demo data
 │   └── with-test-database.ts     # guarded runner for test-database commands
 ├── src/
@@ -695,7 +751,7 @@ newslingo/
 │   │   ├── expressions.ts        # Real English cards and marks for the reader
 │   │   └── moderation.ts         # admin action rules, publication checks (M5)
 │   ├── generated/prisma/         # generated and ignored
-│   ├── jobs/                     # scheduled orchestration later
+│   ├── jobs/                     # scheduled orchestration, on hold with M8
 │   ├── lib/
 │   │   ├── admin-article-filters.ts  # the admin list's URL filters (M5)
 │   │   ├── article-filters.ts
@@ -730,9 +786,9 @@ newslingo/
 │       │   ├── queries.ts        # admin reads: every status, counts, history
 │       │   └── workflow.ts       # publish, archive, restore, edits
 │       ├── rate-limit.ts         # in-memory limits for lookups and sign-in
-│       ├── ingestion/            # ingestion milestone
+│       ├── ingestion/            # ingestion milestone, on hold
 │       │   └── providers/
-│       └── ai/                   # generation milestone
+│       └── ai/                   # generation milestone, on hold
 ├── tests/
 │   ├── e2e/                      # Playwright journeys and axe scans
 │   ├── integration/              # Vitest against the test database
@@ -797,6 +853,8 @@ NEWS_API_KEY=
 CRON_SECRET=
 ```
 
+Both wait with M6 and M8. Written articles need no new variable: GOV.UK's API needs no key, and Claude reads it during the writing session, not at run time.
+
 Rules:
 
 - `.env.example` contains names and safe documentation, never secrets.
@@ -843,7 +901,10 @@ db:reset
 db:studio
 admin:create
 admin:reset
+articles:import
 ```
+
+`articles:import` (W) validates the written articles in `prisma/editorial/` and writes new or changed ones as drafts. It refuses the whole batch if any file is invalid, never changes an article that is not a draft, and, like the admin commands, waits for a typed confirmation before writing to a database that is not on this machine.
 
 `admin:create` creates an admin and `admin:reset` gives one a new password and authenticator app; no page can do either (ADR-003). Both show the target database and wait for a typed confirmation, which is the database host when it is not on this machine. They take passwords at a hidden prompt, never as arguments. Both set up the authenticator app before finishing: a creation whose setup does not finish is removed, and an admin whose reset stops half-way opens no admin page until it is run again.
 
@@ -885,21 +946,22 @@ M3 Reader                                  │
        ├───────────────┐                   │
        ▼               ▼                   │
 M4 Learning layer   M5 Article moderation  │
-       │               ▼                   │
-       │            M6 Ingestion +         │
-       │            candidate admin        │
-       └───────────────┼───────────────────┘
-                       ▼
-                 M7 AI generation
-                       ▼
-                 M8 Scheduled operation
-                       ▼
-                 M9 Search and hardening
-                       ▼
-                     Launch
+       │               │                   │
+       └───────┬───────┘                   │
+               ▼                           │
+       W Written articles ◄────────────────┘
+               ▼
+       M9 Search and hardening
+               ▼
+             Launch
+
+On hold since 2026-10-27:
+M6 Ingestion + candidate admin → M7 AI generation → M8 Scheduled operation
 ```
 
 The Reader Release consists of M1–M3. M0 is not a sequential implementation milestone: decisions about providers, authentication, or hosting may remain open while unrelated work proceeds, but each must close before the milestone that names it as a dependency.
+
+Milestone W has a letter rather than a number so that M6–M8 keep their names and the decision log's references to them stay correct.
 
 ---
 
@@ -916,13 +978,15 @@ Turn the remaining launch-sensitive choices into explicit decisions before they 
 - [x] Choose one difficulty version per article for V1.
 - [x] Choose `/article/[slug]` as the canonical public route.
 - [x] Require moderation before generated content is published.
-- [ ] Select a news provider and document:
+- [x] Select a news provider and document:
   - commercial/derivative-content rights
   - permitted source content depth
   - attribution requirements
   - image-use rights
   - request limits
   - content retention restrictions
+
+  Done on 2026-10-27: GOV.UK news under the Open Government Licence v3.0, with stories picked by hand (ADR-004, `docs/sources/gov-uk.md`).
 - [ ] Define the editorial adaptation policy:
   - no extensive source wording
   - no invented facts or quotations
@@ -930,10 +994,12 @@ Turn the remaining launch-sensitive choices into explicit decisions before they 
   - natural Turkish translation
   - required attribution
   - unsuitable/sensitive-news handling
-- [ ] Select the AI provider/model and confirm structured-output support. Provider selected on 2026-09-25: Anthropic Claude, with structured outputs. The model for each task is still to be chosen by measured comparison.
+
+  The sensitive-news part was drafted on 2026-10-26 in `docs/editorial/sensitive-news.md` and awaits approval. Milestone W's editorial rules cover the rest for written articles.
+- [ ] Select the AI provider/model and confirm structured-output support. Provider selected on 2026-09-25: Anthropic Claude, with structured outputs. The model for each task is still to be chosen by measured comparison. On hold with M7 since 2026-10-27.
 - [x] Select the contextual dictionary fallback: a contextual Claude lookup, cache-first (2026-09-25).
 - [x] Select admin authentication: Better Auth with an email, a password and an authenticator-app code, for admins only (2026-10-14, ADR-003).
-- [ ] Select hosting, managed PostgreSQL, and scheduler.
+- [ ] Select hosting, managed PostgreSQL, and scheduler. The scheduler waits with M8.
 - [ ] Set operational limits:
   - candidates fetched per run
   - articles generated per run/day
@@ -941,16 +1007,18 @@ Turn the remaining launch-sensitive choices into explicit decisions before they 
   - AI budget ceiling
   - job frequency
   - active-content and archive policy
+
+  On hold with M6–M8 since 2026-10-27.
 - [x] Confirm PostgreSQL full-text search as Launch MVP scope.
 - [x] Select and document the compatible Prisma workflow before M2.
 - [ ] Define the production CEFR assignment mix and shortage-filling rule.
 - [ ] Define mandatory finished-article difficulty verification.
-- [ ] Define the moderation cadence, maximum draft backlog, and public-freshness SLA.
+- [ ] Define the moderation cadence, maximum draft backlog, and public-freshness SLA. On hold with M8.
 - [ ] Define launch-blocking quality metrics.
 
 ### Dependencies
 
-None. Provider licensing blocks M6; other unresolved decisions block their named milestones rather than the Reader Release.
+None. Provider licensing blocked M6 until 2026-10-27; other unresolved decisions block their named milestones rather than the Reader Release.
 
 ### Deliverables
 
@@ -962,7 +1030,7 @@ None. Provider licensing blocks M6; other unresolved decisions block their named
 
 ### Exit gate
 
-M0 is complete only when every launch-critical decision has an accepted result. Before any dependent milestone starts, its named M0 choices must be closed; provider usage rights and the sensitive-content policy must be approved before M6.
+M0 is complete only when every launch-critical decision has an accepted result. Before any dependent milestone starts, its named M0 choices must be closed; the sensitive-content policy must be approved before W's first batch of articles. Decisions that only M6–M8 need wait while those milestones are on hold.
 
 ---
 
@@ -1357,7 +1425,75 @@ Met on 2026-10-26: the user created their own admin with the admin command, trie
 
 ---
 
+## W — Written articles
+
+### Goal
+
+Publish articles that Claude writes in Claude Code sessions and the user reviews, explainers and adapted GOV.UK news, through the M5 admin, with no ingestion pipeline, paid API or licence fee.
+
+### Dependencies
+
+- M4 editorial dictionary, key vocabulary and Real English cards.
+- M5 admin preview, publication checks and audited publishing.
+- ADR-004: GOV.UK news under the Open Government Licence v3.0.
+- Before the first batch: the categories, the sensitive-news policy, the CEFR mix and the target length per level (§19 open decisions).
+
+### How an article is made
+
+1. Claude proposes a batch in a Claude Code session, about one article per category, and gives a time estimate before writing it.
+2. An explainer takes a topic the user has agreed to and is written from general knowledge; every fact must be checkable in one of the references it lists. A news article takes a recent GOV.UK story that the sensitive-news policy allows, read through GOV.UK's Content API and retold in Newslingo's own words, keeping its facts and numbers and attributing the government's claims.
+3. Claude writes the English at the assigned level and the Turkish, adds dictionary senses for new words and the sense of every ambiguous word, chooses the key vocabulary and marks Real English occurrences, all in the article's file.
+4. The import command validates the batch and writes it as drafts.
+5. The user reviews each draft in the admin preview, above all its facts and Turkish, and publishes or rejects it. New dictionary entries are sampled for review as in M4.
+
+### Work items — data
+
+- [ ] Add an article kind: `NEWS`, adapted from one source as today, or `EXPLAINER`, written from general knowledge. Existing articles become `NEWS`.
+- [ ] Make the source fields optional for explainers only, with a database check that keeps them required for news.
+- [ ] Add `ArticleReference` for an explainer's references: order, title, publisher, web address and the date it was checked.
+- [ ] Record the source's licence on news articles, so a GOV.UK adaptation carries the Open Government Licence statement and link.
+- [ ] Decide how lists that sort by the source's publication time order explainers, which have none.
+
+### Work items — reader and admin
+
+- [ ] Show the kind on article cards and pages, so an explainer is never mistaken for news.
+- [ ] Give the "About this article" box a version for each kind: news credits its source, links to it and shows the licence; an explainer says Newslingo wrote it and lists its references.
+- [ ] Show the kind and the references or licence in the admin preview's source details.
+- [ ] Extend `publicationProblems`: news needs complete attribution, and GOV.UK news its licence; an explainer needs at least one reference with a web address.
+
+### Work items — content files and import
+
+- [ ] Keep each written article in its own file in the repository, holding its paragraphs, its source or references, its sense choices, key vocabulary and Real English marks. Proposed home: `prisma/editorial/articles/`.
+- [ ] Move the reviewed editorial dictionary into production content shared by the demo and written articles. Proposed home: `prisma/editorial/dictionary/`.
+- [ ] Add `pnpm articles:import`. It validates every file and refuses the whole batch, listing the problems, if any file is invalid. It writes new or changed articles as `DRAFT`, each with its dictionary entries, key vocabulary and marks in one transaction, and rerunning it changes nothing.
+- [ ] Never let the import change an article that is not a draft. Correcting a published article goes archive, restore to draft, import, publish, each step audited by M5.
+- [ ] Like the admin command, show the target database and wait for a typed confirmation before writing to a database that is not on this machine.
+
+### Work items — editorial rules
+
+- [ ] Set the target length per level and the CEFR mix before the first batch, and check every article against them.
+- [ ] Explainers use well-established facts only, give date-sensitive figures with their year, offer no advice, and name living people only in their public roles.
+- [ ] GOV.UK adaptations follow ADR-004 and `docs/sources/gov-uk.md`: original wording, no long passages from the page, the department and GOV.UK credited, and the licence statement shown.
+- [ ] Both kinds follow the sensitive-news policy (`docs/editorial/sensitive-news.md`) once it is approved.
+- [ ] A new category needs at least 10 reviewed Real English cards before it is added, as the card library's unit test requires.
+
+### Verification
+
+- The import is idempotent, refuses invalid files without writing anything, and never changes a published or archived article.
+- An explainer and a GOV.UK adaptation each render with the right "About this article" box, and every word opens a dictionary entry.
+- The publication check refuses an explainer without references and a GOV.UK article without its licence.
+- The demo fixtures include an explainer, so the browser tests cover both kinds on desktop and phone.
+- The demo seed still never runs in production, and the import never writes demo articles.
+
+### Exit gate
+
+The first batch, at least one article for each chosen category, is written, reviewed, imported and published through the admin without manual database changes.
+
+---
+
 ## M6 — Licensed news ingestion
+
+**On hold since 2026-10-27.** Articles are written by hand instead (milestone W). GOV.UK, the source chosen for M6 (ADR-004), is used through stories picked by hand. This section stays as the plan for automated ingestion if it returns.
 
 ### Goal
 
@@ -1436,6 +1572,8 @@ An authorized manual run imports unique, attributable, categorized candidates wi
 ---
 
 ## M7 — AI educational transformation
+
+**On hold since 2026-10-27.** Claude writes and translates articles in Claude Code sessions instead of through paid API calls (milestone W). This section stays as the plan for automated generation if it returns.
 
 ### Goal
 
@@ -1533,6 +1671,8 @@ A raw candidate can become a valid draft and then a human-approved public articl
 
 ## M8 — Scheduled pipeline and operations
 
+**On hold since 2026-10-27,** with M6 and M7: there is no pipeline to schedule.
+
 ### Goal
 
 Run the complete pipeline safely, within budget, and without duplicate work.
@@ -1596,6 +1736,8 @@ The pipeline runs unattended in staging for the agreed soak period without dupli
 
 Turn the staging system into a secure, accessible, observable, and reversible production release.
 
+Since 2026-10-27 M9 follows milestone W. Items that served only the ingestion and generation pipeline are marked as on hold.
+
 ### Work items — MVP search
 
 - [ ] Add an explicit PostgreSQL migration for a search document/vector and GIN index.
@@ -1608,10 +1750,10 @@ Turn the staging system into a secure, accessible, observable, and reversible pr
 
 ### Work items — security
 
-- [ ] Review admin and cron authorization.
+- [ ] Review admin authorization. Cron authorization is on hold with M8.
 - [ ] Confirm all secrets are server-only.
 - [ ] Rate limit dictionary and sensitive admin actions.
-- [ ] Restrict provider URLs and redirects.
+- [ ] Restrict provider URLs and redirects. On hold with M6: written articles fetch nothing at run time.
 - [ ] Sanitize or discard source HTML.
 - [ ] Validate all route parameters and external payloads.
 - [ ] Apply CSRF/session protections appropriate to the selected auth solution.
@@ -1638,34 +1780,30 @@ Turn the staging system into a secure, accessible, observable, and reversible pr
 
 ### Work items — release operations
 
-- [ ] Provision production database, auth, secrets, monitoring, and scheduler.
+- [ ] Provision production database, auth, secrets, and monitoring. The scheduler is on hold with M8.
 - [ ] Configure database backups and restoration documentation.
 - [ ] Rehearse migration and forward-fix/rollback procedures.
-- [ ] Deploy with scheduled execution disabled and run the controlled production migration step.
-- [ ] After migrations, run idempotent production-safe reference provisioning for six categories and approved expression libraries; never run the demo seed.
-- [ ] Run one controlled ingestion/generation cycle.
+- [ ] Deploy and run the controlled production migration step.
+- [ ] After migrations, run idempotent production-safe reference provisioning for the chosen categories and approved expression libraries; never run the demo seed.
+- [ ] Import the written articles into production and publish them through the admin.
 - [ ] Admin-review the initial inventory.
-- [ ] Verify public, admin, cron, logging, alert, and cost controls.
-- [ ] Enable scheduling gradually.
+- [ ] Verify public and admin pages, logging, and backups.
 - [ ] Publish an operations runbook covering:
-  - provider outage
-  - AI failure
   - bad article removal
-  - duplicate handling
-  - stale categories
-  - kill switches
+  - correcting a published article
   - deployment rollback
+  - restoring a backup
 
 ### Launch gate
 
-- All six categories are represented.
+- Every chosen category is represented.
 - Target inventory exists, or a reduced inventory has explicit approval.
 - No critical/high security issue remains.
 - Core keyboard, mobile, and desktop flows pass.
 - PostgreSQL search returns relevant published results across the required fields.
-- Admin removal/archive/regeneration paths work.
+- Admin archive and correction paths work.
 - Monitoring, backup, and rollback paths are operational.
-- Scheduled ingestion creates moderated valid drafts without duplicates.
+- The article import creates valid drafts without duplicates.
 - No launch blocker remains unresolved in the decision log.
 
 ---
@@ -1721,6 +1859,9 @@ Turn the staging system into a secure, accessible, observable, and reversible pr
 - Unauthorized admin/API access is rejected.
 - Invalid state transitions are rejected.
 - Publishing is atomic and auditable.
+
+On hold with M6 and M7:
+
 - Published-article regeneration does not mutate live content before approval.
 - Approving a replacement creates a prior revision; rejecting it leaves live content unchanged.
 - Repeated provider input creates no duplicate raw candidate.
@@ -1728,7 +1869,18 @@ Turn the staging system into a secure, accessible, observable, and reversible pr
 - Filter and count reconciliation is exact.
 - Provider timeouts/rate limits map to retryable operational states.
 
+#### Written articles
+
+- Importing the same files twice changes nothing.
+- An invalid file refuses the whole batch and writes nothing.
+- The import never changes a published or archived article.
+- Every word of an imported article has a dictionary entry, and every ambiguous word has its sense.
+- Explainers need at least one reference; news needs complete attribution, and GOV.UK news its licence.
+- The "About this article" box and the article cards show each kind correctly.
+
 #### AI transformation
+
+On hold with M7.
 
 - Malformed JSON fails validation.
 - Missing/empty translation fails validation.
@@ -1742,6 +1894,8 @@ Turn the staging system into a secure, accessible, observable, and reversible pr
 - Live model calls never run in CI.
 
 #### Scheduled operation
+
+On hold with M8.
 
 - Overlapping invocations respect the lock.
 - Rerun is idempotent.
@@ -1833,13 +1987,14 @@ CI should cancel superseded runs on the same branch. Static checks and database/
 - **Test:** isolated test database; destructive helpers refuse non-test URLs.
 - **Preview:** provider-specific decision; no live ingestion or AI by default.
 - **Staging:** production-like services, controlled scheduler, non-public validation.
-- **Production:** manual release approval initially, scheduled processing enabled after smoke tests.
+- **Production:** manual release approval; written articles arrive through the article import. Scheduled processing waits with M8.
 
 ### 13.3 Database deployment policy
 
 - Back up production before material schema changes.
 - Run `migrate deploy` exactly once as a controlled release step.
 - Run the idempotent reference-provisioning command after migrations when its version changes.
+- Run the article import as a deliberate step after reviewing what it will write; it never publishes.
 - Do not run development migrations, reset, or demo seed in production.
 - Prefer backwards-compatible expand/contract changes.
 - Treat application rollback and database rollback as separate concerns.
@@ -1876,6 +2031,8 @@ Before enabling a provider, record:
 - rate limits
 - owner of the approval decision
 
+GOV.UK's record is `docs/sources/gov-uk.md` (ADR-004). Explainers have no source to approve: they are written from general knowledge, and each lists the references its facts were checked against.
+
 ### 14.2 Content rules
 
 - Never simply scrape and republish a full copyrighted article.
@@ -1887,16 +2044,19 @@ Before enabling a provider, record:
 - Do not use source images without explicit permission.
 - Keep source lineage and generation-version records.
 - Provide a rapid archive/removal path.
+- Write explainers in Newslingo's own words from well-established facts, never from one article's text, and list the references that confirm them.
+- Never present invented events, people or organisations as real. The demo fixtures are fiction and stay on a reserved `.example` domain.
 
 ### 14.3 Publication policy
 
-At launch:
+At launch, since 2026-10-27:
 
-1. Candidate is ingested.
-2. Adaptation is generated and validated.
-3. Article remains `DRAFT`.
-4. Admin reviews factuality, language, level, and originality.
-5. Admin publishes or rejects.
+1. Claude writes the article in a Claude Code session: an explainer, or an adaptation of one GOV.UK story.
+2. The article import validates it and stores it as `DRAFT`.
+3. The user reviews factuality, language, level, and originality in the admin preview.
+4. The user publishes or rejects it.
+
+The automated route that M6–M8 would build, on hold: a candidate is ingested, an adaptation is generated and validated, and the article stays `DRAFT` until an admin publishes or rejects it.
 
 Auto-publication may be reconsidered only after measured evidence shows consistent quality and an emergency kill switch is operational.
 
@@ -1926,11 +2086,12 @@ Auto-publication may be reconsidered only after measured evidence shows consiste
 - Enforce authentication and authorization server-side.
 - Protect actions independently of page middleware.
 - Use secure session and CSRF protections appropriate to the auth solution.
-- Require an authenticated cron secret or signed scheduler request.
+- Require an authenticated cron secret or signed scheduler request (on hold with M8).
 - Rotate compromised secrets.
 - Log material admin actions.
 - Never fetch arbitrary user-controlled URLs.
-- Use timeouts, redirect limits, and approved hosts in source integrations.
+- Use timeouts, redirect limits, and approved hosts in source integrations (on hold with M6).
+- Make the article import show its target database and wait for a typed confirmation before writing anywhere but this machine.
 
 ### Pre-launch review
 
@@ -2000,7 +2161,7 @@ The article page budget, set on 2026-10-14 for the longest article the product s
 | Script time for one tap, phone profile | 100 ms | 41 ms | 38 ms |
 | Time from a tap to the next frame, real browser | 200 ms | 16 ms or less | 48 ms |
 
-`tests/e2e/page-budget.spec.ts` enforces the three size limits on every demo article. The timings were measured once. The phone profile is Google Chrome driven by Playwright at a Pixel 7 viewport with the CPU slowed four times, taking the median of seven loads; the Event Timing API timed the word card, the translation toggle and the text-size buttons, and the word card was the slowest. The 900-word article was a temporary copy of the C1 demo article with its paragraphs repeated. Repeated text compresses better than new text, so a real 900-word article's HTML download would be nearer 39 KB. Headless Chrome added 100 ms or more of waiting for the next frame to every word-card tap, which a real browser window did not show, so the phone budget counts script time and the 200 ms response target is checked in a real browser. Measure again when M7 sets article lengths, and before launch.
+`tests/e2e/page-budget.spec.ts` enforces the three size limits on every demo article. The timings were measured once. The phone profile is Google Chrome driven by Playwright at a Pixel 7 viewport with the CPU slowed four times, taking the median of seven loads; the Event Timing API timed the word card, the translation toggle and the text-size buttons, and the word card was the slowest. The 900-word article was a temporary copy of the C1 demo article with its paragraphs repeated. Repeated text compresses better than new text, so a real 900-word article's HTML download would be nearer 39 KB. Headless Chrome added 100 ms or more of waiting for the next frame to every word-card tap, which a real browser window did not show, so the phone budget counts script time and the 200 ms response target is checked in a real browser. Measure again once W sets the target lengths, and before launch.
 
 ### Cache plan
 
@@ -2031,6 +2192,8 @@ Do not log secrets, full credentials, or unnecessary personal data.
 
 ### Operational metrics
 
+The provider, candidate, generation and scheduling metrics wait with M6–M8.
+
 - provider fetch success/failure
 - candidates fetched/deduplicated/filtered/selected
 - generation success/failure/retry rate
@@ -2047,6 +2210,8 @@ Learning-product analytics such as article completion and words clicked can be a
 
 ### Cost controls
 
+Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code sessions, and word lookups read editorial entries. The controls below apply if M7 and M8 resume.
+
 - Filter and rank before generation.
 - Use one generation call for rewrite, translation, vocabulary, and expressions when quality permits.
 - Apply per-run and daily generation caps.
@@ -2062,21 +2227,23 @@ Learning-product analytics such as article completion and words clicked can be a
 
 | Risk | Likelihood | Impact | Mitigation | Release trigger/blocker |
 |---|---:|---:|---|---|
-| Provider/content use is not licensed for the intended transformation | Medium | Critical | Written provider review; approved-source record; no ingestion before approval. | Blocks M6. |
+| Provider/content use is not licensed for the intended transformation | Low | Critical | GOV.UK under the Open Government Licence v3.0, with its source record (ADR-004); explainers use no source's text. | Blocks the affected article. |
 | Source images have unclear rights | High | High | Omit images or use owned/local placeholders until rights are explicit. | Blocks use of affected image, not text release. |
-| AI invents facts or quotations | Medium | Critical | Strict prompt/schema, factual checks, audit records, human approval. | Blocks publication of affected article. |
+| AI invents facts or quotations | Medium | Critical | References for every explainer, GOV.UK facts and figures kept as published, the user's review before publishing, audit records. | Blocks publication of affected article. |
 | Turkish translation changes meaning | Medium | High | Paragraph alignment, validation, editorial sampling, regeneration/rejection. | Blocks publication of affected article. |
 | CEFR level is inconsistent or inventory becomes one-sided | Medium | Medium | Explicit assignment mix, finished-article classification, readability indicators, and editorial sampling. | Blocks article if materially unsuitable; blocks launch if inventory tolerance fails. |
-| Extensive source wording creates copyright risk | Medium | Critical | Originality prompt, overlap checks, human review, source policy. | Blocks publication. |
+| Extensive source wording creates copyright risk | Low | Critical | Explainers written from general knowledge; GOV.UK stories retold in Newslingo's own words under a licence that allows adaptation; human review. | Blocks publication. |
 | Scope expands before core reader is validated | High | High | Reader Release gate; scope matrix; explicit change decisions. | Blocks added work unless traded against scope. |
-| Duplicate candidates/articles occur across runs | Medium | High | Canonical URL hash, unique constraints, idempotency, cron lock. | Blocks scheduled launch if unresolved. |
-| Provider or AI outage breaks browsing | Medium | High | Async separation, timeouts, failure states, existing-content continuity. | Does not block browsing; alerts operations. |
-| AI costs grow unexpectedly | Medium | High | Pre-filtering, quotas, caps, caching, usage logs, kill switch. | Stops generation at limit. |
+| Duplicate candidates/articles occur across runs | Medium | High | Canonical URL hash, unique constraints, idempotency, cron lock. Written articles: an idempotent import keyed by slug. | Blocks scheduled launch if unresolved (on hold with M8). |
+| Provider or AI outage breaks browsing | Medium | High | Async separation, timeouts, failure states, existing-content continuity. | Does not block browsing; alerts operations. On hold with M6–M8. |
+| AI costs grow unexpectedly | Low | High | Written articles cost no model calls; for M7–M8 if resumed: pre-filtering, quotas, caps, caching, usage logs, kill switch. | Stops generation at limit. |
+| Writing and reviewing articles takes longer than expected | High | Medium | Batches of about one article per category, each with a time estimate first; a smaller launch inventory with the user's approval. | Slows launch; does not block it. |
+| Readers find the articles dry or narrow | Medium | Medium | Categories and topics chosen with the site's main reader; explainers mixed with news. | Prompts a change of topics or categories. |
 | Context cache returns the wrong word sense | Medium | Medium | Sentence hash, provider/schema version, contextual validation. | Requires cache invalidation/fix. |
 | Expression matching corrupts text or overlaps words | Medium | High | Longest-match algorithm, exact reconstruction fixtures, occurrence offsets. | Blocks M4 exit. |
 | Hundreds of interactive tokens harm accessibility/performance | Medium | High | Keyboard strategy, DOM profiling, mobile/assistive QA. | Blocks M4/launch. |
 | Admin or cron access is compromised | Low | Critical | Strong auth, server checks, secret rotation, audit logs, rate limits. | Blocks launch. |
-| Pipeline fails silently | Medium | High | Persist run items/generation attempts, reconciled counts, source lineage, alerts, and runbook. | Blocks M8 exit. |
+| Pipeline fails silently | Medium | High | Persist run items/generation attempts, reconciled counts, source lineage, alerts, and runbook. | Blocks M8 exit (on hold). |
 | Database migration prevents rollback | Low | High | Expand/contract, backups, staging rehearsal, forward-fix plan. | Blocks production deployment. |
 
 ---
@@ -2144,23 +2311,29 @@ Learning-product analytics such as article completion and words clicked can be a
 | 2026-10-25 | Preview articles through the public page's own body, moved into `ArticleView`, from an admin query that reuses the reader's select and mapping but loads any status. Word lookups stay limited to public articles. | A draft looks exactly as it will once published, and the two views cannot drift apart. Looking up a draft's words would need the dictionary route to recognise admins; the preview says lookups start once the article is on the site. |
 | 2026-10-25 | Run the moderation forms as server actions instead of the `/api/admin/articles/[id]/…` handlers in §7.3. Each calls `requireAdmin()` first, then the workflow. A refusal stays on its form; a success refreshes every admin and public path that shows the article with `revalidatePath`, then reloads the article's page with a notice. | The forms work without JavaScript, and Next.js checks each action's origin, as with sign-in. While pages render on every request, `revalidatePath` changes nothing visible; it keeps the pages right once caching arrives. The workflow's success result now names the article's slug and categories for it. |
 | 2026-10-25 | Give each Playwright project its own copies of the demo draft for the tests that publish and archive, reset before each test, and leave the seeded draft to the list tests. | The desktop and phone runs share one database and run at once, other specs read the demo articles, and a retry starts from the same state. Audit rows from an earlier attempt stay, so the tests check that exactly one row was added. |
+| 2026-10-27 | Write articles in Claude Code sessions instead of ingesting and generating them: explainers written from general knowledge with listed references, and adaptations of GOV.UK stories picked by hand. The user reviews every article before publishing it. Chosen by the user: Newslingo is a small, non-commercial project with no budget for a lawyer, a paid news API or paid model calls. | M6–M8 are on hold, and milestone W comes between M5 and M9. Articles cost no API calls, as with the editorial dictionary, and arrive in batches as fast as they can be written and reviewed. |
+| 2026-10-27 | Use GOV.UK news under the Open Government Licence v3.0 as the only news source, with stories picked by hand (ADR-004). Each adaptation credits the department and GOV.UK and shows the licence statement. | No key, contract or fee. A rough count over four weeks found GOV.UK covers AI, Technology, World and Business thinly and from the UK government's point of view, about two AI stories a week, so explainers fill the gaps and cover the other categories. |
+| 2026-10-27 | Give every article a kind: news, adapted from one source, or an explainer, written from general knowledge with listed references. Readers see which kind they are reading. | Explainers have no single source, so their source fields become optional for that kind only, and the "About this article" box and the publication check change with them (W). |
 
 ### Open decisions
 
 | Decision | Needed by | Default recommendation |
 |---|---|---|
-| Licensed news provider and exact usage rights | Before M6 | One provider with explicit derivative-content rights. |
+| News source and usage rights | Before M6 | Resolved on 2026-10-27: GOV.UK news under the Open Government Licence v3.0, picked by hand (ADR-004). |
 | Image policy/provider | Before using production images | Omit unless rights are explicit. |
-| AI provider/model | Before M7 | Provider decided on 2026-09-25 (Claude). Still open: the model for each task, chosen by the ML roadmap's comparison. |
+| AI provider/model | Before M7 | Provider decided on 2026-09-25 (Claude). Still open: the model for each task, chosen by the ML roadmap's comparison. M7 has been on hold since 2026-10-27, so this waits with it. |
 | Dictionary fallback | Before live M4 integration | Resolved on 2026-09-25: contextual Claude lookup, cache-first (see Accepted). |
 | Admin authentication | Before M5 | Resolved on 2026-10-14: Better Auth with an email, a password and an authenticator-app code (ADR-003). |
-| Hosting and managed PostgreSQL | Before M8/M9 | Choose based on operational simplicity and regional needs. |
-| Scheduler | Before M8 | Vercel Cron for simple hosting alignment or Trigger.dev for richer runs. |
-| CEFR assignment mix and verification rule | Before M7 | Fill inventory deficits, then classify every finished article independently. |
-| Moderation cadence and freshness SLA | Before M8 | Define review windows, backlog ceiling, and public freshness target. |
-| Active-content archival duration | Before M8 | Preserve source lineage; archive rather than delete. |
-| AI daily budget and batch limits | Before M7/M8 | Conservative cap with a hard kill switch. |
-| Editorial policy for sensitive news | Before M6/M7 | Written include/exclude/review rules. |
+| Hosting and managed PostgreSQL | Before M9 | Choose based on operational simplicity, cost and regional needs; readers can reach the site only once it is hosted. |
+| Scheduler | Before M8 | On hold with M8. |
+| CEFR assignment mix and verification rule | Before W's first batch | Proposed: in each category, rotate A2, B1, B2 and C1 so every level appears. An independent level check waits for the CEFR classifier. |
+| Target length per level | Before W's first batch | Proposed, close to the demo articles: A2 150–250 English words, B1 250–350, B2 300–450, C1 450–650, never more than 900. |
+| Categories | Before W's first batch | The user decides with the site's main reader. Existing slugs stay and unwanted categories are switched off; a new category needs 10 reviewed Real English cards. |
+| Moderation cadence and freshness SLA | Before M8 | On hold with M8. |
+| Active-content archival duration | Before M8 | On hold with M8. Written articles stay published until an admin archives them. |
+| AI daily budget and batch limits | Before M7/M8 | On hold with M7 and M8: written articles use no paid API. |
+| Editorial policy for sensitive news | Before W's first batch | Drafted on 2026-10-26 in `docs/editorial/sensitive-news.md`, awaiting the user's approval. |
+| Launch inventory | Before M9 | Proposed: 3–5 reviewed articles per category at launch, growing toward the 10–15 target. |
 
 ---
 
@@ -2239,7 +2412,7 @@ Gate: complete Reader Release definition of done passes.
 
 ### 21.2 Launch MVP complete
 
-- Six categories hold the approved recent-content inventory.
+- Every chosen category holds the approved launch inventory.
 - Every eligible English word supports contextual lookup.
 - Known multi-word expressions take precedence over word tokenization.
 - Article and category Real English sections work.
@@ -2247,17 +2420,17 @@ Gate: complete Reader Release definition of done passes.
 - Curated article vocabulary is persisted and displayed.
 - Lookup cache, fallback, loading, rate-limit, and error behavior work.
 - Admin authentication and audited moderation work.
-- One licensed provider imports candidates idempotently.
-- AI produces schema-valid original bilingual drafts.
-- Finished articles are independently checked against their assigned CEFR level, and the inventory meets the approved level mix.
-- Invalid generation output cannot publish.
-- Human review controls publish/archive/reject/regenerate content.
-- Scheduled runs are locked, restartable, bounded, observable, and cost controlled.
+- Written articles import idempotently as drafts: explainers with their references, GOV.UK adaptations with their source and licence.
+- The user reviewed every published article, and readers can tell explainers from news.
+- The inventory meets the approved level mix. An independent level check follows once the CEFR classifier exists.
+- Invalid imports are refused, and the publication check stops incomplete articles.
+- Human review controls publishing, archiving and rejection; a correction goes through archive, restore, import and publish.
 - PostgreSQL full-text search covers title, summary, category, body, and source.
-- Moderation backlog and public category freshness meet the approved SLA.
 - Source attribution and provenance are complete.
 - Security, accessibility, SEO, mobile, backup, and rollback gates pass.
-- Operations can disable generation/publication and remove a bad article quickly.
+- An admin can remove a bad article at once by archiving it.
+
+Until 2026-10-27 this list also required provider imports, AI-generated drafts, scheduled runs, a moderation backlog and freshness SLA, and generation kill switches. They wait with M6–M8.
 
 ---
 
@@ -2269,6 +2442,8 @@ Slices 1–5 are complete, and with them the Reader Release (M1–M3). On 2026-0
 
 **M5, moderation, is complete.** On 2026-10-24 Better Auth 1.7.12 was pinned and its Prisma adapter confirmed with Prisma 7.10.0 (ADR-003), then the `admin` role, the server-only access check and the admin command were built, followed by sign-in at `/admin/sign-in` (a password, then an authenticator code or a backup code) and an admin home at `/admin`. On 2026-10-25 the server side of the moderation workflow followed: the append-only audit record, the status rules, the publication checks, the demo draft, and the publish, archive, restore and edit functions. The admin pages were built the same day and merged on 2026-10-26: the admin home's counts by status, the article list filtered by status and category, and each article's preview through the public reader with its source details, history and the actions its status allows, all with browser tests on desktop and phone. On 2026-10-26 the user tried the admin pages with their own admin and confirmed the exit gate.
 
-Next, M6, licensed news ingestion, needs two M0 decisions first (§19 open decisions): a licensed news provider with explicit usage rights, and the editorial policy for sensitive news.
+**On 2026-10-27 the plan changed course.** Research for M6 found no free news source that covers all six categories and allows adaptation without a licence or a lawyer's opinion. GOV.UK news allows it (ADR-004), but covers only AI, Technology, World and Business, and thinly. Articles are now written in Claude Code sessions, explainers plus GOV.UK stories picked by hand, and M6–M8 are on hold (§19, 2026-10-27).
 
-Do not begin live news or AI integration before their milestones.
+Next is milestone W, written articles. Four decisions come before its first batch (§19 open decisions): the categories, which the user is choosing with the site's main reader; the sensitive-news policy in `docs/editorial/sensitive-news.md`; the CEFR mix; and the target length per level. The code can start before them: the article kind, the reader and admin changes, and the import command.
+
+Do not build live news ingestion or automated AI generation while M6–M8 are on hold.
