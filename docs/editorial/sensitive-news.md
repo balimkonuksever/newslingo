@@ -1,6 +1,6 @@
 # Sensitive-news policy
 
-- Status: Draft, awaiting the project owner's approval
+- Status: Approved by the project owner on 2026-10-27, with held subjects skipped for now (see "Hold for review")
 - Date: 2026-10-26
 - Applies to: choosing GOV.UK stories and explainer topics, writing them, and every review before publication (milestone W). The ingestion rules near the end apply only if M6 resumes.
 
@@ -37,6 +37,8 @@ Never write up a story or explainer whose main subject is:
 
 ## Hold for review
 
+**For now, every held subject is skipped.** On 2026-10-27 the user decided that Newslingo covers no sensitive news yet: Claude does not propose a story or topic that matches this list, and treats it as excluded. The rest of this section, the Turkey default and the handling rules for held subjects take effect only once the user allows held subjects again.
+
 The user decides whether Claude writes about:
 
 1. **War, armed conflict or terrorism.** Suitable when the story is about diplomacy, aid, peace talks, policy or consequences rather than the fighting itself.
@@ -56,6 +58,8 @@ A story about these subjects that was first published less than 24 hours earlier
 Most readers will be in Turkey, where some speech is a crime: insulting the President (Penal Code art. 299), degrading the Turkish nation or the state's institutions (art. 301), spreading terrorist propaganda (Anti-Terror Law 3713, art. 7) and publicly spreading misleading information (Penal Code art. 217/A, added in 2022). The authorities can also block access to a whole website under Law 5651, as they did with Wikipedia from 2017 to 2019.
 
 Proposed default, to confirm with a lawyer: at launch, Newslingo does not adapt stories about Turkish domestic politics, and holds every other story that mentions Turkey, Cyprus or the PKK.
+
+While held subjects are skipped, every story that mentions Turkey, Cyprus or the PKK is skipped too, so the default needs a lawyer's confirmation only before that changes.
 
 ## Handling rules
 
@@ -116,9 +120,9 @@ Before Claude writes about a held subject, and before publishing any article, th
 
 ## Open questions for the project owner
 
-1. Turkey: accept the proposed default, and ask a lawyer to confirm it before launch? Proposed: yes.
+1. Turkey: accept the proposed default, and ask a lawyer to confirm it before launch? Proposed: yes. Deferred on 2026-10-27: it matters only once held subjects are allowed.
 2. Audience: is Newslingo for adults only? If teenagers preparing for exams use it, the exclude list should grow. Proposed: adults.
-3. Levels: may held subjects be written at A2, where simplified English makes careful attribution harder? Proposed: B1 and above only.
+3. Levels: may held subjects be written at A2, where simplified English makes careful attribution harder? Proposed: B1 and above only. Deferred on 2026-10-27, with question 1.
 
 ## References
 
