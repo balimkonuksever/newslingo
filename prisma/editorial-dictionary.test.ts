@@ -9,7 +9,9 @@ import {
   type SenseChoices,
 } from "./editorial-dictionary";
 import { DEMO_ARTICLES } from "./fixtures/articles";
-import { DEMO_DICTIONARY, DEMO_SENSE_CHOICES } from "./fixtures/dictionary";
+import { WRITTEN_ARTICLES } from "./editorial/articles";
+import { EDITORIAL_DICTIONARY } from "./editorial/dictionary";
+import { DEMO_SENSE_CHOICES } from "./fixtures/sense-choices";
 
 const sense = (
   lemma: string,
@@ -186,12 +188,20 @@ describe("editorialVocabularyRows", () => {
   });
 });
 
-describe("the demo dictionary", () => {
-  it("has a checked sense for every word of every demo article", () => {
+describe("the editorial dictionary", () => {
+  it("has a checked sense for every word of the demo and written articles, and no unused entry", () => {
     const rows = editorialVocabularyRows(
-      DEMO_ARTICLES,
-      DEMO_DICTIONARY,
-      DEMO_SENSE_CHOICES,
+      [...DEMO_ARTICLES, ...WRITTEN_ARTICLES],
+      EDITORIAL_DICTIONARY,
+      {
+        ...DEMO_SENSE_CHOICES,
+        ...Object.fromEntries(
+          WRITTEN_ARTICLES.map(({ slug, senseChoices }) => [
+            slug,
+            senseChoices ?? {},
+          ]),
+        ),
+      },
     );
 
     expect(rows.length).toBeGreaterThan(0);

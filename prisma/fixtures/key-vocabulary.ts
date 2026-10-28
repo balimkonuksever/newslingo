@@ -3,7 +3,7 @@
  * 6 to 8 words per article that are worth learning at its level, in the
  * order a reader meets them. Claude (Opus 5.5) chose them on 2026-10-03, and
  * the user looks over the choices. Each word points at its existing
- * editorial dictionary entry for that sentence (prisma/fixtures/dictionary),
+ * editorial dictionary entry for that sentence (prisma/editorial/dictionary),
  * so the list adds no new Turkish. Words inside a marked Real English
  * expression are avoided, because the reader cannot open them on their own.
  */

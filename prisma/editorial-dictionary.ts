@@ -112,15 +112,25 @@ function checkSenses(senses: readonly EditorialSense[], problems: string[]) {
   return byForm;
 }
 
+export type ResolveOptions = {
+  /**
+   * Report entries no article uses. True when `articles` are all the
+   * articles the dictionary serves; the article import checks only the
+   * written ones, so it turns this off.
+   */
+  requireEveryEntryUsed?: boolean;
+};
+
 /**
  * Finds the sense of every word in the articles, and reports every gap at
  * once: words without an entry, spellings with several senses but no choice,
- * leftover choices and unused entries.
+ * leftover choices and, unless turned off, unused entries.
  */
 export function resolveEditorialSenses(
   articles: Articles,
   senses: readonly EditorialSense[],
   choices: SenseChoices,
+  { requireEveryEntryUsed = true }: ResolveOptions = {},
 ): EditorialOccurrence[] {
   const problems: string[] = [];
   const byForm = checkSenses(senses, problems);
@@ -198,7 +208,7 @@ export function resolveEditorialSenses(
     }
   }
 
-  for (const sense of senses) {
+  for (const sense of requireEveryEntryUsed ? senses : []) {
     if (!used.has(sense)) {
       problems.push(`"${sense.id ?? sense.lemma}" is never used`);
     }
@@ -219,13 +229,14 @@ export function editorialVocabularyRows(
   articles: Articles,
   senses: readonly EditorialSense[],
   choices: SenseChoices,
+  options: ResolveOptions = {},
 ) {
   const texts = new Map(
     articles.map(({ slug, paragraphs }) => [slug, paragraphs]),
   );
   const senseByKey = new Map<string, EditorialSense>();
 
-  return resolveEditorialSenses(articles, senses, choices).flatMap(
+  return resolveEditorialSenses(articles, senses, choices, options).flatMap(
     ({ slug, paragraphOrder, start, end, sense }) => {
       const english = texts.get(slug)![paragraphOrder - 1].english;
       const lookup = buildLookupContext(english, start, end)!;

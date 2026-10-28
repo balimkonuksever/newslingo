@@ -17,10 +17,11 @@ import {
   type DemoNews,
   demoSourceUrl,
 } from "./fixtures/articles";
-import { DEMO_DICTIONARY, DEMO_SENSE_CHOICES } from "./fixtures/dictionary";
+import { EDITORIAL_DICTIONARY } from "./editorial/dictionary";
 import { DEMO_DRAFTS } from "./fixtures/drafts";
 import { DEMO_EXPRESSION_OCCURRENCES } from "./fixtures/expression-occurrences";
 import { DEMO_KEY_VOCABULARY } from "./fixtures/key-vocabulary";
+import { DEMO_SENSE_CHOICES } from "./fixtures/sense-choices";
 import { resolveKeyVocabulary } from "./key-vocabulary";
 import { REFERENCE_CATEGORIES } from "./reference/categories";
 import { REFERENCE_EXPRESSIONS } from "./reference/expressions";
@@ -205,34 +206,120 @@ export async function writeDemoArticles(
   };
 }
 
+type EditorialRow = ReturnType<typeof editorialVocabularyRows>[number];
+
+/** The fields of an editorial entry that a dictionary correction can change. */
+const ENTRY_CONTENT = [
+  "surfaceWord",
+  "lemma",
+  "partOfSpeech",
+  "englishDefinition",
+  "turkishMeaning",
+  "exampleSentence",
+  "ipa",
+  "contextSentence",
+] as const;
+
 /**
- * Replaces the editorial dictionary entries with one for every word of every
- * demo article, keyed like live lookups so the reader finds them first. The
- * demo articles' key vocabulary is removed first, so that every entry is
- * rewritten from the fixtures; `seedDemoKeyVocabulary` restores it. Entries
- * that other articles' curated vocabulary points to are kept. The same caller
- * rules as `seedDemoArticles` apply.
+ * Which of `rows` have no editorial entry yet, and which entries' content a
+ * dictionary correction changed, keyed like live lookups.
+ */
+export async function diffEditorialEntries(
+  db: Pick<PrismaClient, "vocabularyEntry">,
+  rows: readonly EditorialRow[],
+) {
+  const existing = await db.vocabularyEntry.findMany({
+    where: {
+      provider: EDITORIAL_SOURCE.provider,
+      providerVersion: EDITORIAL_SOURCE.version,
+      schemaVersion: DICTIONARY_SCHEMA_VERSION,
+      contextHash: { in: [...new Set(rows.map((row) => row.contextHash))] },
+    },
+    select: {
+      id: true,
+      normalizedWord: true,
+      contextHash: true,
+      surfaceWord: true,
+      lemma: true,
+      partOfSpeech: true,
+      englishDefinition: true,
+      turkishMeaning: true,
+      exampleSentence: true,
+      ipa: true,
+      contextSentence: true,
+    },
+  });
+  const byKey = new Map(
+    existing.map((entry) => [
+      `${entry.normalizedWord} ${entry.contextHash}`,
+      entry,
+    ]),
+  );
+  const missing: EditorialRow[] = [];
+  const changed: Array<{ id: string; row: EditorialRow }> = [];
+
+  for (const row of rows) {
+    const key = `${row.normalizedWord} ${row.contextHash}`;
+    const entry = byKey.get(key);
+
+    if (!entry) {
+      missing.push(row);
+      // A word repeated in an identical sentence is one entry.
+      byKey.set(key, { id: "", ...row });
+    } else if (
+      entry.id &&
+      ENTRY_CONTENT.some((field) => entry[field] !== row[field])
+    ) {
+      changed.push({ id: entry.id, row });
+    }
+  }
+
+  return { missing, changed };
+}
+
+/**
+ * Adds the editorial entries that are missing and rewrites those whose
+ * content changed, without removing any: entries are shared by every
+ * article with the same word in the same sentence, demo and written alike.
+ */
+export async function writeEditorialEntries(
+  db: Pick<PrismaClient, "vocabularyEntry">,
+  rows: readonly EditorialRow[],
+) {
+  const { missing, changed } = await diffEditorialEntries(db, rows);
+
+  await db.vocabularyEntry.createMany({ data: missing });
+
+  for (const { id, row } of changed) {
+    await db.vocabularyEntry.update({
+      where: { id },
+      data: Object.fromEntries(
+        ENTRY_CONTENT.map((field) => [field, row[field]]),
+      ),
+    });
+  }
+
+  return { added: missing.length, changed: changed.length };
+}
+
+/**
+ * Writes an editorial dictionary entry for every word of every demo
+ * article, keyed like live lookups so the reader finds them first. It adds
+ * missing entries and rewrites changed ones, and removes none, since written
+ * articles share them. The same caller rules as `seedDemoArticles` apply.
  */
 export async function seedDemoDictionary(db: PrismaClient) {
   const rows = editorialVocabularyRows(
     DEMO_ARTICLES,
-    DEMO_DICTIONARY,
+    EDITORIAL_DICTIONARY,
     DEMO_SENSE_CHOICES,
+    // Written articles use the rest of the dictionary.
+    { requireEveryEntryUsed: false },
   );
 
-  await db.$transaction([
-    db.articleVocabulary.deleteMany({
-      where: {
-        article: { slug: { in: DEMO_ARTICLES.map(({ slug }) => slug) } },
-      },
-    }),
-    db.vocabularyEntry.deleteMany({
-      where: { provider: EDITORIAL_SOURCE.provider, articles: { none: {} } },
-    }),
-    db.vocabularyEntry.createMany({ data: rows, skipDuplicates: true }),
-  ]);
+  await db.$transaction((tx) => writeEditorialEntries(tx, rows));
 
-  return { entries: rows.length, senses: DEMO_DICTIONARY.length };
+  return { entries: rows.length, senses: EDITORIAL_DICTIONARY.length };
 }
 
 /**

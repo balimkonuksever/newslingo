@@ -9,7 +9,7 @@ export const MAX_LOOKUP_WORD_LENGTH = 64;
 export const DICTIONARY_SCHEMA_VERSION = 1;
 
 /**
- * Entries written ahead of time (see prisma/fixtures/dictionary). They are
+ * Entries written ahead of time (see prisma/editorial/dictionary). They are
  * stored in the same cache as provider answers, under this provider name,
  * and every lookup checks them first.
  */

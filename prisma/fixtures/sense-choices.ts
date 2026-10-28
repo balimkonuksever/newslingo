@@ -1,4 +1,4 @@
-import type { SenseChoices } from "../../editorial-dictionary";
+import type { SenseChoices } from "../editorial-dictionary";
 
 /**
  * The sense of every spelling that has several in the demo articles: by
