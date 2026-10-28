@@ -110,9 +110,25 @@ Seeding is split by what is safe where:
 
 Every seed command is idempotent: rerunning it updates rows in place and never duplicates them. The demo articles are original, invented educational fixtures attributed to "Newslingo demo fixture" with URLs on the reserved `demo.newslingo.example` domain, so they cannot be mistaken for real or ingested news. Their CEFR levels are the author's intent, not verified labels, so they must not be used as evaluation data. Live news fetching is a later milestone.
 
-The demo dictionary's Turkish is reviewed by sample. `pnpm exec tsx scripts/sample-dictionary-review.ts [size] [seed]` prints a review sheet with every key vocabulary word and a seeded random sample of the other entries, each in a sentence that uses it. Completed reviews are kept in `docs/reviews/`.
+The editorial dictionary in `prisma/editorial/dictionary/` is production content, shared by the demo articles and the written articles; its Turkish is reviewed by sample. `pnpm exec tsx scripts/sample-dictionary-review.ts [size] [seed]` prints a review sheet with every key vocabulary word and a seeded random sample of the other entries, each in a sentence that uses it. Completed reviews are kept in `docs/reviews/`.
 
 Commands whose names end in `:test`, `pnpm test:integration`, and `pnpm test:e2e` run through `scripts/with-test-database.ts`. It points `DATABASE_URL` at `TEST_DATABASE_URL` only after checking that the two are different databases and that the test database's name contains a distinct `test` token.
+
+## Written articles
+
+Articles are written in Claude Code sessions (milestone W), one file per article in `prisma/editorial/articles/`, listed in its `index.ts`. The format is `WrittenArticle` in `prisma/written-articles.ts`: news adapted from one source, such as a GOV.UK story, or an explainer with its references, plus each article's Turkish, sense choices, key vocabulary and Real English marks. Every word needs an entry in the editorial dictionary.
+
+```bash
+pnpm articles:import --check
+```
+
+checks every file without a database: the fields, the length for the article's level, the credit, a dictionary sense for every word, six to eight key words and the marks. Any problem refuses the whole batch.
+
+```bash
+pnpm articles:import
+```
+
+checks the files again, shows each article as new, changed or unchanged with the dictionary entries to add or correct, and writes new and changed articles as drafts, with their entries, in one transaction. A second run changes nothing. It never changes an article that is no longer a draft: to correct a published one, archive it, restore it to draft, import, then publish again. It writes to a database on this machine at once, and waits for the host to be typed for any other. Demo articles are never imported. Review the drafts at `/admin/articles?status=draft`.
 
 ## Admin accounts
 

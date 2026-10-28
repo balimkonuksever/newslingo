@@ -16,13 +16,11 @@ import {
   referenceExpressionData,
   resolveExpressionOccurrences,
 } from "../../prisma/expression-library";
-import {
-  DEMO_DICTIONARY,
-  DEMO_SENSE_CHOICES,
-} from "../../prisma/fixtures/dictionary";
+import { EDITORIAL_DICTIONARY } from "../../prisma/editorial/dictionary";
 import { DEMO_DRAFTS } from "../../prisma/fixtures/drafts";
 import { DEMO_EXPRESSION_OCCURRENCES } from "../../prisma/fixtures/expression-occurrences";
 import { DEMO_KEY_VOCABULARY } from "../../prisma/fixtures/key-vocabulary";
+import { DEMO_SENSE_CHOICES } from "../../prisma/fixtures/sense-choices";
 import { resolveKeyVocabulary } from "../../prisma/key-vocabulary";
 import {
   provisionReferenceData,
@@ -402,7 +400,7 @@ describe("demo draft seeding", () => {
 describe("demo dictionary seeding", () => {
   const expectedRows = editorialVocabularyRows(
     DEMO_ARTICLES,
-    DEMO_DICTIONARY,
+    EDITORIAL_DICTIONARY,
     DEMO_SENSE_CHOICES,
   ).length;
 
@@ -415,7 +413,7 @@ describe("demo dictionary seeding", () => {
   it("stores an editorial entry for every word and can run twice", async () => {
     await expect(seedEverything()).resolves.toEqual({
       entries: expectedRows,
-      senses: DEMO_DICTIONARY.length,
+      senses: EDITORIAL_DICTIONARY.length,
     });
     await seedDemoDictionary(db);
 

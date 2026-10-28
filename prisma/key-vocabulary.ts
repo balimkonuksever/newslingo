@@ -28,6 +28,9 @@ export class KeyVocabularyError extends Error {
 export type ResolvedKeyWord = {
   articleSlug: string;
   paragraphOrder: number;
+  /** UTF-16 offsets into the paragraph's English text. */
+  start: number;
+  end: number;
   surfaceWord: string;
   /** With `contextHash`, the key of the word's dictionary entry here. */
   normalizedWord: string;
@@ -69,10 +72,7 @@ export function resolveKeyVocabulary(
     }
 
     const seen = new Set<string>();
-    const found: Array<{
-      start: number;
-      word: Omit<ResolvedKeyWord, "displayOrder">;
-    }> = [];
+    const found: Array<Omit<ResolvedKeyWord, "displayOrder">> = [];
 
     for (const { paragraph, word } of words) {
       const where = `${articleSlug} ¶${paragraph} "${word}"`;
@@ -107,24 +107,20 @@ export function resolveKeyVocabulary(
       const lookup = buildLookupContext(english, start, end)!;
 
       found.push({
+        articleSlug,
+        paragraphOrder: paragraph,
         start,
-        word: {
-          articleSlug,
-          paragraphOrder: paragraph,
-          surfaceWord: lookup.surfaceWord,
-          normalizedWord: lookup.normalizedWord,
-          contextHash: hashContext(lookup.context),
-          sourceSentence: sentenceAt(english, start),
-        },
+        end,
+        surfaceWord: lookup.surfaceWord,
+        normalizedWord: lookup.normalizedWord,
+        contextHash: hashContext(lookup.context),
+        sourceSentence: sentenceAt(english, start),
       });
     }
 
     found
-      .sort(
-        (a, b) =>
-          a.word.paragraphOrder - b.word.paragraphOrder || a.start - b.start,
-      )
-      .forEach(({ word }, index) =>
+      .sort((a, b) => a.paragraphOrder - b.paragraphOrder || a.start - b.start)
+      .forEach((word, index) =>
         resolved.push({ ...word, displayOrder: index + 1 }),
       );
   }

@@ -664,23 +664,25 @@ newslingo/
 ├── prisma/
 │   ├── migrations/
 │   ├── editorial/                # production content written in sessions (W)
-│   │   ├── articles/             # one file per written article
+│   │   ├── articles/             # one file per written article, listed in index.ts
 │   │   └── dictionary/           # the reviewed editorial dictionary, shared with the demo
 │   ├── fixtures/                 # development/test data only
-│   │   ├── articles.ts           # demo articles
+│   │   ├── articles.ts           # demo articles: five news stories and an explainer
 │   │   ├── drafts.ts             # an unpublished draft for the admin pages (M5)
-│   │   ├── dictionary/           # editorial entries for their words (M4); moves to editorial/ in W
 │   │   ├── expression-occurrences.ts  # where cards occur in them (M4)
-│   │   └── key-vocabulary.ts     # each article's key words (M4)
+│   │   ├── key-vocabulary.ts     # each article's key words (M4)
+│   │   └── sense-choices.ts      # the sense of each ambiguous word in them (M4)
 │   ├── reference/                # production reference data
 │   │   ├── categories.ts
 │   │   └── expressions/          # Real English cards, one file per category (M4)
+│   ├── article-import.ts         # plans and writes the import of written articles (W)
 │   ├── editorial-dictionary.ts   # checks and rows for the dictionary entries
 │   ├── expression-library.ts     # checks and rows for cards and occurrences
 │   ├── key-vocabulary.ts         # checks key words and keys them to entries
 │   ├── schema.prisma
 │   ├── seed.ts                   # CLI: reference | demo | all
-│   └── seeders.ts                # seeding logic shared with tests
+│   ├── seeders.ts                # seeding logic shared with tests
+│   └── written-articles.ts       # the written-article format and its checks (W)
 ├── public/
 │   └── images/
 │       └── seed/                 # owned/licensed local assets only
@@ -1471,15 +1473,15 @@ The data items and the publication check were built on 2026-10-27 (§8.7), and t
 
 ### Work items — content files and import
 
-- [ ] Keep each written article in its own file in the repository, holding its paragraphs, its source or references, its sense choices, key vocabulary and Real English marks. Proposed home: `prisma/editorial/articles/`.
-- [ ] Move the reviewed editorial dictionary into production content shared by the demo and written articles. Proposed home: `prisma/editorial/dictionary/`.
-- [ ] Add `pnpm articles:import`. It validates every file and refuses the whole batch, listing the problems, if any file is invalid. It writes new or changed articles as `DRAFT`, each with its dictionary entries, key vocabulary and marks in one transaction, and rerunning it changes nothing.
-- [ ] Never let the import change an article that is not a draft. Correcting a published article goes archive, restore to draft, import, publish, each step audited by M5.
-- [ ] Like the admin command, show the target database and wait for a typed confirmation before writing to a database that is not on this machine.
+- [x] Keep each written article in its own file in the repository, holding its paragraphs, its source or references, its sense choices, key vocabulary and Real English marks. Built in `prisma/editorial/articles/`: one file per article, named after its slug and listed in `index.ts`, which a unit test checks; the format is `WrittenArticle` in `prisma/written-articles.ts`.
+- [x] Move the reviewed editorial dictionary into production content shared by the demo and written articles. Moved to `prisma/editorial/dictionary/` (`EDITORIAL_DICTIONARY`); the demo articles' sense choices stay with the fixtures in `prisma/fixtures/sense-choices.ts`. Entries are now added and corrected but never removed by the demo seed or the import, since both kinds of article share them.
+- [x] Add `pnpm articles:import`. It validates every file and refuses the whole batch, listing the problems, if any file is invalid. It writes new or changed articles as `DRAFT`, each with its dictionary entries, key vocabulary and marks in one transaction, and rerunning it changes nothing. Built in `scripts/import-articles.ts` and `prisma/article-import.ts`. The whole batch is one transaction; `--check` validates without a database. Before writing, it lists each article as new, changed (naming the parts) or unchanged, with the dictionary entries to add or correct. Dictionary corrections reach every imported article, published ones included, as reference data does.
+- [x] Never let the import change an article that is not a draft. Correcting a published article goes archive, restore to draft, import, publish, each step audited by M5. A changed file for a published or archived article refuses the whole batch, and the draft update is guarded by its status in case an admin publishes meanwhile.
+- [x] Like the admin command, show the target database and wait for a typed confirmation before writing to a database that is not on this machine.
 
 ### Work items — editorial rules
 
-- [ ] Set the target length per level and the CEFR mix before the first batch, and check every article against them. Both were set on 2026-10-27 (§4); the check is still to build.
+- [ ] Set the target length per level and the CEFR mix before the first batch, and check every article against them. Both were set on 2026-10-27 (§4). The import refuses an article whose length is outside its level's range (`TARGET_WORDS`); the mix is checked when each batch is proposed, since it depends on the articles already published.
 - [ ] Explainers use well-established facts only, give date-sensitive figures with their year, offer no advice, and name living people only in their public roles.
 - [ ] GOV.UK adaptations follow ADR-004 and `docs/sources/gov-uk.md`: original wording, no long passages from the page, the department and GOV.UK credited, and the licence statement shown.
 - [ ] Both kinds follow the sensitive-news policy (`docs/editorial/sensitive-news.md`), approved on 2026-10-27. Until the user decides otherwise, subjects it holds for review are skipped, not proposed.
@@ -2325,6 +2327,7 @@ Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code
 | 2026-10-27 | Keep the six existing categories: AI, Technology, World, Business, Entertainment and Beauty. Chosen by the user. | Every category already has its Real English cards. GOV.UK has no Entertainment or Beauty news, so those two get explainers only. |
 | 2026-10-27 | Approve the sensitive-news policy, and skip every subject it holds for review instead of holding it, until the user decides otherwise. Chosen by the user. | No war, disaster, election, crime, health, religion or migration stories, no story that mentions Turkey, Cyprus or the PKK, and no product launches. The Turkey default needs no lawyer while those stories are skipped, and the question of held subjects at A2 does not arise. |
 | 2026-10-27 | Date every article with a required `datedAt`: its source's publication time for news, which a CHECK constraint enforces, and the day it was written for an explainer. Lists sort and filter by it, and the reader shows it. | Explainers sort among news by their own date with no special case in any query. `sourcePublishedAt` stays as news lineage, shown in the admin preview. |
+| 2026-10-27 | Import written articles from files in one transaction per batch, comparing each stored article with its file. A new file becomes a draft, a changed draft is rewritten, and a changed file for a published or archived article refuses the batch. Dictionary entries are added and corrected, never removed, by both the import and the demo seed. | The file is the source of truth for a draft: an admin's category or level change on a draft is replaced on the next import, so it must be made in the file too. A dictionary correction reaches published articles at once, as a Real English card correction does. Entries left over from changed demo sentences stay in development databases, where nothing looks them up. |
 | 2026-10-27 | Rotate A2, B1, B2 and C1 within each category, and write A2 at 150–250 English words, B1 at 250–350, B2 at 300–450 and C1 at 450–650, never more than 900. Accepted by the user as proposed. | Every level appears in every category. Lengths stay close to the demo articles and within the page budget (§17). |
 
 ### Open decisions

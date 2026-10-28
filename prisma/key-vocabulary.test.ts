@@ -4,7 +4,8 @@ import { hashContext } from "../src/lib/text/context-hash";
 import { editorialVocabularyRows } from "./editorial-dictionary";
 import { resolveExpressionOccurrences } from "./expression-library";
 import { DEMO_ARTICLES } from "./fixtures/articles";
-import { DEMO_DICTIONARY, DEMO_SENSE_CHOICES } from "./fixtures/dictionary";
+import { EDITORIAL_DICTIONARY } from "./editorial/dictionary";
+import { DEMO_SENSE_CHOICES } from "./fixtures/sense-choices";
 import { DEMO_EXPRESSION_OCCURRENCES } from "./fixtures/expression-occurrences";
 import { DEMO_KEY_VOCABULARY } from "./fixtures/key-vocabulary";
 import {
@@ -50,6 +51,8 @@ describe("resolveKeyVocabulary", () => {
       {
         articleSlug: "river",
         paragraphOrder: 1,
+        start: 13,
+        end: 21,
         surfaceWord: "ratified",
         normalizedWord: "ratified",
         contextHash: hashContext("The deal was ⟦ratified⟧."),
@@ -114,7 +117,7 @@ describe("the demo key vocabulary", () => {
     const keys = new Set(
       editorialVocabularyRows(
         DEMO_ARTICLES,
-        DEMO_DICTIONARY,
+        EDITORIAL_DICTIONARY,
         DEMO_SENSE_CHOICES,
       ).map(
         ({ normalizedWord, contextHash }) => `${normalizedWord} ${contextHash}`,
@@ -141,10 +144,8 @@ describe("the demo key vocabulary", () => {
         (mark) =>
           mark.articleSlug === word.articleSlug &&
           mark.paragraphOrder === word.paragraphOrder &&
-          mark.surfaceText
-            .toLocaleLowerCase("en")
-            .split(/\s+/)
-            .includes(word.normalizedWord),
+          word.start < mark.end &&
+          mark.start < word.end,
       );
 
       expect(overlapping, word.surfaceWord).toEqual([]);
