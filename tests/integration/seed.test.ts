@@ -402,6 +402,8 @@ describe("demo dictionary seeding", () => {
     DEMO_ARTICLES,
     EDITORIAL_DICTIONARY,
     DEMO_SENSE_CHOICES,
+    // Written articles use the rest of the dictionary.
+    { requireEveryEntryUsed: false },
   ).length;
 
   async function seedEverything() {

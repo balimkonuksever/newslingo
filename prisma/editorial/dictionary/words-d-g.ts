@@ -127,7 +127,7 @@ export const WORDS_D_G: EditorialSense[] = [
   },
   {
     lemma: "describe",
-    forms: ["described"],
+    forms: ["describe", "described"],
     pos: "verb",
     ipa: "/dɪˈskraɪb/",
     tr: "tanımlamak, anlatmak; (described as) olarak adlandırılmak",
@@ -150,6 +150,15 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "ayrıntı",
     en: "A small fact or piece of information.",
     example: "Send me the details of the trip.",
+  },
+  {
+    lemma: "developer",
+    forms: ["developers"],
+    pos: "noun",
+    ipa: "/dɪˈveləpə/",
+    tr: "(gayrimenkul) geliştirici, müteahhit",
+    en: "A person or company that buys land and builds houses, shops or offices on it.",
+    example: "A developer wants to build new flats near the river.",
   },
   {
     lemma: "device",
@@ -185,6 +194,15 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "This exercise is difficult.",
   },
   {
+    lemma: "director",
+    forms: ["directors"],
+    pos: "noun",
+    ipa: "/daɪˈrektə/",
+    tr: "yönetici, müdür",
+    en: "One of the people who manage a company or an organisation.",
+    example: "She became a director of the company last year.",
+  },
+  {
     lemma: "dispute",
     forms: ["disputes"],
     pos: "noun",
@@ -195,10 +213,10 @@ export const WORDS_D_G: EditorialSense[] = [
   },
   {
     lemma: "do",
-    forms: ["do", "does"],
+    forms: ["do", "does", "did"],
     pos: "verb",
     ipa: "/duː/",
-    tr: "yapmak; (yardımcı fiil) soru ve olumsuz cümle kurar",
+    tr: "yapmak; (yardımcı fiil) soru ve olumsuz cümle kurar (did not send: göndermedi)",
     en: "To perform an action; also used to make questions and negative sentences.",
     example: "What do you do at the weekend?",
   },
@@ -351,6 +369,14 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "The shop opens at eight.",
   },
   {
+    lemma: "either",
+    pos: "adverb",
+    ipa: "/ˈaɪðə/",
+    tr: "(olumsuz cümlede) de/da",
+    en: "Used at the end of a negative sentence to mean “also”.",
+    example: "I can't swim, and my brother can't either.",
+  },
+  {
     lemma: "elaborate",
     pos: "adjective",
     ipa: "/ɪˈlæbərət/",
@@ -436,6 +462,14 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "My sister is an engineer.",
   },
   {
+    lemma: "English",
+    pos: "adjective",
+    ipa: "/ˈɪŋɡlɪʃ/",
+    tr: "İngilizce; İngiliz",
+    en: "In or about the English language, or from England.",
+    example: "She is reading an English book.",
+  },
+  {
     lemma: "enjoy",
     pos: "verb",
     ipa: "/ɪnˈdʒɔɪ/",
@@ -503,6 +537,7 @@ export const WORDS_D_G: EditorialSense[] = [
   },
   {
     lemma: "estimate",
+    forms: ["estimate", "estimates"],
     pos: "verb",
     ipa: "/ˈestɪmeɪt/",
     tr: "tahmin etmek",
@@ -534,6 +569,14 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "I walk every morning.",
   },
   {
+    lemma: "everyone",
+    pos: "pronoun",
+    ipa: "/ˈevriwʌn/",
+    tr: "herkes",
+    en: "Every person.",
+    example: "Everyone in the class passed the test.",
+  },
+  {
     lemma: "exactly",
     pos: "adverb",
     ipa: "/ɪɡˈzæktli/",
@@ -548,6 +591,14 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "örnek; (for example) örneğin",
     en: "Something that shows what a group of things is like.",
     example: "Some fruits, for example apples, grow well here.",
+  },
+  {
+    lemma: "existing",
+    pos: "adjective",
+    ipa: "/ɪɡˈzɪstɪŋ/",
+    tr: "mevcut, var olan",
+    en: "Already there, or already in use now.",
+    example: "The new road will join the existing one near the bridge.",
   },
   {
     lemma: "expensive",
@@ -634,6 +685,14 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "Everyone should get a fair share.",
   },
   {
+    lemma: "fairly",
+    pos: "adverb",
+    ipa: "/ˈfeəli/",
+    tr: "adil biçimde, hakça",
+    en: "In a way that is right and equal for everyone.",
+    example: "The teacher treats all the students fairly.",
+  },
+  {
     lemma: "family",
     forms: ["family", "families"],
     pos: "noun",
@@ -675,6 +734,14 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "tarım arazisi",
     en: "Land that is used for farming.",
     example: "The new road will cross farmland.",
+  },
+  {
+    lemma: "fast",
+    pos: "adverb",
+    ipa: "/fɑːst/",
+    tr: "hızlı, hızla",
+    en: "Quickly.",
+    example: "He speaks so fast that I can't understand him.",
   },
   {
     lemma: "fear",
@@ -739,6 +806,7 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "Fewer people drive to work now.",
   },
   {
+    id: "field-crops",
     lemma: "field",
     forms: ["field", "fields"],
     pos: "noun",
@@ -746,6 +814,17 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "tarla",
     en: "An area of land used for growing crops.",
     example: "The fields are green in spring.",
+  },
+  {
+    id: "field-sport",
+    lemma: "field",
+    forms: ["field"],
+    pos: "noun",
+    ipa: "/fiːld/",
+    tr: "saha, oyun alanı (playing field: oyun sahası)",
+    en: "An area of grass where people play sports; “level the playing field” means make a situation fair for everyone.",
+    example:
+      "The children are playing football on the field behind the school.",
   },
   {
     lemma: "fifteen",
@@ -876,6 +955,22 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "The river flows into the sea.",
   },
   {
+    lemma: "follow",
+    pos: "verb",
+    ipa: "/ˈfɒləʊ/",
+    tr: "(kurala) uymak; takip etmek, izlemek",
+    en: "To obey a rule or an instruction; to go after someone or something.",
+    example: "Drivers must follow the rules of the road.",
+  },
+  {
+    lemma: "food",
+    pos: "noun",
+    ipa: "/fuːd/",
+    tr: "yiyecek, gıda",
+    en: "Things that people and animals eat.",
+    example: "We need to buy some food for the weekend.",
+  },
+  {
     lemma: "for",
     pos: "preposition",
     ipa: "/fɔː/",
@@ -950,6 +1045,14 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "Entry to the museum is free.",
   },
   {
+    lemma: "freely",
+    pos: "adverb",
+    ipa: "/ˈfriːli/",
+    tr: "serbestçe, özgürce",
+    en: "Without anyone controlling or stopping you.",
+    example: "In the park, the dogs can run freely.",
+  },
+  {
     lemma: "frequently",
     pos: "adverb",
     ipa: "/ˈfriːkwəntli/",
@@ -988,6 +1091,14 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "don (zirai don), kırağı",
     en: "Very cold weather that makes a thin layer of ice form on plants and the ground.",
     example: "The frost killed the young plants.",
+  },
+  {
+    lemma: "frozen",
+    pos: "adjective",
+    ipa: "/ˈfrəʊzn/",
+    tr: "dondurulmuş",
+    en: "Kept very cold so that it stays fresh for a long time.",
+    example: "We always keep some frozen vegetables at home.",
   },
   {
     lemma: "fruit",
@@ -1135,6 +1246,14 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "The danger is greatest at night.",
   },
   {
+    lemma: "grocery",
+    pos: "noun",
+    ipa: "/ˈɡrəʊsəri/",
+    tr: "market, bakkaliye (gıda ve ev ihtiyaçları)",
+    en: "Food and other things for the home that you buy in a shop; often used before another noun, as in “grocery market”.",
+    example: "There is a small grocery shop at the end of our street.",
+  },
+  {
     lemma: "group",
     forms: ["group", "groups"],
     pos: "noun",
@@ -1169,7 +1288,7 @@ export const WORDS_D_G: EditorialSense[] = [
   },
   {
     lemma: "guide",
-    forms: ["guides"],
+    forms: ["guide", "guides"],
     pos: "noun",
     ipa: "/ɡaɪd/",
     tr: "kılavuz, rehber",
