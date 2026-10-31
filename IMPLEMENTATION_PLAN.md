@@ -1,10 +1,10 @@
 # Newslingo Implementation Plan
 
 > Status: Working draft  
-> Last updated: 2026-10-27  
+> Last updated: 2026-10-31  
 > Product specification: `bilingual_news_english_learning_plan.md`  
 > Immediate target: written articles (milestone W)  
-> Launch target: articles written in Claude Code sessions, explainers and adapted GOV.UK news, published through moderation
+> Launch target: articles written in Claude Code sessions, explainers and adapted GOV.UK news, reviewed by the user and published as a static site on GitHub Pages
 
 ## 1. Purpose
 
@@ -18,6 +18,8 @@ The plan intentionally separates two outcomes:
 This separation prevents the content pipeline from hiding usability or data-model problems in the core reader.
 
 Until 2026-10-27 the Launch MVP also included licensed news ingestion, automated AI adaptation and scheduled operation (M6–M8). They are on hold: Newslingo is a small, non-commercial project with no budget for a lawyer, a paid news API or paid model calls, so articles are written by hand instead (decision log, 2026-10-27).
+
+Since 2026-10-31 the public site is planned as a static site on GitHub Pages, rebuilt from the repository on every merge to `main`, with no server or database in production. The admin runs only on the user's computer (decision log, 2026-10-31).
 
 ### How to use this plan
 
@@ -117,7 +119,7 @@ These are the working defaults. Items marked **Open** must be resolved before th
 | Browser tests | Playwright plus axe integration | Accepted | Covers server-rendered routes, responsive journeys, and baseline accessibility. |
 | Rendering | Server Components by default | Accepted | Public content is read-heavy and SEO-sensitive. |
 | Client code | Only reader controls and interactive learning surfaces | Accepted | Keeps bundles and state management small. |
-| Runtime | Node runtime for Prisma-backed pages and handlers | Accepted | Prisma/database access should not depend on Edge constraints. |
+| Runtime | Node runtime for Prisma-backed pages and handlers | Accepted | Prisma/database access should not depend on Edge constraints. Since 2026-10-31 it runs during the site build and on the user's computer; production serves static files. |
 | Database | PostgreSQL with Prisma | Accepted | Matches the product plan and future search/transaction needs. |
 | Local database | Docker Compose | Accepted | Reproducible without a locally installed PostgreSQL server. |
 | Public article route | `/article/[slug]` | Accepted | Resolves the specification's `/article` versus `/news` inconsistency. |
@@ -125,19 +127,19 @@ These are the working defaults. Items marked **Open** must be resolved before th
 | Publication | Imported and generated content enters `DRAFT` | Accepted | Prevents unsafe automatic publishing. |
 | Article writing | Claude writes articles in Claude Code sessions, and the user reviews them (milestone W) | Accepted | No paid API, licence or legal review; the same method as the editorial dictionary. Decided on 2026-10-27. |
 | Article kinds | News, adapted from one source, and explainers, written from general knowledge with references | Accepted | Explainers cover what free news sources cannot. Decided on 2026-10-27. |
-| Launch moderation | Human approval required | Accepted | Reduces factual, translation, and copyright risk. |
+| Launch moderation | Human approval required | Accepted | Reduces factual, translation, and copyright risk. Since 2026-10-31 the approval is a publication mark in the article's file, merged to `main`. |
 | Seed data | PostgreSQL seed data, not a parallel mock-data path | Accepted | Ensures the first release exercises real queries and relationships. |
 | Images | Local owned placeholders or no image by default | Accepted | Avoids unclear external image rights. |
 | Deduplication | URL and normalized-title rules first | Accepted | Embeddings are deferred until evidence shows they are necessary. |
 | Processing | Sequential jobs are acceptable initially | Accepted | A dedicated queue is premature for MVP volume. |
 | Search | Not a Reader Release requirement | Accepted | It does not block validation of the core reader. |
-| Search at launch | PostgreSQL full-text search | Accepted | Search is in the product MVP; a separate search service is unnecessary initially. |
+| Search at launch | In the browser, over an index built with the site | Accepted | Search is in the product MVP. Since 2026-10-31 the static site has no database to search; PostgreSQL full-text search waits until the site has a server. |
 | Prisma workflow | Prisma ORM 7.10.0 with `prisma-client`, `prisma.config.ts`, and the PostgreSQL driver adapter | Accepted | ADR-001 pins the stable M2 generator, runtime, migration, and seeding workflow. |
 | News source | GOV.UK news under the Open Government Licence v3.0, picked by hand (ADR-004) | Accepted | Explicit commercial and adaptation rights with no key, contract or fee. Decided on 2026-10-27. |
 | AI provider/model | Anthropic Claude through the official SDK, `claude-opus-5` by default | Provider accepted | Structured outputs are supported. The model for each task is chosen by measured comparison (ML roadmap item 3) before M7, which is on hold. |
-| Dictionary fallback | Contextual Claude lookup, cache-first | Accepted | Word plus sentence gives the contextual Turkish sense; results are cached in `VocabularyEntry`. |
-| Admin authentication | Better Auth: an email, a password and an authenticator-app code (ADR-003) | Accepted | Decided on 2026-10-14; no third-party service or host dependency. |
-| Hosting/database | Provider-neutral until deployment planning | Open | Does not block local Reader Release work. |
+| Dictionary fallback | Contextual Claude lookup, cache-first | Accepted; off on the static site | Word plus sentence gives the contextual Turkish sense; results are cached in `VocabularyEntry`. Since 2026-10-31 the static site has no server to call it from, and every word of a written article has an editorial entry. |
+| Admin authentication | Better Auth: an email, a password and an authenticator-app code (ADR-003) | Accepted | Decided on 2026-10-14; no third-party service or host dependency. Since 2026-10-31 the admin runs only on the user's computer. |
+| Hosting | GitHub Pages: a static site built by a GitHub Actions workflow on every push to `main`, at `https://balimkonuksever.github.io/newslingo/`. No server or database in production | Accepted | Chosen by the user on 2026-10-31. Free, nothing online to secure or back up, and the articles already live in the repository. GitHub Free offers Pages only for public repositories. |
 | Scheduler | Vercel Cron or Trigger.dev | On hold | Waits with M8. |
 | CEFR inventory mix | Each category rotates A2, B1, B2 and C1, so every level appears | Accepted | Decided on 2026-10-27. Levels are assigned when an article is written; an independent level check waits for the CEFR classifier. |
 | Article length | English words per level: A2 150–250, B1 250–350, B2 300–450, C1 450–650, never more than 900 | Accepted | Decided on 2026-10-27, close to the demo articles. The 900-word ceiling is the one the page budget is set for (§17). |
@@ -163,16 +165,18 @@ Version numbers for framework and database dependencies will be verified for com
 | Multi-word expression matching | | ✓ | |
 | Article-level Real English section | | ✓ | |
 | Category expression libraries | | ✓ | |
-| Protected admin moderation | | ✓ | |
+| Admin moderation, on the user's computer | | ✓ | |
 | Articles written in Claude Code sessions (W) | | ✓ | |
 | Explainers with references | | ✓ | |
 | Adapted GOV.UK news, picked by hand | | ✓ | |
 | Idempotent article import | | ✓ | |
+| Static site on GitHub Pages | | ✓ | |
 | Licensed news ingestion (M6, on hold) | | | ✓ |
 | Automated AI rewrite and translation (M7, on hold) | | | ✓ |
 | Scheduled processing (M8, on hold) | | | ✓ |
 | SEO, accessibility, security hardening | Baseline | ✓ | |
-| PostgreSQL full-text search | | ✓ | |
+| Search in the browser | | ✓ | |
+| Online admin, PostgreSQL full-text search and the contextual Claude lookup, which need a server | | | ✓ |
 | General user accounts | | | ✓ |
 | Saved articles and saved words | | | ✓ |
 | Vocabulary notebook/review | | | ✓ |
@@ -215,7 +219,7 @@ Next.js application
 
 ### 6.2 Launch MVP architecture
 
-Since 2026-10-27:
+Since 2026-10-31, when the site became static (§19):
 
 ```text
 Claude Code session: Claude writes, the user reviews
@@ -228,18 +232,25 @@ Article file in the repository
 (paragraphs, Turkish, dictionary senses, key vocabulary, Real English marks)
       │
       ▼
-Import command → validation → DRAFT
+Import command → validation → DRAFT in the local database
       │
       ▼
-Admin preview and publish (M5)
+Local admin preview (M5) → the user approves → the file is marked published
       │
       ▼
-Public reader routes
+Pull request merged to main
+      │
+      ▼
+GitHub Actions: temporary PostgreSQL → migrations → reference data
+→ import, publishing the marked articles → static export
+      │
+      ▼
+GitHub Pages: the public reader routes as static files
 
 Reader word/expression click
       │
       ▼
-Editorial dictionary entry, written ahead of time → UI
+The article's static file of editorial entries, fetched on the first click → UI
 ```
 
 The automated pipeline that M6–M8 would build, on hold since 2026-10-27:
@@ -278,7 +289,7 @@ Local contextual cache → External fallback → Validate → Cache → UI
 
 - `src/app`: routes, layouts, route-level metadata, loading/error boundaries.
 - `src/components`: presentation and tightly scoped interaction components.
-- `src/server`: server-only database and external-service integrations.
+- `src/server`: server-only database and external-service integrations. Since 2026-10-31 this code runs during the site build and on the user's computer, never on GitHub Pages.
 - `src/domain`: shared schemas and domain contracts where a real boundary exists.
 - `src/jobs`: scheduled orchestration added only when ingestion begins (on hold with M8).
 - `prisma`: schema, migrations, deterministic fixtures, seed entry point, and the written articles with their editorial dictionary (W).
@@ -309,6 +320,8 @@ Local contextual cache → External fallback → Validate → Cache → UI
 | `/article/[slug]` | Reader Release | Bilingual reader, metadata, attribution, learning interactions. |
 | `/category/[slug]/expressions` | Launch MVP | Category-specific Real English library. Built in M4: the category's cards in display order, linked from the category page and from each article's Real English section; unknown or inactive categories return 404. |
 
+Since 2026-10-31 every public route is generated at build time for GitHub Pages, under the `/newslingo` base path. The homepage filters keep their shareable URLs but are applied in the browser, since a static page cannot read its query string on a server.
+
 Reserved but disabled until their product phases:
 
 - `/saved`
@@ -329,6 +342,8 @@ Added during the moderation milestone:
 
 Authentication and authorization must protect both the pages and their server actions/handlers.
 
+Since 2026-10-31 the admin runs only on the user's computer and is left out of the static site.
+
 ### 7.3 API and internal interfaces
 
 Interfaces are added only in their owning milestone:
@@ -346,6 +361,8 @@ POST /api/cron/news-ingestion
 
 Publishing and archiving were built in M5 as server actions on the admin article page instead of the two `/api/admin/articles/[id]/…` handlers above (decision 2026-10-25). Ingestion, regeneration and cron handlers are decided in their own milestones, which are on hold; written articles reach the database through a command, not an HTTP interface (W).
 
+`POST /api/dictionary` is not part of the static site (2026-10-31): each article page fetches a static file of its words' and expressions' entries on the first click instead. The endpoint stays for local use, and for the contextual lookup if the site gains a server.
+
 ---
 
 ## 8. Data model and migration roadmap
@@ -356,7 +373,7 @@ Publishing and archiving were built in M5 as server actions on the admin article
 - Each later feature adds its models in the milestone that owns them.
 - Never edit a migration that has been applied outside an isolated local reset.
 - Production-safe reference provisioning uses stable identifiers/slugs, is idempotent, and contains categories plus approved expression-library content only.
-- Written articles reach production through the article import (W), which writes them as drafts for review and never includes demo articles.
+- There is no production database since 2026-10-31. Each site build creates a temporary database, applies the migrations, provisions reference data, and imports the written articles, publishing the ones their files mark published. It never includes demo articles.
 - Development/test demo seeding is a separate command containing sample articles and test fixtures.
 - Production is never reset or seeded with demo articles.
 - Production schema changes use forward migrations and an expand/contract approach where needed.
@@ -640,7 +657,7 @@ Initial generation may create a normal `DRAFT` Article. Regenerating an unpublis
 - `SavedArticle`, `SavedWord`, and `ReadingProgress`: user learning state.
 - `Quiz`, `QuizQuestion`, `QuizAttempt`: quiz feature.
 - `AudioAsset`: article/paragraph/word TTS metadata.
-- PostgreSQL search vector and GIN index: explicit SQL migration in M9.
+- PostgreSQL search vector and GIN index: waits until the site has a server. Since 2026-10-31 launch search runs in the browser (M9).
 
 ### 8.7 Written-articles migration
 
@@ -852,6 +869,8 @@ BETTER_AUTH_SECRET=   # signs sessions and encrypts authenticator secrets
 BETTER_AUTH_URL=      # the site's origin; defaults to NEXT_PUBLIC_SITE_URL
 ```
 
+Since 2026-10-31 production has no host secret store. The site build sets `NEXT_PUBLIC_SITE_URL` to the GitHub Pages address and the `/newslingo` base path, and needs no secret: the static site has no admin, sign-in or dictionary provider.
+
 Later milestones add variables only when required:
 
 ```env
@@ -908,9 +927,12 @@ db:studio
 admin:create
 admin:reset
 articles:import
+site:build
 ```
 
 `articles:import` (W) validates the written articles in `prisma/editorial/` and writes new or changed ones as drafts. It refuses the whole batch if any file is invalid, never changes an article that is not a draft, and, like the admin commands, waits for a typed confirmation before writing to a database that is not on this machine.
+
+`site:build` (M9) builds the static site the way the GitHub Pages workflow does: against a database holding only reference data and the written articles, with the admin and the dictionary endpoint left out.
 
 `admin:create` creates an admin and `admin:reset` gives one a new password and authenticator app; no page can do either (ADR-003). Both show the target database and wait for a typed confirmation, which is the database host when it is not on this machine. They take passwords at a hidden prompt, never as arguments. Both set up the authenticator app before finishing: a creation whose setup does not finish is removed, and an admin whose reset stops half-way opens no admin page until it is run again.
 
@@ -1005,7 +1027,7 @@ Turn the remaining launch-sensitive choices into explicit decisions before they 
 - [ ] Select the AI provider/model and confirm structured-output support. Provider selected on 2026-09-25: Anthropic Claude, with structured outputs. The model for each task is still to be chosen by measured comparison. On hold with M7 since 2026-10-27.
 - [x] Select the contextual dictionary fallback: a contextual Claude lookup, cache-first (2026-09-25).
 - [x] Select admin authentication: Better Auth with an email, a password and an authenticator-app code, for admins only (2026-10-14, ADR-003).
-- [ ] Select hosting, managed PostgreSQL, and scheduler. The scheduler waits with M8.
+- [x] Select hosting: GitHub Pages, a static site with no production database (2026-10-31). The scheduler waits with M8.
 - [ ] Set operational limits:
   - candidates fetched per run
   - articles generated per run/day
@@ -1015,7 +1037,7 @@ Turn the remaining launch-sensitive choices into explicit decisions before they 
   - active-content and archive policy
 
   On hold with M6–M8 since 2026-10-27.
-- [x] Confirm PostgreSQL full-text search as Launch MVP scope.
+- [x] Confirm PostgreSQL full-text search as Launch MVP scope. Since 2026-10-31 launch search runs in the browser instead, since the static site has no database.
 - [x] Select and document the compatible Prisma workflow before M2.
 - [x] Define the production CEFR assignment mix and shortage-filling rule.
 
@@ -1452,7 +1474,7 @@ Publish articles that Claude writes in Claude Code sessions and the user reviews
 2. An explainer takes a topic the user has agreed to and is written from general knowledge; every fact must be checkable in one of the references it lists. A news article takes a recent GOV.UK story that the sensitive-news policy allows, read through GOV.UK's Content API and retold in Newslingo's own words, keeping its facts and numbers and attributing the government's claims.
 3. Claude writes the English at the assigned level and the Turkish, adds dictionary senses for new words and the sense of every ambiguous word, chooses the key vocabulary and marks Real English occurrences, all in the article's file.
 4. The import command validates the batch and writes it as drafts.
-5. The user reviews each draft in the admin preview, above all its facts and Turkish, and publishes or rejects it. As in M4, the new dictionary entries are reviewed from a sheet in `docs/reviews/`: `scripts/sample-dictionary-review.ts --written=<slug>` lists the article's key words and every entry that no demo article and no written article listed before it uses.
+5. The user reviews each draft in the local admin preview, above all its facts and Turkish, and approves or rejects it. Since 2026-10-31 an approved article's file is marked published, and the article goes live when that change is merged to `main` and the site rebuilds. As in M4, the new dictionary entries are reviewed from a sheet in `docs/reviews/`: `scripts/sample-dictionary-review.ts --written=<slug>` lists the article's key words and every entry that no demo article and no written article listed before it uses.
 
 ### Work items — data
 
@@ -1478,6 +1500,7 @@ The data items and the publication check were built on 2026-10-27 (§8.7), and t
 - [x] Add `pnpm articles:import`. It validates every file and refuses the whole batch, listing the problems, if any file is invalid. It writes new or changed articles as `DRAFT`, each with its dictionary entries, key vocabulary and marks in one transaction, and rerunning it changes nothing. Built in `scripts/import-articles.ts` and `prisma/article-import.ts`. The whole batch is one transaction; `--check` validates without a database. Before writing, it lists each article as new, changed (naming the parts) or unchanged, with the dictionary entries to add or correct. Dictionary corrections reach every imported article, published ones included, as reference data does.
 - [x] Never let the import change an article that is not a draft. Correcting a published article goes archive, restore to draft, import, publish, each step audited by M5. A changed file for a published or archived article refuses the whole batch, and the draft update is guarded by its status in case an admin publishes meanwhile.
 - [x] Like the admin command, show the target database and wait for a typed confirmation before writing to a database that is not on this machine.
+- [ ] Mark publication in the article file (2026-10-31). An approved article's file records the day it was published, and the import publishes it, through the same publication checks as the admin, instead of writing it as a draft. A file without the mark stays a draft. A correction to a published article is a reviewed change to its file, which the next site build shows. The merged pull request is the record of a publication on the live site; how the import records one in the local database, whose moderation record needs an admin, is settled when this is built.
 
 ### Work items — editorial rules
 
@@ -1497,7 +1520,7 @@ The data items and the publication check were built on 2026-10-27 (§8.7), and t
 
 ### Exit gate
 
-The first batch, at least one article for each chosen category, is written, reviewed, imported and published through the admin without manual database changes.
+The first batch, at least one article for each chosen category, is written, reviewed in the admin preview, and published by its file's mark through the import, without manual database changes. It goes live with the static site (M9).
 
 ---
 
@@ -1740,34 +1763,41 @@ The pipeline runs unattended in staging for the agreed soak period without dupli
 
 ---
 
-## M9 — Search, release hardening, and launch
+## M9 — Static site, search, release hardening, and launch
 
 ### Goal
 
-Turn the staging system into a secure, accessible, observable, and reversible production release.
+Publish the reader as a static site on GitHub Pages that is secure, accessible, findable and reversible, rebuilt from the repository on every push to `main`, with no server or database in production.
 
-Since 2026-10-27 M9 follows milestone W. Items that served only the ingestion and generation pipeline are marked as on hold.
+Since 2026-10-27 M9 follows milestone W. Items that served only the ingestion and generation pipeline are marked as on hold. Since 2026-10-31 production is a static site on GitHub Pages (§19), so items that needed a production server or database are replaced or marked as not needed.
+
+### Work items — static site
+
+- [ ] Build the public routes as a static export under the `/newslingo` base path: the homepage, the category pages and their expression pages, every published article and the not-found page. Routes with parameters list theirs at build time and refuse any other.
+- [ ] Leave the admin, sign-in and `POST /api/dictionary` out of the static site. They keep working on the user's computer.
+- [ ] Apply the homepage filters in the browser, keeping their shareable URLs and their validation rules.
+- [ ] Give each article a static file of its words' and expressions' editorial entries, fetched on the first click, so a lookup needs no server and the page budget (§17) still holds.
+- [ ] Add `pnpm site:build` and a GitHub Actions workflow that starts a temporary PostgreSQL, applies the migrations, provisions reference data, imports the written articles, publishing the marked ones, builds the static export and deploys it to GitHub Pages. It runs on every push to `main` and never includes demo articles; a failing step leaves the previous site live.
+- [ ] Run the browser tests, accessibility scans and page budget against the static build in CI.
 
 ### Work items — MVP search
 
-- [ ] Add an explicit PostgreSQL migration for a search document/vector and GIN index.
-- [ ] Index title, summary, category, article body, and source with sensible weights.
-- [ ] Build a validated, URL-backed search query and results surface.
-- [ ] Return published articles only.
-- [ ] Handle empty queries, no results, Turkish/English text, and pagination/limits.
-- [ ] Add ranking/latency integration tests at launch volume and separate index-eligibility tests with a sufficiently large synthetic corpus.
-- [ ] Keep external search services deferred until PostgreSQL search is proven insufficient.
+- [ ] Build a search index of published articles with the site, covering title, summary, category, article body and source, with sensible weights.
+- [ ] Build a validated, URL-backed search page that loads the index when first used and searches in the browser.
+- [ ] Handle empty queries, no results, Turkish/English text, and result limits.
+- [ ] Test ranking on the launch inventory, and keep the index's download within the page budget.
+- [ ] PostgreSQL full-text search and external search services wait until the site has a server.
 
 ### Work items — security
 
-- [ ] Review admin authorization. Cron authorization is on hold with M8.
-- [ ] Confirm all secrets are server-only.
-- [ ] Rate limit dictionary and sensitive admin actions.
-- [ ] Restrict provider URLs and redirects. On hold with M6: written articles fetch nothing at run time.
+- [ ] Before the repository becomes public, scan its whole history for secrets and personal data, and confirm no `.env` file was ever committed.
+- [ ] Confirm the static build needs no secret and contains no draft, demo article, admin page or server-only code.
+- [ ] Set a content security policy and a referrer policy with `<meta>` tags, since GitHub Pages cannot set response headers.
 - [ ] Sanitize or discard source HTML.
-- [ ] Validate all route parameters and external payloads.
-- [ ] Apply CSRF/session protections appropriate to the selected auth solution.
-- [ ] Confirm error messages expose no secrets or raw stack traces.
+- [ ] Validate all route parameters, and the filter and search query strings in the browser.
+- [ ] Confirm error pages expose no secrets or raw stack traces.
+- [ ] Keep the local admin's authentication, server-side checks and rate limits as they are, for the user's computer.
+- [ ] Not needed while production is static: online admin authorization, server rate limits, CSRF and session settings for a live admin, cron authorization (on hold with M8), and provider URL restrictions (on hold with M6).
 
 ### Work items — accessibility
 
@@ -1780,40 +1810,38 @@ Since 2026-10-27 M9 follows milestone W. Items that served only the ingestion an
 
 ### Work items — performance and SEO
 
-- [ ] Confirm no dictionary calls occur on initial render.
+- [ ] Confirm no word file is fetched before the first click.
 - [ ] Profile the DOM and hydration cost of long tokenized articles.
-- [ ] Cache safe public queries appropriately.
+- [ ] Measure the page budget again on the deployed site, served by GitHub Pages.
 - [ ] Optimize fonts and mobile loading.
-- [ ] Add canonical URLs, metadata, OpenGraph fallback, and Article structured data.
-- [ ] Add sitemap and robots behavior.
-- [ ] Verify PostgreSQL full-text search performance against the launch inventory.
+- [ ] Check canonical URLs and metadata under the base path, and add an OpenGraph fallback and Article structured data.
+- [ ] Generate the sitemap and robots file at build time.
+- [ ] Check search speed and index size against the launch inventory.
 
 ### Work items — release operations
 
-- [ ] Provision production database, auth, secrets, and monitoring. The scheduler is on hold with M8.
-- [ ] Configure database backups and restoration documentation.
-- [ ] Rehearse migration and forward-fix/rollback procedures.
-- [ ] Deploy and run the controlled production migration step.
-- [ ] After migrations, run idempotent production-safe reference provisioning for the chosen categories and approved expression libraries; never run the demo seed.
-- [ ] Import the written articles into production and publish them through the admin.
-- [ ] Admin-review the initial inventory.
-- [ ] Verify public and admin pages, logging, and backups.
+- [ ] The user makes the repository public, after the security scan, and turns on GitHub Pages with GitHub Actions as its source.
+- [ ] Deploy, then check the live site: the homepage, a category page, an article with a word lookup, the not-found page, and a phone viewport.
+- [ ] Add a job to the workflow that checks those pages after every deployment.
+- [ ] Publish the first batch by merging its publication marks, and confirm that every article appears.
+- [ ] Rehearse a rollback.
 - [ ] Publish an operations runbook covering:
-  - bad article removal
-  - correcting a published article
-  - deployment rollback
-  - restoring a backup
+  - removing a bad article: remove its publication mark, or revert its merge, and the site rebuilds
+  - correcting a published article: a reviewed change to its file
+  - rolling back: revert `main` to an earlier commit, or rerun an earlier deployment
+  - a failed build: GitHub reports it, and the previous site stays live
+- [ ] Not needed while production is static: a production database with its backups and migration step, production secrets, and monitoring beyond GitHub's reports. The repository holds everything the site publishes.
 
 ### Launch gate
 
 - Every chosen category is represented.
 - Target inventory exists, or a reduced inventory has explicit approval.
 - No critical/high security issue remains.
-- Core keyboard, mobile, and desktop flows pass.
-- PostgreSQL search returns relevant published results across the required fields.
-- Admin archive and correction paths work.
-- Monitoring, backup, and rollback paths are operational.
-- The article import creates valid drafts without duplicates.
+- Core keyboard, mobile, and desktop flows pass on the deployed site.
+- Search returns relevant published results across the required fields.
+- An article can be removed and corrected through a merge.
+- The site rebuilds from `main` alone, and a rollback has been rehearsed.
+- The article import creates valid drafts without duplicates and publishes only marked articles.
 - No launch blocker remains unresolved in the decision log.
 
 ---
@@ -1921,7 +1949,7 @@ On hold with M8.
 - Ranking favors stronger/title matches as designed.
 - Empty, invalid, and no-result queries are safe.
 - Launch-scale search meets relevance and latency/row-bound expectations without requiring a particular scan type on a tiny table.
-- A sufficiently large synthetic corpus verifies that the query is eligible to use the intended PostgreSQL search index.
+- The search index's download stays within the page budget at launch volume. Since 2026-10-31 search runs in the browser, so no PostgreSQL index is checked.
 
 ### 12.3 Quality gates by change type
 
@@ -1995,32 +2023,32 @@ CI should cancel superseded runs on the same branch. Static checks and database/
 
 - **Local:** Docker PostgreSQL and deterministic development fixtures.
 - **Test:** isolated test database; destructive helpers refuse non-test URLs.
-- **Preview:** provider-specific decision; no live ingestion or AI by default.
-- **Staging:** production-like services, controlled scheduler, non-public validation.
-- **Production:** manual release approval; written articles arrive through the article import. Scheduled processing waits with M8.
+- **Preview:** none since 2026-10-31. Pull-request CI builds the static site without deploying it.
+- **Staging:** none since 2026-10-31. The local `pnpm site:build` and the CI build stand in for it.
+- **Production:** GitHub Pages, deployed by the site workflow on every push to `main`; merging is the release approval. Written articles arrive through the article import in the build. Scheduled processing waits with M8.
 
 ### 13.3 Database deployment policy
 
-- Back up production before material schema changes.
-- Run `migrate deploy` exactly once as a controlled release step.
-- Run the idempotent reference-provisioning command after migrations when its version changes.
-- Run the article import as a deliberate step after reviewing what it will write; it never publishes.
-- Do not run development migrations, reset, or demo seed in production.
-- Prefer backwards-compatible expand/contract changes.
-- Treat application rollback and database rollback as separate concerns.
-- Prefer forward fixes over attempting to reverse destructive migrations.
+Since 2026-10-31 there is no production database. Each site build:
+
+- creates an empty temporary PostgreSQL database and runs `migrate deploy`;
+- provisions reference data, then imports the written articles, publishing the ones their files mark published;
+- never runs development migrations, a reset, or the demo seed;
+- discards the database after the static export.
+
+A failing step stops the deployment, and the previous site stays live. Applied migrations are still never edited, because the user's local database keeps its history.
 
 ### 13.4 Deployment smoke tests
 
-After every deployment:
+After every deployment, on the live site:
 
 - load `/`
 - load one category page
 - load one published article
-- verify source link and EN/TR content
-- verify database connectivity
-- verify admin protection
-- verify health of configured integrations without creating paid work
+- verify source link or references and EN/TR content
+- open one word's entry
+- load a missing address and get the not-found page
+- confirm that no admin page or draft is reachable
 
 ---
 
@@ -2064,7 +2092,7 @@ At launch, since 2026-10-27:
 1. Claude writes the article in a Claude Code session: an explainer, or an adaptation of one GOV.UK story.
 2. The article import validates it and stores it as `DRAFT`.
 3. The user reviews factuality, language, level, and originality in the admin preview.
-4. The user publishes or rejects it.
+4. The user approves or rejects it. Since 2026-10-31 an approved article's file is marked published, and the article goes live when that change is merged to `main`.
 
 The automated route that M6–M8 would build, on hold: a candidate is ingested, an adaptation is generated and validated, and the article stays `DRAFT` until an admin publishes or rejects it.
 
@@ -2093,6 +2121,8 @@ Auto-publication may be reconsidered only after measured evidence shows consiste
 
 ### Admin and jobs
 
+Since 2026-10-31 the admin runs only on the user's computer, and the public site is static.
+
 - Enforce authentication and authorization server-side.
 - Protect actions independently of page middleware.
 - Use secure session and CSRF protections appropriate to the auth solution.
@@ -2106,14 +2136,13 @@ Auto-publication may be reconsidered only after measured evidence shows consiste
 ### Pre-launch review
 
 - dependency/security scan
-- secret scan
-- authorization tests
-- rate-limit tests
+- secret and personal-data scan of the whole history, before the repository becomes public
+- a check that the static build holds no draft, demo article, admin page or server-only code
+- content security policy review
 - input-validation review
-- source-fetch/redirect review
-- session/cookie review
 - error/log redaction review
-- database permission and backup review
+
+Until 2026-10-31 this list also covered authorization, rate-limit, source-fetch, session and cookie, and database permission and backup reviews of a production server. The local admin keeps its authorization and rate-limit tests.
 
 ---
 
@@ -2152,7 +2181,7 @@ Automated scans supplement—not replace—manual keyboard and screen-reader che
 
 ### Performance budgets
 
-- Public list/article content is server rendered.
+- Public list/article content is rendered on the server; since 2026-10-31, once, when the site is built.
 - Client JavaScript is limited to explicit interactions.
 - No dictionary request occurs until a user clicks.
 - Article queries select only required fields.
@@ -2174,6 +2203,8 @@ The article page budget, set on 2026-10-14 for the longest article the product s
 `tests/e2e/page-budget.spec.ts` enforces the three size limits on every demo article. The timings were measured once. The phone profile is Google Chrome driven by Playwright at a Pixel 7 viewport with the CPU slowed four times, taking the median of seven loads; the Event Timing API timed the word card, the translation toggle and the text-size buttons, and the word card was the slowest. The 900-word article was a temporary copy of the C1 demo article with its paragraphs repeated. Repeated text compresses better than new text, so a real 900-word article's HTML download would be nearer 39 KB. Headless Chrome added 100 ms or more of waiting for the next frame to every word-card tap, which a real browser window did not show, so the phone budget counts script time and the 200 ms response target is checked in a real browser. Measure again once W sets the target lengths, and before launch.
 
 ### Cache plan
+
+Since 2026-10-31 production is static: GitHub Pages serves prebuilt files, and a merge to `main` rebuilds the site, which replaces invalidation after publish and archive. The items below apply to the local application.
 
 - Framework/data cache for safe public published-content queries.
 - Explicit invalidation after publish/archive/regenerate actions.
@@ -2220,7 +2251,7 @@ Learning-product analytics such as article completion and words clicked can be a
 
 ### Cost controls
 
-Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code sessions, and word lookups read editorial entries. The controls below apply if M7 and M8 resume.
+Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code sessions, and word lookups read editorial entries. Since 2026-10-31 hosting costs nothing: GitHub Pages and GitHub Actions are free for a public repository. The controls below apply if M7 and M8 resume.
 
 - Filter and rank before generation.
 - Use one generation call for rewrite, translation, vocabulary, and expressions when quality permits.
@@ -2252,7 +2283,9 @@ Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code
 | Context cache returns the wrong word sense | Medium | Medium | Sentence hash, provider/schema version, contextual validation. | Requires cache invalidation/fix. |
 | Expression matching corrupts text or overlaps words | Medium | High | Longest-match algorithm, exact reconstruction fixtures, occurrence offsets. | Blocks M4 exit. |
 | Hundreds of interactive tokens harm accessibility/performance | Medium | High | Keyboard strategy, DOM profiling, mobile/assistive QA. | Blocks M4/launch. |
-| Admin or cron access is compromised | Low | Critical | Strong auth, server checks, secret rotation, audit logs, rate limits. | Blocks launch. |
+| Admin or cron access is compromised | Low | Critical | Strong auth, server checks, secret rotation, audit logs, rate limits. Since 2026-10-31 the admin is not online. | Blocks launch. |
+| Making the repository public exposes something private | Low | High | A secret and personal-data scan of the whole history before the switch; `.env` files are ignored. | Blocks making the repository public. |
+| GitHub Pages' limits or terms stop fitting the site | Low | Medium | Non-commercial use, well inside the 1 GB site and soft 100 GB-a-month bandwidth limits; the site is plain static files any static host can serve. | Prompts a move to another static host. |
 | Pipeline fails silently | Medium | High | Persist run items/generation attempts, reconciled counts, source lineage, alerts, and runbook. | Blocks M8 exit (on hold). |
 | Database migration prevents rollback | Low | High | Expand/contract, backups, staging rehearsal, forward-fix plan. | Blocks production deployment. |
 
@@ -2330,6 +2363,7 @@ Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code
 | 2026-10-27 | Import written articles from files in one transaction per batch, comparing each stored article with its file. A new file becomes a draft, a changed draft is rewritten, and a changed file for a published or archived article refuses the batch. Dictionary entries are added and corrected, never removed, by both the import and the demo seed. | The file is the source of truth for a draft: an admin's category or level change on a draft is replaced on the next import, so it must be made in the file too. A dictionary correction reaches published articles at once, as a Real English card correction does. Entries left over from changed demo sentences stay in development databases, where nothing looks them up. |
 | 2026-10-27 | Rotate A2, B1, B2 and C1 within each category, and write A2 at 150–250 English words, B1 at 250–350, B2 at 300–450 and C1 at 450–650, never more than 900. Accepted by the user as proposed. | Every level appears in every category. Lengths stay close to the demo articles and within the page budget (§17). |
 | 2026-10-28 | Start the first batch with a pilot of two articles, one GOV.UK story and one explainer, and write the other four after the user has reviewed them. Chosen by the user. | The pilot tests writing, import, review and publishing on real content before the rest of the batch. It also measured the work: the editorial dictionary, written for the six demo articles, covered only 24–39% of the distinct words in five recent GOV.UK stories, and the pilot's articles needed 55 and 31 new entries, which took most of the writing time. Coverage grows with every article. |
+| 2026-10-31 | Host the public site on GitHub Pages as a static site, built by a GitHub Actions workflow on every push to `main`, at `https://balimkonuksever.github.io/newslingo/`. Production has no server or database: each build creates a temporary database from the repository, and the admin runs only on the user's computer. An approved article's file is marked published, and the article goes live when that change is merged. Chosen by the user. | It costs nothing, leaves nothing online to secure or back up, and fits articles that already live in the repository. The repository must become public, since GitHub Free offers Pages only for public repositories. Word lookups read a static file per article instead of `POST /api/dictionary`; the homepage filters and search run in the browser; PostgreSQL full-text search, the contextual Claude lookup and publishing from an online admin wait until the site has a server, which M6–M8 would also need if they resume. |
 
 ### Open decisions
 
@@ -2340,7 +2374,7 @@ Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code
 | AI provider/model | Before M7 | Provider decided on 2026-09-25 (Claude). Still open: the model for each task, chosen by the ML roadmap's comparison. M7 has been on hold since 2026-10-27, so this waits with it. |
 | Dictionary fallback | Before live M4 integration | Resolved on 2026-09-25: contextual Claude lookup, cache-first (see Accepted). |
 | Admin authentication | Before M5 | Resolved on 2026-10-14: Better Auth with an email, a password and an authenticator-app code (ADR-003). |
-| Hosting and managed PostgreSQL | Before M9 | Choose based on operational simplicity, cost and regional needs; readers can reach the site only once it is hosted. |
+| Hosting and managed PostgreSQL | Before M9 | Resolved on 2026-10-31: GitHub Pages, a static site with no production database. |
 | Scheduler | Before M8 | On hold with M8. |
 | CEFR assignment mix and verification rule | Before W's first batch | Mix resolved on 2026-10-27: in each category, rotate A2, B1, B2 and C1 so every level appears. Still open: the independent level check, which waits for the CEFR classifier. |
 | Target length per level | Before W's first batch | Resolved on 2026-10-27: A2 150–250 English words, B1 250–350, B2 300–450, C1 450–650, never more than 900. |
@@ -2434,17 +2468,17 @@ Gate: complete Reader Release definition of done passes.
 - Article and category Real English sections work.
 - Every launch category contains at least 10 reviewed expressions.
 - Curated article vocabulary is persisted and displayed.
-- Lookup cache, fallback, loading, rate-limit, and error behavior work.
-- Admin authentication and audited moderation work.
+- Word lookups, loading and error behavior work on the static site; the cache, fallback and rate limit work locally.
+- Admin authentication and audited moderation work on the user's computer.
 - Written articles import idempotently as drafts: explainers with their references, GOV.UK adaptations with their source and licence.
 - The user reviewed every published article, and readers can tell explainers from news.
 - The inventory meets the approved level mix. An independent level check follows once the CEFR classifier exists.
 - Invalid imports are refused, and the publication check stops incomplete articles.
-- Human review controls publishing, archiving and rejection; a correction goes through archive, restore, import and publish.
-- PostgreSQL full-text search covers title, summary, category, body, and source.
+- Human review controls publishing and rejection: an article goes live only when its reviewed file is marked published and merged, and a correction is a reviewed change to its file.
+- Search covers title, summary, category, body, and source.
 - Source attribution and provenance are complete.
-- Security, accessibility, SEO, mobile, backup, and rollback gates pass.
-- An admin can remove a bad article at once by archiving it.
+- Security, accessibility, SEO, mobile, and rollback gates pass on the deployed site.
+- A bad article can be removed within one site build, by removing its publication mark or reverting its merge.
 
 Until 2026-10-27 this list also required provider imports, AI-generated drafts, scheduled runs, a moderation backlog and freshness SLA, and generation kill switches. They wait with M6–M8.
 
@@ -2460,6 +2494,8 @@ Slices 1–5 are complete, and with them the Reader Release (M1–M3). On 2026-0
 
 **On 2026-10-27 the plan changed course.** Research for M6 found no free news source that covers all six categories and allows adaptation without a licence or a lawyer's opinion. GOV.UK news allows it (ADR-004), but covers only AI, Technology, World and Business, and thinly. Articles are now written in Claude Code sessions, explainers plus GOV.UK stories picked by hand, and M6–M8 are on hold (§19, 2026-10-27).
 
-**Milestone W, written articles, is under way.** The four decisions its first batch needed were settled the same day (§19): the six categories stay, the sensitive-news policy is approved with held subjects skipped for now, each category rotates A2 to C1, and each level has a target length. W's code, the article kind, the reader and admin changes and `pnpm articles:import`, was merged by 2026-10-28. The first batch began that day with a pilot of two articles, imported as drafts for the user's review: the Competition and Markets Authority's decision on Aldi and Lidl (Business, B1, a GOV.UK story) and “How Subtitles Work” (Entertainment, A2, an explainer). The user reviewed both on 2026-10-30, the facts, the Turkish and every new dictionary entry, and found nothing to change (`docs/reviews/2026-10-28-*.md`). Once both are published through the admin, the other four categories follow: AI, Technology, World and Beauty.
+**Milestone W, written articles, is under way.** The four decisions its first batch needed were settled the same day (§19): the six categories stay, the sensitive-news policy is approved with held subjects skipped for now, each category rotates A2 to C1, and each level has a target length. W's code, the article kind, the reader and admin changes and `pnpm articles:import`, was merged by 2026-10-28. The first batch began that day with a pilot of two articles, imported as drafts for the user's review: the Competition and Markets Authority's decision on Aldi and Lidl (Business, B1, a GOV.UK story) and “How Subtitles Work” (Entertainment, A2, an explainer). The user reviewed both on 2026-10-30, the facts, the Turkish and every new dictionary entry, and found nothing to change (`docs/reviews/2026-10-28-*.md`). The other four categories follow: AI, Technology, World and Beauty.
+
+**On 2026-10-31 the user chose GitHub Pages for the live site** (§19): a static site rebuilt from the repository on every merge to `main`, with no server or database in production. Publishing therefore moves into the article files: an approved article is published by a mark in its file (W) and goes live with the static site (M9). Until the mark exists, publishing in the local admin only previews what the site will show.
 
 Do not build live news ingestion or automated AI generation while M6–M8 are on hold.
