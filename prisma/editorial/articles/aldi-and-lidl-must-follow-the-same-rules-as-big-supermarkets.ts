@@ -61,7 +61,7 @@ export const ALDI_AND_LIDL_SUPERMARKET_RULES: WrittenNews = {
     },
   ],
   senseChoices: {
-    1: { that: ["that-relative"] },
+    1: { competition: ["competition-rivalry"], that: ["that-relative"] },
     2: {
       about: ["about-topic", "about-topic"],
       open: ["open-verb", "open-verb"],

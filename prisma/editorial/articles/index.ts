@@ -10,9 +10,11 @@ import type { WrittenArticle } from "../../written-articles";
 import { ALDI_AND_LIDL_SUPERMARKET_RULES } from "./aldi-and-lidl-must-follow-the-same-rules-as-big-supermarkets";
 import { HOW_PERFUME_IS_MADE } from "./how-perfume-is-made";
 import { HOW_SUBTITLES_WORK } from "./how-subtitles-work";
+import { UK_MISSION_TO_CLEAN_UP_SPACE } from "./uk-mission-to-clean-up-rubbish-in-space";
 
 export const WRITTEN_ARTICLES: readonly WrittenArticle[] = [
   ALDI_AND_LIDL_SUPERMARKET_RULES,
   HOW_SUBTITLES_WORK,
   HOW_PERFUME_IS_MADE,
+  UK_MISSION_TO_CLEAN_UP_SPACE,
 ];

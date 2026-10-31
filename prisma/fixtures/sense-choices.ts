@@ -11,6 +11,7 @@ export const DEMO_SENSE_CHOICES: SenseChoices = {
       end: ["end-noun"],
       which: ["which-relative"],
     },
+    2: { competition: ["competition-rivalry"] },
     3: {
       that: ["that-relative", "that-conjunction"],
       which: ["which-relative"],
@@ -100,6 +101,7 @@ export const DEMO_SENSE_CHOICES: SenseChoices = {
       repair: ["repair-verb", "repair-noun"],
       next: ["next-to", "next-following"],
       help: ["help-noun"],
+      atmosphere: ["atmosphere-mood"],
     },
     6: {
       last: ["last-continue"],
