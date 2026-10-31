@@ -11,6 +11,7 @@ export const DEMO_SENSE_CHOICES: SenseChoices = {
       end: ["end-noun"],
       which: ["which-relative"],
     },
+    2: { competition: ["competition-rivalry"] },
     3: {
       that: ["that-relative", "that-conjunction"],
       which: ["which-relative"],
@@ -30,6 +31,8 @@ export const DEMO_SENSE_CHOICES: SenseChoices = {
       yet: ["yet-but", "yet-still"],
     },
     7: {
+      note: ["note-mention"],
+      supply: ["supply-resource"],
       that: ["that-conjunction"],
       next: ["next-following"],
       dry: ["dry-weather"],
@@ -99,6 +102,7 @@ export const DEMO_SENSE_CHOICES: SenseChoices = {
       repair: ["repair-verb", "repair-noun"],
       next: ["next-to", "next-following"],
       help: ["help-noun"],
+      atmosphere: ["atmosphere-mood"],
     },
     6: {
       last: ["last-continue"],
@@ -114,6 +118,7 @@ export const DEMO_SENSE_CHOICES: SenseChoices = {
     3: {
       leave: ["leave-depart"],
       next: ["next-following"],
+      costs: ["cost-verb"],
     },
     4: {
       about: ["about-approximately"],
