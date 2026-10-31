@@ -1,5 +1,6 @@
 // Imports the written articles in prisma/editorial/articles into the
-// database named by DATABASE_URL, as drafts for review (milestone W).
+// database named by DATABASE_URL (milestone W): as drafts for review, or
+// published when a file has the publication mark.
 //
 //   pnpm articles:import           check the files, show what would change, write
 //   pnpm articles:import --check   check the files only, without a database
@@ -40,9 +41,9 @@ const demoArticles = [...DEMO_ARTICLES, ...DEMO_DRAFTS];
 function describe(step: ImportStep) {
   switch (step.action) {
     case "create":
-      return `  new        ${step.slug}`;
+      return `  new        ${step.slug}${step.publish ? ", published" : ""}`;
     case "update":
-      return `  changed    ${step.slug} (${step.changed.join(", ")})`;
+      return `  changed    ${step.slug} (${step.changed.join(", ")})${step.publish ? ", published" : ""}`;
     case "unchanged":
       return `  unchanged  ${step.slug}`;
     case "refuse":
@@ -142,7 +143,7 @@ try {
     );
 
     console.log(
-      `Done: ${result.created} new and ${result.updated} changed draft(s), ${result.unchanged} unchanged; ${result.entries.added} dictionary entries added and ${result.entries.changed} corrected. Review the drafts at /admin/articles?status=draft.`,
+      `Done: ${result.created} new and ${result.updated} changed article(s), ${result.published} of them published, ${result.unchanged} unchanged; ${result.entries.added} dictionary entries added and ${result.entries.changed} corrected. Review the drafts at /admin/articles?status=draft.`,
     );
   }
 } catch (error) {

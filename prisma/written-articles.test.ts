@@ -201,8 +201,33 @@ describe("resolveWrittenArticles", () => {
       },
       'written-cinema-explainer ¶4 "sold out": there is no card "no-such-card"',
     ],
+    [
+      "a publication mark at a time of day",
+      () => [
+        {
+          ...writtenNews(),
+          publishedOnSite: new Date("2026-10-31T09:00:00Z"),
+        },
+      ],
+      'written-bakery-story: the publication mark must be a whole day, such as new Date("2026-10-31")',
+    ],
+    [
+      "a publication mark before the article's date",
+      () => [{ ...writtenNews(), publishedOnSite: new Date("2026-10-19") }],
+      "written-bakery-story: the publication mark is earlier than the article's date",
+    ],
   ])("refuses %s", (_name, articles, problem) => {
     expect(problemsOf(articles())).toContain(problem);
+  });
+
+  it("accepts a publication mark on the article's own day", () => {
+    // The story's source published it at 09:30 on 20 October.
+    expect(
+      problemsOf([
+        { ...writtenNews(), publishedOnSite: new Date("2026-10-20") },
+        { ...writtenExplainer(), publishedOnSite: new Date("2026-10-31") },
+      ]),
+    ).toEqual([]);
   });
 
   it("refuses two stories adapted from one source", () => {

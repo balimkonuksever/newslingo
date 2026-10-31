@@ -29,7 +29,8 @@ import {
 // Articles written in Claude Code sessions (milestone W), one file per
 // article in prisma/editorial/articles. `pnpm articles:import` checks them
 // all with `resolveWrittenArticles` and writes new and changed ones as drafts
-// for the user to review in the admin.
+// for the user to review in the admin. Once the user approves a draft, its
+// file is marked with the day it was published, and the import publishes it.
 
 type WrittenArticleContent = {
   /** Permanent: the import finds the article by it, so never rename one. */
@@ -50,6 +51,12 @@ type WrittenArticleContent = {
   keyVocabulary: KeyVocabulary[string];
   /** Real English occurrences, by card slug and exact wording. */
   expressions: ExpressionOccurrences[string];
+  /**
+   * The publication mark: the day the user approved the article for the
+   * site, a whole day such as new Date("2026-10-31"). The import publishes
+   * an article with the mark and writes one without it as a draft.
+   */
+  publishedOnSite?: Date;
 };
 
 /** News adapted from one source, dated by the source's publication time. */
@@ -183,6 +190,26 @@ function fieldProblems(article: WrittenArticle) {
         );
       }
     });
+  }
+
+  const { publishedOnSite } = article;
+  const datedAt =
+    article.kind === "NEWS" ? article.source.publishedAt : article.writtenAt;
+
+  if (publishedOnSite !== undefined) {
+    if (!isWholeDay(publishedOnSite)) {
+      problems.push(
+        `${slug}: the publication mark must be a whole day, such as new Date("2026-10-31")`,
+      );
+    } else if (
+      isValidDate(datedAt) &&
+      publishedOnSite.toISOString().slice(0, 10) <
+        datedAt.toISOString().slice(0, 10)
+    ) {
+      problems.push(
+        `${slug}: the publication mark is earlier than the article's date`,
+      );
+    }
   }
 
   const words = article.paragraphs.reduce(

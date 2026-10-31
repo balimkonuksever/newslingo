@@ -128,7 +128,15 @@ checks every file without a database: the fields, the length for the article's l
 pnpm articles:import
 ```
 
-checks the files again, shows each article as new, changed or unchanged with the dictionary entries to add or correct, and writes new and changed articles as drafts, with their entries, in one transaction. A second run changes nothing. It never changes an article that is no longer a draft: to correct a published one, archive it, restore it to draft, import, then publish again. It writes to a database on this machine at once, and waits for the host to be typed for any other. Demo articles are never imported. Review the drafts at `/admin/articles?status=draft`.
+checks the files again, shows each article as new, changed or unchanged with the dictionary entries to add or correct, and writes new and changed articles, with their entries, in one transaction. A second run changes nothing. It never changes an article that is no longer a draft, and never takes one off the site: to correct a published one in this database, archive it, restore it to draft, then import again. It writes to a database on this machine at once, and waits for the host to be typed for any other. Demo articles are never imported. Review the drafts at `/admin/articles?status=draft`.
+
+An article is written as a draft unless its file has the publication mark, the day the user approved it for the site:
+
+```ts
+publishedOnSite: new Date("2026-10-31"),
+```
+
+The import publishes a marked article with that day, after the checks an admin's publish runs, and records no moderation event: the merged pull request that added the mark is the record. The mark must be a whole day, no earlier than the article's date. To publish a draft after reviewing it in the admin preview, add the mark to its file and import again.
 
 ## Admin accounts
 

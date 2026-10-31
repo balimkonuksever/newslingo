@@ -2,8 +2,9 @@ import type { WrittenExplainer } from "../../written-articles";
 
 /*
  * Written by Claude (Opus 5.5) on 2026-10-28 from the BBC's and Netflix's
- * subtitle guides, which its references link to. The user reviews its facts
- * and Turkish in the admin preview before publishing it.
+ * subtitle guides, which its references link to. The user reviewed its facts
+ * and Turkish in the admin preview on 2026-10-30 and approved it for the
+ * site.
  */
 export const HOW_SUBTITLES_WORK: WrittenExplainer = {
   slug: "how-subtitles-work",
@@ -14,6 +15,7 @@ export const HOW_SUBTITLES_WORK: WrittenExplainer = {
   categorySlug: "entertainment",
   difficulty: "A2",
   writtenAt: new Date("2026-10-28T12:00:00Z"),
+  publishedOnSite: new Date("2026-10-31"),
   references: [
     {
       title: "BBC Subtitle Guidelines",
