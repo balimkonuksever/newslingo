@@ -7,5 +7,10 @@
  * drafts. The format is `WrittenArticle` in prisma/written-articles.ts.
  */
 import type { WrittenArticle } from "../../written-articles";
+import { ALDI_AND_LIDL_SUPERMARKET_RULES } from "./aldi-and-lidl-must-follow-the-same-rules-as-big-supermarkets";
+import { HOW_SUBTITLES_WORK } from "./how-subtitles-work";
 
-export const WRITTEN_ARTICLES: readonly WrittenArticle[] = [];
+export const WRITTEN_ARTICLES: readonly WrittenArticle[] = [
+  ALDI_AND_LIDL_SUPERMARKET_RULES,
+  HOW_SUBTITLES_WORK,
+];

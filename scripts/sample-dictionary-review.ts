@@ -1,9 +1,15 @@
 // Prints a review sheet for the editorial dictionary's Turkish, in Markdown:
 // every key vocabulary word, then a random sample of the other entries, each
-// shown in a sentence where the demo articles use it. The sample is drawn
-// with a fixed seed, so the same seed always gives the same sheet.
+// shown in a sentence where an article uses it. The sample is drawn with a
+// fixed seed, so the same seed always gives the same sheet. With --written,
+// the sheet covers the written articles only: their key words, then a sample
+// of the entries no demo article uses, which were written for them.
+// --written=<slug> covers one written article and the entries no demo article
+// and no written article listed before it uses, so each new article's entries
+// can be reviewed with it.
 //
-//   tsx scripts/sample-dictionary-review.ts [sample size] [seed]
+//   tsx scripts/sample-dictionary-review.ts [sample size] [seed] [--written[=<slug>]]
+import { WRITTEN_ARTICLES } from "../prisma/editorial/articles";
 import { DEMO_ARTICLES } from "../prisma/fixtures/articles";
 import { EDITORIAL_DICTIONARY } from "../prisma/editorial/dictionary";
 import { DEMO_KEY_VOCABULARY } from "../prisma/fixtures/key-vocabulary";
@@ -17,8 +23,17 @@ import { resolveKeyVocabulary } from "../prisma/key-vocabulary";
 import { sentenceSpanAt } from "../src/lib/text/segment";
 import { normalizeWord } from "../src/lib/text/tokenize";
 
-const sampleSize = Number(process.argv[2] ?? 40);
-const seed = Number(process.argv[3] ?? 20261014);
+const writtenArgument = process.argv.find((argument) =>
+  argument.startsWith("--written"),
+);
+const writtenOnly = writtenArgument !== undefined;
+/** With --written=<slug>, the one written article the sheet covers. */
+const onlySlug = writtenArgument?.split("=")[1];
+const [sizeArgument, seedArgument] = process.argv
+  .slice(2)
+  .filter((argument) => argument !== writtenArgument);
+const sampleSize = Number(sizeArgument ?? 40);
+const seed = Number(seedArgument ?? 20261014);
 
 /** mulberry32: a small seeded generator, so the sample is reproducible. */
 function random(seedValue: number) {
@@ -32,13 +47,25 @@ function random(seedValue: number) {
   };
 }
 
-const occurrences = resolveEditorialSenses(
-  DEMO_ARTICLES,
-  EDITORIAL_DICTIONARY,
-  DEMO_SENSE_CHOICES,
-);
+const articles = [...DEMO_ARTICLES, ...WRITTEN_ARTICLES];
+const writtenSlugs = new Set(WRITTEN_ARTICLES.map(({ slug }) => slug));
+if (onlySlug !== undefined && !writtenSlugs.has(onlySlug)) {
+  throw new Error(`No written article has the slug "${onlySlug}".`);
+}
+/** Whether the sheet covers an article: with --written, written ones only. */
+const covered = (slug: string) =>
+  onlySlug !== undefined ? slug === onlySlug : writtenSlugs.has(slug);
+const occurrences = resolveEditorialSenses(articles, EDITORIAL_DICTIONARY, {
+  ...DEMO_SENSE_CHOICES,
+  ...Object.fromEntries(
+    WRITTEN_ARTICLES.map(({ slug, senseChoices }) => [
+      slug,
+      senseChoices ?? {},
+    ]),
+  ),
+});
 const englishOf = (slug: string, paragraphOrder: number) =>
-  DEMO_ARTICLES.find((article) => article.slug === slug)!.paragraphs[
+  articles.find((article) => article.slug === slug)!.paragraphs[
     paragraphOrder - 1
   ].english;
 
@@ -62,8 +89,14 @@ function item(number: number, occurrence: EditorialOccurrence) {
 }
 
 // Part A: each key word, through the sense it has in its sentence.
-const keyWords = resolveKeyVocabulary(DEMO_ARTICLES, DEMO_KEY_VOCABULARY).map(
-  (word) =>
+const keyWords = resolveKeyVocabulary(articles, {
+  ...DEMO_KEY_VOCABULARY,
+  ...Object.fromEntries(
+    WRITTEN_ARTICLES.map(({ slug, keyVocabulary }) => [slug, keyVocabulary]),
+  ),
+})
+  .filter(({ articleSlug }) => !writtenOnly || covered(articleSlug))
+  .map((word) =>
     occurrences.find(
       (occurrence) =>
         occurrence.slug === word.articleSlug &&
@@ -75,11 +108,36 @@ const keyWords = resolveKeyVocabulary(DEMO_ARTICLES, DEMO_KEY_VOCABULARY).map(
           ),
         ) === word.normalizedWord,
     )!,
-);
+  );
 const keySenses = new Set<EditorialSense>(keyWords.map(({ sense }) => sense));
 
 // Part B: a uniform sample of the other senses, each in its first sentence.
-const others = EDITORIAL_DICTIONARY.filter((sense) => !keySenses.has(sense));
+// With --written, only senses the sheet's articles use and no demo article
+// does. With --written=<slug>, also none that a written article listed before
+// it uses: a sense belongs to the first article that uses it, so a sense
+// shared by two new articles is on the earlier one's sheet, not missing from
+// both.
+const writtenBefore = new Set(
+  onlySlug === undefined
+    ? []
+    : WRITTEN_ARTICLES.slice(
+        0,
+        WRITTEN_ARTICLES.findIndex(({ slug }) => slug === onlySlug),
+      ).map(({ slug }) => slug),
+);
+const sensesOfSlugs = (included: (slug: string) => boolean) =>
+  new Set(
+    occurrences.filter(({ slug }) => included(slug)).map(({ sense }) => sense),
+  );
+const sensesOnSheet = sensesOfSlugs(covered);
+const sensesBefore = sensesOfSlugs(
+  (slug) => !writtenSlugs.has(slug) || writtenBefore.has(slug),
+);
+const others = EDITORIAL_DICTIONARY.filter(
+  (sense) =>
+    !keySenses.has(sense) &&
+    !(writtenOnly && (!sensesOnSheet.has(sense) || sensesBefore.has(sense))),
+);
 const next = random(seed);
 const pool = [...others];
 for (let i = pool.length - 1; i > 0; i -= 1) {
@@ -96,7 +154,7 @@ console.log(
   [
     "# Editorial dictionary review",
     "",
-    `Generated by \`pnpm exec tsx scripts/sample-dictionary-review.ts ${sampleSize} ${seed}\` from the ${EDITORIAL_DICTIONARY.length} entries in \`prisma/editorial/dictionary/\`.`,
+    `Generated by \`pnpm exec tsx scripts/sample-dictionary-review.ts ${sampleSize} ${seed}${writtenArgument ? ` ${writtenArgument}` : ""}\` from the ${EDITORIAL_DICTIONARY.length} entries in \`prisma/editorial/dictionary/\`${onlySlug ? `, for the written article “${onlySlug}” only` : writtenOnly ? ", for the written articles only" : ""}.`,
     "",
     "For each entry, check that the Turkish fits the word in this sentence and reads naturally. Mark it OK, or give the Turkish it should have.",
     "",
@@ -108,7 +166,7 @@ console.log(
       .map((occurrence, index) => item(index + 1, occurrence))
       .join("\n\n"),
     "",
-    `## Part B: ${sample.length} entries drawn at random from the other ${others.length}`,
+    `## Part B: ${sample.length} entries drawn at random from the other ${others.length}${onlySlug ? ", which no demo or earlier written article uses" : writtenOnly ? ", which no demo article uses" : ""}`,
     "",
     sample
       .map((occurrence, index) => item(keyWords.length + index + 1, occurrence))

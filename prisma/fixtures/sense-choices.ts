@@ -37,20 +37,25 @@ export const DEMO_SENSE_CHOICES: SenseChoices = {
   },
   "farmers-turn-to-ai-weather-forecasts": {
     1: {
+      conditions: ["condition-situation"],
       that: ["that-demonstrative"],
+      field: ["field-crops"],
       next: ["next-following"],
     },
     2: {
       about: ["about-to"],
+      conditions: ["condition-situation"],
       change: ["change-verb"],
       that: ["that-relative"],
     },
     3: {
       most: ["most-majority"],
+      field: ["field-crops"],
     },
     4: {
       too: ["too-excess", "too-excess"],
       leave: ["leave-cause"],
+      field: ["field-crops"],
       which: ["which-relative"],
       last: ["last-previous"],
     },
@@ -64,6 +69,7 @@ export const DEMO_SENSE_CHOICES: SenseChoices = {
       that: ["that-conjunction", "that-conjunction"],
       work: ["work-verb"],
       which: ["which-question"],
+      field: ["field-crops"],
     },
   },
   "more-people-repair-their-phones": {
