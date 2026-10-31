@@ -77,6 +77,56 @@ export function hasActiveFilters(filters: ArticleFilters) {
   return Object.values(filters).some((value) => value !== undefined);
 }
 
+/**
+ * The search parameters of a URL as `parseArticleFilters` reads them: a name
+ * that appears more than once keeps every value, in order.
+ */
+export function searchParamsRecord(params: URLSearchParams): SearchParams {
+  const record: Record<string, string | string[]> = {};
+
+  for (const [name, value] of params) {
+    const known = record[name];
+    record[name] =
+      known === undefined
+        ? value
+        : [...(Array.isArray(known) ? known : [known]), value];
+  }
+
+  return record;
+}
+
+/** The fields of an article that the homepage filters look at. */
+export type FilterableArticle = {
+  category: { slug: string };
+  difficulty: Difficulty;
+  readingTimeMinutes: number;
+  datedAt: Date;
+};
+
+/**
+ * The articles that match `filters`, in their given order. The static site
+ * filters in the browser by the same rules the database query applies.
+ */
+export function filterArticles<Article extends FilterableArticle>(
+  articles: readonly Article[],
+  filters: ArticleFilters,
+): Article[] {
+  const band = filters.length ? READING_TIME_BANDS[filters.length] : null;
+  const range = datedAtRange(filters);
+
+  return articles.filter(
+    (article) =>
+      (!filters.category || article.category.slug === filters.category) &&
+      (!filters.level || article.difficulty === filters.level) &&
+      (!band ||
+        (article.readingTimeMinutes >= band.minMinutes &&
+          (band.maxMinutes === null ||
+            article.readingTimeMinutes <= band.maxMinutes))) &&
+      (!range?.gte || article.datedAt >= range.gte) &&
+      (!range?.lt || article.datedAt < range.lt),
+  );
+}
+
 /** The `datedAt` instants covered by the filter's date range. */
 export function datedAtRange({ from, to }: ArticleFilters) {
   if (!from && !to) {

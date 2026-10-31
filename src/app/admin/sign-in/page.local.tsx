@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import type { AdminPageProps } from "@/app/admin/page-props";
 import { PasswordForm } from "@/components/admin/sign-in-forms";
 import { eyebrow } from "@/components/ui/styles";
 import { ADMIN_PATHS, getSignedInAdmin } from "@/server/auth/session";
@@ -14,9 +15,7 @@ const NOTICES = {
   expired: "The sign-in took too long. Please start again.",
 };
 
-export default async function SignInPage({
-  searchParams,
-}: PageProps<"/admin/sign-in">) {
+export default async function SignInPage({ searchParams }: AdminPageProps) {
   if (await getSignedInAdmin()) {
     redirect(ADMIN_PATHS.home);
   }

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  datedAtRange,
+  filterArticles,
   hasActiveFilters,
   parseArticleFilters,
-  datedAtRange,
+  searchParamsRecord,
 } from "./article-filters";
 
 const categories = ["ai", "world"];
@@ -89,5 +91,91 @@ describe("datedAtRange", () => {
     expect(datedAtRange({ to: "2026-09-01" })).toEqual({
       lt: new Date("2026-09-01T21:00:00Z"),
     });
+  });
+});
+
+describe("searchParamsRecord", () => {
+  it("keeps one value as a string and repeated ones as a list", () => {
+    expect(
+      searchParamsRecord(new URLSearchParams("level=B2&category=ai&level=A2")),
+    ).toEqual({ level: ["B2", "A2"], category: "ai" });
+  });
+
+  it("feeds parseArticleFilters as the server's search parameters did", () => {
+    const params = new URLSearchParams("level=B2&level=A2&from=2026-02-30");
+
+    expect(parseArticleFilters(searchParamsRecord(params), categories)).toEqual(
+      { level: "B2" },
+    );
+  });
+});
+
+describe("filterArticles", () => {
+  const article = (
+    slug: string,
+    fields: {
+      category?: string;
+      difficulty?: "A2" | "B1" | "B2" | "C1";
+      readingTimeMinutes?: number;
+      datedAt?: string;
+    } = {},
+  ) => ({
+    slug,
+    category: { slug: fields.category ?? "ai" },
+    difficulty: fields.difficulty ?? "B1",
+    readingTimeMinutes: fields.readingTimeMinutes ?? 2,
+    datedAt: new Date(fields.datedAt ?? "2026-09-10T09:00:00Z"),
+  });
+  const slugs = (articles: Array<{ slug: string }>) =>
+    articles.map(({ slug }) => slug);
+
+  it("keeps every article without filters, in order", () => {
+    const articles = [article("b"), article("a")];
+
+    expect(slugs(filterArticles(articles, {}))).toEqual(["b", "a"]);
+  });
+
+  it("filters by category and level together", () => {
+    const articles = [
+      article("ai-b1"),
+      article("ai-c1", { difficulty: "C1" }),
+      article("world-c1", { category: "world", difficulty: "C1" }),
+    ];
+
+    expect(
+      slugs(filterArticles(articles, { category: "world", level: "C1" })),
+    ).toEqual(["world-c1"]);
+  });
+
+  it("uses the reading-time bands, with an open-ended longest band", () => {
+    const articles = [3, 4, 5, 6, 12].map((minutes) =>
+      article(`${minutes}`, { readingTimeMinutes: minutes }),
+    );
+
+    expect(slugs(filterArticles(articles, { length: "short" }))).toEqual(["3"]);
+    expect(slugs(filterArticles(articles, { length: "medium" }))).toEqual([
+      "4",
+      "5",
+    ]);
+    expect(slugs(filterArticles(articles, { length: "long" }))).toEqual([
+      "6",
+      "12",
+    ]);
+  });
+
+  it("covers whole Istanbul days, as the database query does", () => {
+    const articles = [
+      // 23:30 on 31 August in Istanbul.
+      article("before", { datedAt: "2026-08-31T20:30:00Z" }),
+      // 00:30 on 1 September in Istanbul.
+      article("first", { datedAt: "2026-08-31T21:30:00Z" }),
+      // 23:59 on 2 September in Istanbul.
+      article("last", { datedAt: "2026-09-02T20:59:00Z" }),
+      article("after", { datedAt: "2026-09-02T21:00:00Z" }),
+    ];
+
+    expect(
+      slugs(filterArticles(articles, { from: "2026-09-01", to: "2026-09-02" })),
+    ).toEqual(["first", "last"]);
   });
 });

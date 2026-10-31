@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { POST } from "@/app/api/dictionary/route";
+import { POST } from "@/app/api/dictionary/route.local";
 import { db } from "@/server/db/client";
 
 import { createArticle, createCategory, resetDatabase } from "./database";

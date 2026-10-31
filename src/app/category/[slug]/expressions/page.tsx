@@ -8,7 +8,15 @@ import { categoryAccent } from "@/components/news/category-accent";
 import { EmptyState } from "@/components/shared/empty-state";
 import { textLink } from "@/components/ui/styles";
 import { formatExpressionCount } from "@/lib/format";
-import { getCategoryExpressions } from "@/server/categories/queries";
+import {
+  getCategoryExpressions,
+  listCategoriesWithArticleCounts,
+} from "@/server/categories/queries";
+import { staticParams } from "@/server/render-mode";
+
+export function generateStaticParams() {
+  return staticParams(listCategoriesWithArticleCounts);
+}
 
 export async function generateMetadata(
   props: PageProps<"/category/[slug]/expressions">,

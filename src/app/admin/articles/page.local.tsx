@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import type { AdminPageProps } from "@/app/admin/page-props";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { DifficultyBadge } from "@/components/shared/difficulty-badge";
@@ -37,9 +38,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-export default async function AdminArticlesPage(
-  props: PageProps<"/admin/articles">,
-) {
+export default async function AdminArticlesPage(props: AdminPageProps) {
   const admin = await requireAdmin();
   const [searchParams, allCategories] = await Promise.all([
     props.searchParams,

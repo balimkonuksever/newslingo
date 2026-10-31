@@ -174,6 +174,15 @@ export async function getFeaturedAndLatestArticles(latestLimit: number) {
   return { featured, latest };
 }
 
+/** The slug of every public article, for the static site's article pages. */
+export async function listPublicArticleSlugs() {
+  return db.article.findMany({
+    where: publicArticleWhere,
+    orderBy: { slug: "asc" },
+    select: { slug: true },
+  });
+}
+
 /**
  * Public articles matching the homepage filters, newest `datedAt` first.
  */

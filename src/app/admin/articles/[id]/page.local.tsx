@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
 import type { ModerationNotice } from "@/app/admin/articles/actions";
+import type { AdminPageProps } from "@/app/admin/page-props";
 import { AdminNav } from "@/components/admin/admin-nav";
 import {
   ArchiveForm,
@@ -43,7 +44,7 @@ function noticeFor(done: string | string[] | undefined) {
 }
 
 export async function generateMetadata(
-  props: PageProps<"/admin/articles/[id]">,
+  props: AdminPageProps<{ id: string }>,
 ): Promise<Metadata> {
   await requireAdmin();
   const { id } = await props.params;
@@ -169,7 +170,7 @@ function ArticleDetails({ article }: { article: AdminArticleDetail }) {
 }
 
 export default async function AdminArticlePage(
-  props: PageProps<"/admin/articles/[id]">,
+  props: AdminPageProps<{ id: string }>,
 ) {
   const admin = await requireAdmin();
   const [{ id }, searchParams] = await Promise.all([

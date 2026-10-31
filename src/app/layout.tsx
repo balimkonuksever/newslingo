@@ -4,6 +4,7 @@ import { Geist, Newsreader } from "next/font/google";
 import { SiteFooter } from "@/components/shared/site-footer";
 import { SiteHeader } from "@/components/shared/site-header";
 import { env } from "@/lib/env";
+import { renderPerRequest } from "@/server/render-mode";
 
 import "./globals.css";
 
@@ -18,11 +19,6 @@ const newsreader = Newsreader({
   subsets: ["latin", "latin-ext"],
   axes: ["opsz"],
 });
-
-// Every page reads PostgreSQL at request time, so a published or archived
-// article shows at once. Caching waits for hosting and a measured need; see
-// IMPLEMENTATION_PLAN.md §19 (2026-10-25).
-export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
@@ -39,7 +35,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // On the local server every page reads PostgreSQL at request time, so a
+  // published or archived article shows at once; the static site is rendered
+  // once at build time (IMPLEMENTATION_PLAN.md §19, 2026-10-25 and 2026-10-31).
+  await renderPerRequest();
+
   return (
     <html
       lang="en"
