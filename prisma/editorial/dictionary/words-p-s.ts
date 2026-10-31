@@ -45,6 +45,15 @@ export const WORDS_P_S: EditorialSense[] = [
     example: "The shop sells spare parts for bikes.",
   },
   {
+    lemma: "partnership",
+    forms: ["partnership", "partnerships"],
+    pos: "noun",
+    ipa: "/ˈpɑːtnəʃɪp/",
+    tr: "ortaklık, iş birliği",
+    en: "An arrangement in which people or organisations work together.",
+    example: "The school has a partnership with a local museum.",
+  },
+  {
     lemma: "party",
     forms: ["parties"],
     pos: "noun",
@@ -90,6 +99,7 @@ export const WORDS_P_S: EditorialSense[] = [
   },
   {
     lemma: "people",
+    forms: ["people", "people's"],
     pos: "noun",
     ipa: "/ˈpiːpl/",
     tr: "insanlar, kişiler",
@@ -275,6 +285,23 @@ export const WORDS_P_S: EditorialSense[] = [
     example: "Please reply as soon as possible.",
   },
   {
+    lemma: "postcode",
+    pos: "noun",
+    ipa: "/ˈpəʊstkəʊd/",
+    tr: "posta kodu",
+    en: "A group of letters and numbers that is part of an address in the UK.",
+    example: "Please write your postcode on the form.",
+  },
+  {
+    lemma: "pound",
+    forms: ["pound", "pounds"],
+    pos: "noun",
+    ipa: "/paʊnd/",
+    tr: "sterlin (İngiliz parası)",
+    en: "The money of the UK; one pound is 100 pence.",
+    example: "The ticket costs ten pounds.",
+  },
+  {
     lemma: "practical",
     pos: "adjective",
     ipa: "/ˈpræktɪkl/",
@@ -309,6 +336,14 @@ export const WORDS_P_S: EditorialSense[] = [
     example: "His prediction was correct.",
   },
   {
+    lemma: "prepare",
+    pos: "verb",
+    ipa: "/prɪˈpeə/",
+    tr: "hazırlamak; (prepare for) -e hazırlanmak",
+    en: "To get ready for something, or to make something ready.",
+    example: "We need to prepare for the exam.",
+  },
+  {
     lemma: "prepared",
     pos: "adjective",
     ipa: "/prɪˈpeəd/",
@@ -341,6 +376,14 @@ export const WORDS_P_S: EditorialSense[] = [
     tr: "fiyat",
     en: "The amount of money you pay for something.",
     example: "Food prices went up again.",
+  },
+  {
+    lemma: "prize",
+    pos: "noun",
+    ipa: "/praɪz/",
+    tr: "ödül",
+    en: "Something such as money that is given to the winner of a competition.",
+    example: "She won first prize in the photo competition.",
   },
   {
     lemma: "problem",
@@ -396,6 +439,14 @@ export const WORDS_P_S: EditorialSense[] = [
     example: "He promised to call me.",
   },
   {
+    lemma: "promising",
+    pos: "adjective",
+    ipa: "/ˈprɒmɪsɪŋ/",
+    tr: "gelecek vaat eden, umut verici",
+    en: "Showing signs that it will be good or successful.",
+    example: "She is a promising young singer.",
+  },
+  {
     lemma: "proportion",
     pos: "noun",
     ipa: "/prəˈpɔːʃn/",
@@ -421,6 +472,7 @@ export const WORDS_P_S: EditorialSense[] = [
   },
   {
     lemma: "protect",
+    forms: ["protect", "protecting"],
     pos: "verb",
     ipa: "/prəˈtekt/",
     tr: "korumak",
@@ -452,12 +504,22 @@ export const WORDS_P_S: EditorialSense[] = [
     example: "The new system proved very useful.",
   },
   {
+    id: "public-noun",
     lemma: "public",
     pos: "noun",
     ipa: "/ˈpʌblɪk/",
     tr: "(the public) halk, kamuoyu",
     en: "Ordinary people in general, not people who work for the government or a company.",
     example: "The museum is open to the public every day.",
+  },
+  {
+    id: "public-adjective",
+    lemma: "public",
+    pos: "adjective",
+    ipa: "/ˈpʌblɪk/",
+    tr: "kamu, kamuya ait; (public services) kamu hizmetleri",
+    en: "Provided by the government for everyone, or connected with ordinary people in general.",
+    example: "Public transport in the city is cheap.",
   },
   {
     lemma: "publish",
@@ -614,7 +676,7 @@ export const WORDS_P_S: EditorialSense[] = [
   },
   {
     lemma: "receive",
-    forms: ["receives"],
+    forms: ["receives", "receive"],
     pos: "verb",
     ipa: "/rɪˈsiːv/",
     tr: "almak (verilen bir şeyi)",
@@ -736,7 +798,7 @@ export const WORDS_P_S: EditorialSense[] = [
   },
   {
     lemma: "rely",
-    forms: ["relied"],
+    forms: ["relied", "relies"],
     pos: "verb",
     ipa: "/rɪˈlaɪ/",
     tr: "(rely on) -e güvenmek, -e dayanmak",
@@ -789,6 +851,14 @@ export const WORDS_P_S: EditorialSense[] = [
     example: "I called him repeatedly.",
   },
   {
+    lemma: "replace",
+    pos: "verb",
+    ipa: "/rɪˈpleɪs/",
+    tr: "-in yerini almak, yerine koymak",
+    en: "To take the place of someone or something.",
+    example: "Machines have replaced many factory workers.",
+  },
+  {
     lemma: "reply",
     forms: ["replied"],
     pos: "verb",
@@ -804,6 +874,22 @@ export const WORDS_P_S: EditorialSense[] = [
     tr: "talep etmek, istemek",
     en: "To ask for something politely or officially.",
     example: "You can request a refund.",
+  },
+  {
+    lemma: "research",
+    pos: "noun",
+    ipa: "/rɪˈsɜːtʃ/",
+    tr: "araştırma",
+    en: "Careful study of a subject to find out new facts.",
+    example: "She is doing research into climate change.",
+  },
+  {
+    lemma: "reshape",
+    pos: "verb",
+    ipa: "/ˌriːˈʃeɪp/",
+    tr: "yeniden şekillendirmek",
+    en: "To change the shape or the structure of something.",
+    example: "The internet has reshaped the music industry.",
   },
   {
     lemma: "resident",
@@ -825,7 +911,7 @@ export const WORDS_P_S: EditorialSense[] = [
   },
   {
     lemma: "respond",
-    forms: ["responded"],
+    forms: ["responded", "responds"],
     pos: "verb",
     ipa: "/rɪˈspɒnd/",
     tr: "karşılık vermek, tepki vermek",
@@ -893,6 +979,7 @@ export const WORDS_P_S: EditorialSense[] = [
   },
   {
     lemma: "risk",
+    forms: ["risk", "risks"],
     pos: "noun",
     ipa: "/rɪsk/",
     tr: "risk, tehlike",
@@ -1015,6 +1102,14 @@ export const WORDS_P_S: EditorialSense[] = [
     example: "She grew up in a rural area.",
   },
   {
+    lemma: "safety",
+    pos: "noun",
+    ipa: "/ˈseɪfti/",
+    tr: "güvenlik, emniyet (zarardan korunma)",
+    en: "The state of being safe from harm or danger.",
+    example: "Wear a helmet for your safety.",
+  },
+  {
     lemma: "Sainsbury's",
     forms: ["sainsbury's"],
     pos: "proper noun",
@@ -1065,6 +1160,14 @@ export const WORDS_P_S: EditorialSense[] = [
     tr: "sahne; (behind the scenes) perde arkasında",
     en: "A part of a film or a play; “behind the scenes” means in the work that the public does not see.",
     example: "The last scene of the film was very sad.",
+  },
+  {
+    lemma: "school",
+    pos: "noun",
+    ipa: "/skuːl/",
+    tr: "okul",
+    en: "A place where children go to learn.",
+    example: "My son walks to school every day.",
   },
   {
     lemma: "scientist",
@@ -1155,6 +1258,14 @@ export const WORDS_P_S: EditorialSense[] = [
     example: "The race was over in ten seconds.",
   },
   {
+    lemma: "security",
+    pos: "noun",
+    ipa: "/sɪˈkjʊərəti/",
+    tr: "güvenlik (tehditlere karşı korunma)",
+    en: "Protection from threats, such as attacks or crime.",
+    example: "Airport security checked our bags.",
+  },
+  {
     lemma: "see",
     forms: ["see", "saw"],
     pos: "verb",
@@ -1225,6 +1336,15 @@ export const WORDS_P_S: EditorialSense[] = [
     example: "The hotel has a laundry service.",
   },
   {
+    lemma: "set out",
+    forms: ["set"],
+    pos: "verb",
+    ipa: "/set ˈaʊt/",
+    tr: "(set out) ortaya koymak, açıklamak, sunmak",
+    en: "To explain a plan or ideas clearly, often in writing or a speech.",
+    example: "The report sets out three ways to save energy.",
+  },
+  {
     lemma: "seven",
     pos: "numeral",
     ipa: "/ˈsevn/",
@@ -1273,6 +1393,14 @@ export const WORDS_P_S: EditorialSense[] = [
     tr: "o (kadın için)",
     en: "Used for a woman or girl who was mentioned before.",
     example: "She is my sister.",
+  },
+  {
+    lemma: "shield",
+    pos: "noun",
+    ipa: "/ʃiːld/",
+    tr: "kalkan",
+    en: "Something that protects people or things from harm.",
+    example: "The trees act as a shield against the wind.",
   },
   {
     lemma: "shop",
@@ -1489,6 +1617,15 @@ export const WORDS_P_S: EditorialSense[] = [
     example: "Dancing is a good social activity.",
   },
   {
+    lemma: "solve",
+    forms: ["solve", "solves"],
+    pos: "verb",
+    ipa: "/sɒlv/",
+    tr: "çözmek",
+    en: "To find the answer to a problem.",
+    example: "The new road will solve the traffic problem.",
+  },
+  {
     lemma: "some",
     pos: "determiner",
     ipa: "/sʌm/",
@@ -1544,6 +1681,14 @@ export const WORDS_P_S: EditorialSense[] = [
     tr: "güneye (doğru)",
     en: "Towards the south.",
     example: "Birds fly south in winter.",
+  },
+  {
+    lemma: "sovereign",
+    pos: "adjective",
+    ipa: "/ˈsɒvrɪn/",
+    tr: "egemen, bağımsız; (bir ülkenin) kendine ait",
+    en: "Belonging to a country and controlled by it, not by others.",
+    example: "The country wants its own sovereign energy supply.",
   },
   {
     lemma: "space",
@@ -1605,7 +1750,7 @@ export const WORDS_P_S: EditorialSense[] = [
   },
   {
     lemma: "spend",
-    forms: ["spending"],
+    forms: ["spending", "spend"],
     pos: "verb",
     ipa: "/spend/",
     tr: "harcamak",
@@ -1663,6 +1808,14 @@ export const WORDS_P_S: EditorialSense[] = [
     tr: "başlamak, başlatmak",
     en: "To begin doing something, or to make something begin.",
     example: "She started a new business.",
+  },
+  {
+    lemma: "state",
+    pos: "noun",
+    ipa: "/steɪt/",
+    tr: "devlet",
+    en: "The government of a country and the organisations it controls.",
+    example: "Schools are paid for by the state.",
   },
   {
     lemma: "station",

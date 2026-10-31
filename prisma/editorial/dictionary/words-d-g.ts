@@ -2,12 +2,29 @@ import type { EditorialSense } from "../../editorial-dictionary";
 
 export const WORDS_D_G: EditorialSense[] = [
   {
+    lemma: "daily",
+    pos: "adjective",
+    ipa: "/ˈdeɪli/",
+    tr: "günlük, gündelik",
+    en: "Happening every day, or connected with ordinary days.",
+    example: "Exercise is part of her daily routine.",
+  },
+  {
     lemma: "damage",
     pos: "verb",
     ipa: "/ˈdæmɪdʒ/",
     tr: "zarar vermek, hasar vermek",
     en: "To harm or break something.",
     example: "Strong winds damaged the roof.",
+  },
+  {
+    lemma: "danger",
+    forms: ["danger", "dangers"],
+    pos: "noun",
+    ipa: "/ˈdeɪndʒə/",
+    tr: "tehlike",
+    en: "The possibility that something bad will happen.",
+    example: "The doctors warned us about the dangers of smoking.",
   },
   {
     lemma: "dark",
@@ -49,6 +66,15 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "anlaşma",
     en: "An agreement between two or more people or groups.",
     example: "The two companies made a deal.",
+  },
+  {
+    lemma: "deal with",
+    forms: ["deals"],
+    pos: "verb",
+    ipa: "/ˈdiːl wɪð/",
+    tr: "(deal with) ele almak, ilgilenmek",
+    en: "To take action about a problem or a subject, or to be about it.",
+    example: "The book deals with life in a small town.",
   },
   {
     lemma: "decade",
@@ -110,6 +136,7 @@ export const WORDS_D_G: EditorialSense[] = [
   },
   {
     lemma: "depend",
+    forms: ["depend", "depends"],
     pos: "verb",
     ipa: "/dɪˈpend/",
     tr: "(depend on) -e bağlı olmak, -e muhtaç olmak",
@@ -136,6 +163,7 @@ export const WORDS_D_G: EditorialSense[] = [
   },
   {
     lemma: "design",
+    forms: ["design", "designed"],
     pos: "verb",
     ipa: "/dɪˈzaɪn/",
     tr: "tasarlamak",
@@ -161,6 +189,7 @@ export const WORDS_D_G: EditorialSense[] = [
   },
   {
     lemma: "develop",
+    forms: ["develop", "developed"],
     pos: "verb",
     ipa: "/dɪˈveləp/",
     tr: "geliştirmek; (develop a problem) bir sorun ortaya çıkmak, arıza yapmak",
@@ -210,6 +239,22 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "This exercise is difficult.",
   },
   {
+    lemma: "digital",
+    pos: "adjective",
+    ipa: "/ˈdɪdʒɪtl/",
+    tr: "dijital",
+    en: "Using computers or the internet.",
+    example: "Most of our photos are digital now.",
+  },
+  {
+    lemma: "directly",
+    pos: "adverb",
+    ipa: "/dəˈrektli/",
+    tr: "doğrudan",
+    en: "Without anyone or anything else being involved.",
+    example: "You can buy tickets directly from the theatre.",
+  },
+  {
     lemma: "director",
     forms: ["directors"],
     pos: "noun",
@@ -235,6 +280,14 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "anlaşmazlık",
     en: "A serious disagreement between people or groups.",
     example: "The dispute was settled in court.",
+  },
+  {
+    lemma: "distinctively",
+    pos: "adverb",
+    ipa: "/dɪˈstɪŋktɪvli/",
+    tr: "kendine özgü biçimde, belirgin şekilde",
+    en: "In a way that is clearly different from others.",
+    example: "The building has a distinctively modern look.",
   },
   {
     lemma: "do",
@@ -393,6 +446,14 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "kolay (easier: daha kolay)",
     en: "Not difficult.",
     example: "The test was easier than I expected.",
+  },
+  {
+    lemma: "edge",
+    pos: "noun",
+    ipa: "/edʒ/",
+    tr: "kenar, uç; (at the cutting edge) en ileri noktada",
+    en: "The outer end or side of something.",
+    example: "He sat on the edge of the bed.",
   },
   {
     lemma: "effort",
@@ -620,6 +681,14 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "I walk every morning.",
   },
   {
+    lemma: "everyday",
+    pos: "adjective",
+    ipa: "/ˈevrideɪ/",
+    tr: "gündelik, günlük",
+    en: "Ordinary, and happening as part of normal life.",
+    example: "The app helps with everyday tasks such as shopping.",
+  },
+  {
     lemma: "everyone",
     pos: "pronoun",
     ipa: "/ˈevriwʌn/",
@@ -642,6 +711,15 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "örnek; (for example) örneğin",
     en: "Something that shows what a group of things is like.",
     example: "Some fruits, for example apples, grow well here.",
+  },
+  {
+    lemma: "Exchequer",
+    forms: ["exchequer"],
+    pos: "proper noun",
+    ipa: "/ɪksˈtʃekə/",
+    tr: "Birleşik Krallık hazinesi; (Chancellor of the Exchequer) Maliye Bakanı",
+    en: "The UK government department that is in charge of public money.",
+    example: "The money comes from the Exchequer.",
   },
   {
     lemma: "exist",
@@ -938,6 +1016,14 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "This is my final answer.",
   },
   {
+    lemma: "finally",
+    pos: "adverb",
+    ipa: "/ˈfaɪnəli/",
+    tr: "son olarak; sonunda",
+    en: "Used to introduce the last point in a list; also, after a long time.",
+    example: "Finally, I would like to thank my parents.",
+  },
+  {
     lemma: "financial",
     pos: "adjective",
     ipa: "/faɪˈnænʃl/",
@@ -970,6 +1056,15 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "kaliteli, seçkin",
     en: "Of very high quality.",
     example: "The shop sells fine wines and cheeses.",
+  },
+  {
+    lemma: "firm",
+    forms: ["firm", "firms"],
+    pos: "noun",
+    ipa: "/fɜːm/",
+    tr: "şirket, firma",
+    en: "A company or business.",
+    example: "She works for a law firm in London.",
   },
   {
     lemma: "first",
@@ -1220,12 +1315,36 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "This button has two functions.",
   },
   {
+    lemma: "fund",
+    pos: "noun",
+    ipa: "/fʌnd/",
+    tr: "fon",
+    en: "An amount of money that is kept for a particular purpose, or the organisation that manages it.",
+    example: "The school started a fund to build a new library.",
+  },
+  {
     lemma: "funding",
     pos: "noun",
     ipa: "/ˈfʌndɪŋ/",
     tr: "finansman, fon",
     en: "Money given for a particular purpose.",
     example: "The school needs more funding.",
+  },
+  {
+    lemma: "further",
+    pos: "adjective",
+    ipa: "/ˈfɜːðə/",
+    tr: "ek, ilave; (a further £60 million) 60 milyon sterlin daha",
+    en: "More, or extra.",
+    example: "The museum will be closed until further notice.",
+  },
+  {
+    lemma: "future",
+    pos: "noun",
+    ipa: "/ˈfjuːtʃə/",
+    tr: "gelecek; (in the future) gelecekte",
+    en: "The time that will come after now.",
+    example: "Nobody knows what will happen in the future.",
   },
   {
     lemma: "gain",

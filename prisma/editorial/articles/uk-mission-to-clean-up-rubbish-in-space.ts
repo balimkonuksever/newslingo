@@ -68,6 +68,7 @@ export const UK_MISSION_TO_CLEAN_UP_SPACE: WrittenNews = {
       working: ["work-job"],
       that: ["that-conjunction"],
       competition: ["competition-contest"],
+      public: ["public-noun"],
     },
   },
   keyVocabulary: [
