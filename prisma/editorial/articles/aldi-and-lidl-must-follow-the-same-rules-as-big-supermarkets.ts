@@ -61,14 +61,18 @@ export const ALDI_AND_LIDL_SUPERMARKET_RULES: WrittenNews = {
     },
   ],
   senseChoices: {
-    1: { competition: ["competition-rivalry"], that: ["that-relative"] },
+    1: {
+      chains: ["chain-stores"],
+      competition: ["competition-rivalry"],
+      that: ["that-relative"],
+    },
     2: {
       about: ["about-topic", "about-topic"],
       open: ["open-verb", "open-verb"],
       that: ["that-conjunction"],
       help: ["help-verb"],
     },
-    3: { conditions: ["condition-requirement"] },
+    3: { chains: ["chain-stores"], conditions: ["condition-requirement"] },
     5: {
       change: ["change-noun"],
       help: ["help-verb", "help-verb"],

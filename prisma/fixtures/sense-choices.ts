@@ -32,6 +32,7 @@ export const DEMO_SENSE_CHOICES: SenseChoices = {
     },
     7: {
       note: ["note-mention"],
+      supply: ["supply-resource"],
       that: ["that-conjunction"],
       next: ["next-following"],
       dry: ["dry-weather"],
@@ -117,6 +118,7 @@ export const DEMO_SENSE_CHOICES: SenseChoices = {
     3: {
       leave: ["leave-depart"],
       next: ["next-following"],
+      costs: ["cost-verb"],
     },
     4: {
       about: ["about-approximately"],

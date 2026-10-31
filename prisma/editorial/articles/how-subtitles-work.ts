@@ -71,6 +71,7 @@ export const HOW_SUBTITLES_WORK: WrittenExplainer = {
     },
     4: {
       too: ["too-excess"],
+      second: ["second-time"],
       that: ["that-conjunction"],
       about: ["about-approximately"],
     },

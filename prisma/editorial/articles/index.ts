@@ -11,6 +11,7 @@ import { ALDI_AND_LIDL_SUPERMARKET_RULES } from "./aldi-and-lidl-must-follow-the
 import { HOW_PERFUME_IS_MADE } from "./how-perfume-is-made";
 import { HOW_SUBTITLES_WORK } from "./how-subtitles-work";
 import { THE_CHANCELLORS_PLAN_FOR_AI } from "./the-chancellors-plan-for-ai";
+import { UK_CALLS_FOR_A_FINANCIAL_RESET } from "./uk-calls-for-a-reset-of-the-global-financial-system";
 import { UK_MISSION_TO_CLEAN_UP_SPACE } from "./uk-mission-to-clean-up-rubbish-in-space";
 
 export const WRITTEN_ARTICLES: readonly WrittenArticle[] = [
@@ -19,4 +20,5 @@ export const WRITTEN_ARTICLES: readonly WrittenArticle[] = [
   HOW_PERFUME_IS_MADE,
   UK_MISSION_TO_CLEAN_UP_SPACE,
   THE_CHANCELLORS_PLAN_FOR_AI,
+  UK_CALLS_FOR_A_FINANCIAL_RESET,
 ];
