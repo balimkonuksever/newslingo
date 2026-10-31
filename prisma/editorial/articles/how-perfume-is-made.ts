@@ -2,8 +2,8 @@ import type { WrittenExplainer } from "../../written-articles";
 
 /*
  * Written by Claude (Opus 5.5) on 2026-10-31 from Britannica's article on
- * perfume, which its reference links to. The user reviews its facts and
- * Turkish in the admin preview before it is marked published.
+ * perfume, which its reference links to. The user reviewed its facts and
+ * Turkish in the admin preview on 2026-10-31 and approved it for the site.
  */
 export const HOW_PERFUME_IS_MADE: WrittenExplainer = {
   slug: "how-perfume-is-made",
@@ -14,6 +14,7 @@ export const HOW_PERFUME_IS_MADE: WrittenExplainer = {
   categorySlug: "beauty",
   difficulty: "A2",
   writtenAt: new Date("2026-10-31T12:00:00Z"),
+  publishedOnSite: new Date("2026-10-31"),
   references: [
     {
       title: "Perfume",

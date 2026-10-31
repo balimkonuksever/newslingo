@@ -1,12 +1,12 @@
 import type { WrittenNews } from "../../written-articles";
 
 /*
- * Adapted by Claude (Opus 5.5) on 2026-10-31 from HM Treasury's GOV.UK
- * story of 24 October 2026, under the Open Government Licence v3.0. It
- * leaves out the parts of the plan about biological threats, health and
- * cyber attacks, which the sensitive-news policy holds, and the companies
- * the story names. The user reviews its facts and Turkish in the admin
- * preview before it is marked published.
+ * Adapted by Claude (Opus 5.5) on 2026-10-31 from HM Treasury's GOV.UK story of
+ * 24 October 2026, under the Open Government Licence v3.0. It leaves out the
+ * parts of the plan about biological threats, health and cyber attacks, which
+ * the sensitive-news policy holds, and the companies the story names. The user
+ * reviewed its facts and Turkish in the admin preview on 2026-10-31 and
+ * approved it for the site.
  */
 export const THE_CHANCELLORS_PLAN_FOR_AI: WrittenNews = {
   slug: "the-chancellors-plan-for-ai",
@@ -22,6 +22,7 @@ export const THE_CHANCELLORS_PLAN_FOR_AI: WrittenNews = {
     publishedAt: new Date("2026-10-24T05:00:00Z"),
     licence: "OGL_3_0",
   },
+  publishedOnSite: new Date("2026-10-31"),
   paragraphs: [
     {
       english:

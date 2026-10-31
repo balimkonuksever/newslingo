@@ -1,11 +1,11 @@
 import type { WrittenNews } from "../../written-articles";
 
 /*
- * Adapted by Claude (Opus 5.5) on 2026-10-31 from the Department for
- * Business, Innovation, Science and Trade's GOV.UK story of 15 October 2026,
- * published with the UK Space Agency, under the Open Government Licence
- * v3.0. The user reviews its facts and Turkish in the admin preview before
- * it is marked published.
+ * Adapted by Claude (Opus 5.5) on 2026-10-31 from the Department for Business,
+ * Innovation, Science and Trade's GOV.UK story of 15 October 2026, published
+ * with the UK Space Agency, under the Open Government Licence v3.0. The user
+ * reviewed its facts and Turkish in the admin preview on 2026-10-31 and
+ * approved it for the site.
  */
 export const UK_MISSION_TO_CLEAN_UP_SPACE: WrittenNews = {
   slug: "uk-mission-to-clean-up-rubbish-in-space",
@@ -21,6 +21,7 @@ export const UK_MISSION_TO_CLEAN_UP_SPACE: WrittenNews = {
     publishedAt: new Date("2026-10-15T09:34:27Z"),
     licence: "OGL_3_0",
   },
+  publishedOnSite: new Date("2026-10-31"),
   paragraphs: [
     {
       english:

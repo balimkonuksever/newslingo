@@ -1,10 +1,10 @@
 import type { WrittenNews } from "../../written-articles";
 
 /*
- * Adapted by Claude (Opus 5.5) on 2026-10-31 from the Foreign, Commonwealth
- * & Development Office's GOV.UK story of 14 October 2026, under the Open
- * Government Licence v3.0. The user reviews its facts and Turkish in the
- * admin preview before it is marked published.
+ * Adapted by Claude (Opus 5.5) on 2026-10-31 from the Foreign, Commonwealth &
+ * Development Office's GOV.UK story of 14 October 2026, under the Open
+ * Government Licence v3.0. The user reviewed its facts and Turkish in the admin
+ * preview on 2026-10-31 and approved it for the site.
  */
 export const UK_CALLS_FOR_A_FINANCIAL_RESET: WrittenNews = {
   slug: "uk-calls-for-a-reset-of-the-global-financial-system",
@@ -20,6 +20,7 @@ export const UK_CALLS_FOR_A_FINANCIAL_RESET: WrittenNews = {
     publishedAt: new Date("2026-10-14T12:49:45Z"),
     licence: "OGL_3_0",
   },
+  publishedOnSite: new Date("2026-10-31"),
   paragraphs: [
     {
       english:
