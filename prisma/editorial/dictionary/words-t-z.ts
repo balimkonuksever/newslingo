@@ -276,6 +276,15 @@ export const WORDS_T_Z: EditorialSense[] = [
     example: "It's expensive. It's very good, though.",
   },
   {
+    lemma: "thousand",
+    forms: ["thousand", "thousands"],
+    pos: "numeral",
+    ipa: "/ˈθaʊznd/",
+    tr: "bin; (thousands of) binlerce",
+    en: "The number 1,000. “Thousands of” means a very large number.",
+    example: "Thousands of people came to the concert.",
+  },
+  {
     lemma: "three",
     pos: "numeral",
     ipa: "/θriː/",
@@ -377,6 +386,14 @@ export const WORDS_T_Z: EditorialSense[] = [
     tr: "araç, alet",
     en: "Something you use to do a particular job.",
     example: "The app is a useful tool for students.",
+  },
+  {
+    lemma: "top",
+    pos: "adjective",
+    ipa: "/tɒp/",
+    tr: "en üstteki, üst; (parfümde, top note) üst nota",
+    en: "Highest in position, or first.",
+    example: "The books are on the top shelf.",
   },
   {
     lemma: "town",
@@ -907,6 +924,14 @@ export const WORDS_T_Z: EditorialSense[] = [
     example: "That's the man whose car was stolen.",
   },
   {
+    lemma: "why",
+    pos: "adverb",
+    ipa: "/waɪ/",
+    tr: "neden, niçin; (that is why) bu yüzden",
+    en: "For what reason. “That is why” introduces the result of something you have just said.",
+    example: "Why are you late?",
+  },
+  {
     lemma: "will",
     pos: "verb",
     ipa: "/wɪl/",
@@ -939,8 +964,16 @@ export const WORDS_T_Z: EditorialSense[] = [
     example: "I can't see without my glasses.",
   },
   {
+    lemma: "wood",
+    pos: "noun",
+    ipa: "/wʊd/",
+    tr: "ağaç (malzeme olarak), tahta, odun",
+    en: "The hard material that trees are made of.",
+    example: "The table is made of wood.",
+  },
+  {
     lemma: "word",
-    forms: ["words"],
+    forms: ["words", "word"],
     pos: "noun",
     ipa: "/wɜːd/",
     tr: "kelime, söz",

@@ -199,6 +199,14 @@ export const WORDS_A_C: EditorialSense[] = [
     example: "We can't afford a new car this year.",
   },
   {
+    lemma: "after",
+    pos: "preposition",
+    ipa: "/ˈɑːftə/",
+    tr: "-den sonra",
+    en: "Later than a particular time or event.",
+    example: "We went for a walk after lunch.",
+  },
+  {
     lemma: "again",
     pos: "adverb",
     ipa: "/əˈɡen/",
@@ -254,6 +262,14 @@ export const WORDS_A_C: EditorialSense[] = [
     tr: "yapay zekâ",
     en: "Artificial intelligence: computer systems that can do tasks that usually need human thinking.",
     example: "The app uses AI to suggest recipes.",
+  },
+  {
+    lemma: "alcohol",
+    pos: "noun",
+    ipa: "/ˈælkəhɒl/",
+    tr: "alkol",
+    en: "A clear liquid that is in drinks such as wine and beer, and is also used in products such as perfume.",
+    example: "Hand gel usually contains alcohol.",
   },
   {
     lemma: "Aldi",
@@ -376,6 +392,14 @@ export const WORDS_A_C: EditorialSense[] = [
     tr: "analist, uzman yorumcu",
     en: "A person whose job is to study a subject and explain what is happening.",
     example: "Analysts expect prices to rise.",
+  },
+  {
+    lemma: "ancient",
+    pos: "adjective",
+    ipa: "/ˈeɪnʃənt/",
+    tr: "antik, eski çağlara ait",
+    en: "From a time thousands of years ago.",
+    example: "We visited the ruins of an ancient city.",
   },
   {
     lemma: "and",
@@ -617,6 +641,14 @@ export const WORDS_A_C: EditorialSense[] = [
     tr: "fırın, unlu mamul dükkânı",
     en: "A place where bread and cakes are made or sold.",
     example: "I buy fresh bread from the bakery.",
+  },
+  {
+    lemma: "base",
+    pos: "noun",
+    ipa: "/beɪs/",
+    tr: "taban, temel; (parfümde, base note) alt nota",
+    en: "The lowest part of something, which the other parts rest on.",
+    example: "The lamp has a heavy base.",
   },
   {
     lemma: "basic",
@@ -907,6 +939,15 @@ export const WORDS_A_C: EditorialSense[] = [
     example: "She made a chocolate cake for his birthday.",
   },
   {
+    lemma: "call",
+    forms: ["call", "calls", "called"],
+    pos: "verb",
+    ipa: "/kɔːl/",
+    tr: "adlandırmak, demek; (be called) … diye adlandırılmak, -e … denmek",
+    en: "To give someone or something a particular name.",
+    example: "They called their daughter Emma.",
+  },
+  {
     lemma: "can",
     pos: "verb",
     ipa: "/kæn/",
@@ -932,7 +973,7 @@ export const WORDS_A_C: EditorialSense[] = [
   },
   {
     lemma: "carry",
-    forms: ["carry", "carrying"],
+    forms: ["carry", "carrying", "carries"],
     pos: "verb",
     ipa: "/ˈkæri/",
     tr: "taşımak",
@@ -1045,6 +1086,15 @@ export const WORDS_A_C: EditorialSense[] = [
     tr: "çocuk",
     en: "A young boy or girl.",
     example: "The children are playing in the garden.",
+  },
+  {
+    lemma: "China",
+    forms: ["china"],
+    pos: "proper noun",
+    ipa: "/ˈtʃaɪnə/",
+    tr: "Çin",
+    en: "A large country in East Asia.",
+    example: "The Great Wall is in China.",
   },
   {
     lemma: "choice",
@@ -1189,7 +1239,7 @@ export const WORDS_A_C: EditorialSense[] = [
   },
   {
     lemma: "come",
-    forms: ["come", "came"],
+    forms: ["come", "came", "comes"],
     pos: "verb",
     ipa: "/kʌm/",
     tr: "gelmek",
@@ -1320,6 +1370,14 @@ export const WORDS_A_C: EditorialSense[] = [
     example: "Stress can contribute to health problems.",
   },
   {
+    lemma: "cook",
+    pos: "noun",
+    ipa: "/kʊk/",
+    tr: "aşçı",
+    en: "A person who prepares and cooks food.",
+    example: "My grandmother is a wonderful cook.",
+  },
+  {
     lemma: "corner",
     pos: "noun",
     ipa: "/ˈkɔːnə/",
@@ -1416,7 +1474,7 @@ export const WORDS_A_C: EditorialSense[] = [
   },
   {
     lemma: "create",
-    forms: ["creates"],
+    forms: ["creates", "create"],
     pos: "verb",
     ipa: "/kriˈeɪt/",
     tr: "oluşturmak, kurmak",

@@ -203,6 +203,15 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "She became a director of the company last year.",
   },
   {
+    lemma: "disappear",
+    forms: ["disappear", "disappears"],
+    pos: "verb",
+    ipa: "/ˌdɪsəˈpɪə/",
+    tr: "kaybolmak, yok olmak",
+    en: "To go away, so that you cannot see, hear or smell it any more.",
+    example: "The sun disappeared behind the clouds.",
+  },
+  {
     lemma: "dispute",
     forms: ["disputes"],
     pos: "noun",
@@ -359,6 +368,15 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "kolay (easier: daha kolay)",
     en: "Not difficult.",
     example: "The test was easier than I expected.",
+  },
+  {
+    lemma: "Egypt",
+    forms: ["egypt"],
+    pos: "proper noun",
+    ipa: "/ˈiːdʒɪpt/",
+    tr: "Mısır",
+    en: "A country in north-east Africa, through which the River Nile flows.",
+    example: "The pyramids in Egypt are thousands of years old.",
   },
   {
     lemma: "eight",
@@ -591,6 +609,14 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "örnek; (for example) örneğin",
     en: "Something that shows what a group of things is like.",
     example: "Some fruits, for example apples, grow well here.",
+  },
+  {
+    lemma: "exist",
+    pos: "verb",
+    ipa: "/ɪɡˈzɪst/",
+    tr: "var olmak, mevcut olmak",
+    en: "To be real, or to be present in the world.",
+    example: "Do you think life exists on other planets?",
   },
   {
     lemma: "existing",
@@ -896,6 +922,14 @@ export const WORDS_D_G: EditorialSense[] = [
     example: "The findings will be published next month.",
   },
   {
+    lemma: "fine",
+    pos: "adjective",
+    ipa: "/faɪn/",
+    tr: "kaliteli, seçkin",
+    en: "Of very high quality.",
+    example: "The shop sells fine wines and cheeses.",
+  },
+  {
     lemma: "first",
     pos: "adjective",
     ipa: "/fɜːst/",
@@ -953,6 +987,15 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "akmak",
     en: "To move along in one direction, like a river.",
     example: "The river flows into the sea.",
+  },
+  {
+    lemma: "flower",
+    forms: ["flower", "flowers"],
+    pos: "noun",
+    ipa: "/ˈflaʊə/",
+    tr: "çiçek",
+    en: "The coloured part of a plant, which often has a pleasant smell.",
+    example: "He bought her a bunch of flowers.",
   },
   {
     lemma: "follow",
@@ -1102,6 +1145,7 @@ export const WORDS_D_G: EditorialSense[] = [
   },
   {
     lemma: "fruit",
+    forms: ["fruit", "fruits"],
     pos: "noun",
     ipa: "/fruːt/",
     tr: "meyve",
@@ -1177,7 +1221,7 @@ export const WORDS_D_G: EditorialSense[] = [
   },
   {
     lemma: "get",
-    forms: ["gets", "got"],
+    forms: ["gets", "got", "get"],
     pos: "verb",
     ipa: "/ɡet/",
     tr: "almak, elde etmek",
@@ -1195,7 +1239,7 @@ export const WORDS_D_G: EditorialSense[] = [
   },
   {
     lemma: "go",
-    forms: ["go"],
+    forms: ["go", "goes"],
     pos: "verb",
     ipa: "/ɡəʊ/",
     tr: "gitmek",
@@ -1244,6 +1288,15 @@ export const WORDS_D_G: EditorialSense[] = [
     tr: "büyük; (at its greatest) en yüksek düzeyinde",
     en: "Very large in amount or level.",
     example: "The danger is greatest at night.",
+  },
+  {
+    lemma: "Greece",
+    forms: ["greece"],
+    pos: "proper noun",
+    ipa: "/ɡriːs/",
+    tr: "Yunanistan",
+    en: "A country in south-east Europe, on the Mediterranean Sea.",
+    example: "Many tourists visit the islands of Greece.",
   },
   {
     lemma: "grocery",

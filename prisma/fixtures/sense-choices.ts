@@ -30,6 +30,7 @@ export const DEMO_SENSE_CHOICES: SenseChoices = {
       yet: ["yet-but", "yet-still"],
     },
     7: {
+      note: ["note-mention"],
       that: ["that-conjunction"],
       next: ["next-following"],
       dry: ["dry-weather"],
