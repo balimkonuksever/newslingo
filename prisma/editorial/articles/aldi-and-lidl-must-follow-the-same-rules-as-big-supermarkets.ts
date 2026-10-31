@@ -3,8 +3,8 @@ import type { WrittenNews } from "../../written-articles";
 /*
  * Adapted by Claude (Opus 5.5) on 2026-10-28 from the Competition and Markets
  * Authority's GOV.UK story of 22 October 2026, under the Open Government
- * Licence v3.0. The user reviews its facts and Turkish in the admin preview
- * before publishing it.
+ * Licence v3.0. The user reviewed its facts and Turkish in the admin preview
+ * on 2026-10-30 and approved it for the site.
  */
 export const ALDI_AND_LIDL_SUPERMARKET_RULES: WrittenNews = {
   slug: "aldi-and-lidl-must-follow-the-same-rules-as-big-supermarkets",
@@ -21,6 +21,7 @@ export const ALDI_AND_LIDL_SUPERMARKET_RULES: WrittenNews = {
     publishedAt: new Date("2026-10-22T09:02:23Z"),
     licence: "OGL_3_0",
   },
+  publishedOnSite: new Date("2026-10-31"),
   paragraphs: [
     {
       english:

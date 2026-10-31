@@ -28,8 +28,9 @@ import { TEST_ADMIN, testAuth } from "./admins";
 import { createArticle, resetDatabase } from "./database";
 
 // The article import (W) against PostgreSQL: new and changed files become
-// drafts with everything the reader shows, a rerun changes nothing, and an
-// article that is no longer a draft is never touched.
+// drafts with everything the reader shows, or published articles when the
+// file is marked, a rerun changes nothing, and an article that is no longer
+// a draft is never touched.
 
 beforeEach(async () => {
   await resetDatabase();
@@ -190,13 +191,93 @@ describe("importArticles", () => {
     expect(story.vocabulary).toHaveLength(news.keyVocabulary.length);
   });
 
-  it("never changes a published article, and then writes nothing at all", async () => {
+  it("publishes an article whose file is marked, on its mark's day", async () => {
+    const marked = {
+      ...writtenNews(),
+      publishedOnSite: new Date("2026-10-31"),
+    };
+    const draft = writtenExplainer();
+
+    expect((await planFor([marked, draft])).steps).toEqual([
+      { slug: marked.slug, action: "create", publish: true },
+      { slug: draft.slug, action: "create", publish: false },
+    ]);
+    await expect(runImport([marked, draft])).resolves.toMatchObject({
+      created: 2,
+      published: 1,
+    });
+
+    expect(await stored(marked.slug)).toMatchObject({
+      status: "PUBLISHED",
+      publishedOnSiteAt: new Date("2026-10-31"),
+      datedAt: marked.source.publishedAt,
+    });
+    expect(await stored(draft.slug)).toMatchObject({
+      status: "DRAFT",
+      publishedOnSiteAt: null,
+    });
+    expect(await db.moderationEvent.count()).toBe(0);
+    await expect(runImport([marked, draft])).resolves.toMatchObject({
+      unchanged: 2,
+      published: 0,
+    });
+  });
+
+  it("publishes a draft once its file is marked", async () => {
     const news = writtenNews();
     await runImport([news]);
-    await db.article.update({
-      where: { slug: news.slug },
-      data: { status: "PUBLISHED", publishedOnSiteAt: new Date() },
+    const marked = { ...news, publishedOnSite: new Date("2026-10-31") };
+
+    expect((await planFor([marked])).steps).toEqual([
+      expect.objectContaining({
+        action: "update",
+        changed: ["publication"],
+        publish: true,
+      }),
+    ]);
+    await expect(runImport([marked])).resolves.toMatchObject({
+      updated: 1,
+      published: 1,
     });
+
+    const story = await stored(news.slug);
+    expect(story).toMatchObject({
+      status: "PUBLISHED",
+      publishedOnSiteAt: new Date("2026-10-31"),
+    });
+    expect(story.paragraphs).toHaveLength(news.paragraphs.length);
+    expect(story.vocabulary).toHaveLength(news.keyVocabulary.length);
+  });
+
+  it("refuses to publish an article whose category is switched off", async () => {
+    const marked = {
+      ...writtenNews(),
+      publishedOnSite: new Date("2026-10-31"),
+    };
+    await db.category.update({
+      where: { slug: marked.categorySlug },
+      data: { isActive: false },
+    });
+
+    await expect(runImport([marked])).rejects.toThrow(
+      `"${marked.slug}" is marked published, but its category "${marked.categorySlug}" is switched off, so readers could not reach it.`,
+    );
+    expect(await db.article.count()).toBe(0);
+  });
+
+  it("never takes a published article off the site when its mark is removed", async () => {
+    const news = writtenNews();
+    await runImport([{ ...news, publishedOnSite: new Date("2026-10-31") }]);
+
+    await expect(runImport([news])).rejects.toThrow(
+      `"${news.slug}" is published, and its file differs in: publication.`,
+    );
+    expect((await stored(news.slug)).status).toBe("PUBLISHED");
+  });
+
+  it("never changes a published article, and then writes nothing at all", async () => {
+    const news = { ...writtenNews(), publishedOnSite: new Date("2026-10-31") };
+    await runImport([news]);
     const explainer = writtenExplainer();
 
     // An unchanged published article is left alone.

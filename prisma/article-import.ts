@@ -8,9 +8,13 @@ import { EDITORIAL_OCCURRENCE_SOURCE } from "./expression-library";
 import { diffEditorialEntries, writeEditorialEntries } from "./seeders";
 import type { ResolvedWrittenArticle, VocabularyRow } from "./written-articles";
 
-// Writes checked written articles (milestone W) as drafts: new ones are
-// created, changed drafts are rewritten, and an article that is no longer a
-// draft is never touched. `resolveWrittenArticles` checks the files first.
+// Writes checked written articles (milestone W): new ones are created,
+// changed drafts are rewritten, and an article that is no longer a draft is
+// never touched. An article whose file has the publication mark is
+// published with its mark's day, after the checks an admin's publish runs;
+// one without it is written as a draft. `resolveWrittenArticles` checks the
+// files first. The import records no moderation event, which needs an admin:
+// the merged pull request that marked the file is the record.
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -28,8 +32,14 @@ export class ArticleImportError extends Error {
 
 /** What the import does with one article. */
 export type ImportStep =
-  | { slug: string; action: "create" }
-  | { slug: string; action: "update"; id: string; changed: string[] }
+  | { slug: string; action: "create"; publish: boolean }
+  | {
+      slug: string;
+      action: "update";
+      id: string;
+      changed: string[];
+      publish: boolean;
+    }
   | { slug: string; action: "unchanged" }
   | {
       slug: string;
@@ -62,6 +72,7 @@ const contentSelect = {
   sourcePublishedAt: true,
   sourceLicence: true,
   datedAt: true,
+  publishedOnSiteAt: true,
   wordCount: true,
   readingTimeMinutes: true,
   category: { select: { slug: true } },
@@ -130,6 +141,7 @@ function fileContent({
         }
       : null,
     date: iso(datedAt),
+    publication: iso(article.publishedOnSite ?? null),
     length: { wordCount, readingTimeMinutes },
     paragraphs: article.paragraphs.map(({ english, turkish }, index) => ({
       order: index + 1,
@@ -181,6 +193,9 @@ function storedContent(stored: StoredArticle): Content {
             licence: stored.sourceLicence,
           },
     date: iso(stored.datedAt),
+    // A draft restored from the archive keeps its old date, but is not on the site.
+    publication:
+      stored.status === "PUBLISHED" ? iso(stored.publishedOnSiteAt) : null,
     length: {
       wordCount: stored.wordCount,
       readingTimeMinutes: stored.readingTimeMinutes,
@@ -250,7 +265,7 @@ export async function planArticleImport(
   });
   const categories = await db.category.findMany({
     where: { slug: { in: categorySlugs } },
-    select: { slug: true },
+    select: { slug: true, isActive: true },
   });
   const expressions = await db.expression.findMany({
     where: { slug: { in: expressionSlugs } },
@@ -277,9 +292,10 @@ export async function planArticleImport(
   const steps = articles.map((resolved): ImportStep => {
     const { slug } = resolved.article;
     const existing = bySlug.get(slug);
+    const publish = resolved.article.publishedOnSite !== undefined;
 
     if (!existing) {
-      return { slug, action: "create" };
+      return { slug, action: "create", publish };
     }
 
     const changed = changedParts(
@@ -292,11 +308,29 @@ export async function planArticleImport(
     }
 
     return existing.status === "DRAFT"
-      ? { slug, action: "update", id: existing.id, changed }
+      ? { slug, action: "update", id: existing.id, changed, publish }
       : { slug, action: "refuse", status: existing.status, changed };
   });
+  const switchedOff = new Set(
+    categories.filter(({ isActive }) => !isActive).map(({ slug }) => slug),
+  );
 
   for (const step of steps) {
+    const { article } = articles.find(
+      (resolved) => resolved.article.slug === step.slug,
+    )!;
+
+    // The one publication check that needs the database.
+    if (
+      (step.action === "create" || step.action === "update") &&
+      step.publish &&
+      switchedOff.has(article.categorySlug)
+    ) {
+      problems.push(
+        `"${step.slug}" is marked published, but its category "${article.categorySlug}" is switched off, so readers could not reach it.`,
+      );
+    }
+
     if (step.action === "refuse") {
       problems.push(
         `"${step.slug}" is ${step.status.toLowerCase()}, and its file differs in: ${step.changed.join(", ")}. The import only changes drafts: archive it, restore it to draft, then import again.`,
@@ -351,16 +385,27 @@ async function writeArticle(
   };
   let articleId: string;
 
+  const publication =
+    article.publishedOnSite === undefined
+      ? null
+      : {
+          status: "PUBLISHED" as const,
+          publishedOnSiteAt: article.publishedOnSite,
+        };
+
   if (step.action === "create") {
     ({ id: articleId } = await tx.article.create({
-      data: { ...data, status: "DRAFT", publishedOnSiteAt: null },
+      data: {
+        ...data,
+        ...(publication ?? { status: "DRAFT", publishedOnSiteAt: null }),
+      },
       select: { id: true },
     }));
   } else {
     // Only a draft is rewritten, even if an admin publishes it meanwhile.
     const { count } = await tx.article.updateMany({
       where: { id: step.id, status: "DRAFT" },
-      data,
+      data: { ...data, ...publication },
     });
 
     if (count !== 1) {
@@ -432,9 +477,10 @@ async function writeArticle(
 
 /**
  * Imports `articles` in one transaction: their dictionary entries first,
- * then each new or changed draft with its paragraphs, references, Real
- * English marks and key vocabulary. It writes nothing if any article it
- * would change is no longer a draft, and a second run changes nothing.
+ * then each new or changed article with its paragraphs, references, Real
+ * English marks and key vocabulary, published if its file is marked. It
+ * writes nothing if any article it would change is no longer a draft, and a
+ * second run changes nothing.
  */
 export async function importArticles(
   db: PrismaClient,
@@ -501,6 +547,12 @@ export async function importArticles(
         created: count("create"),
         updated: count("update"),
         unchanged: count("unchanged"),
+        /** How many of the new and changed articles it published. */
+        published: plan.steps.filter(
+          (step) =>
+            (step.action === "create" || step.action === "update") &&
+            step.publish,
+        ).length,
         entries,
       };
     },
