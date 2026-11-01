@@ -14,6 +14,7 @@ for (const path of [
   `/article/${article.slug}`,
   `/article/${explainer.slug}`,
   "/article/no-such-article",
+  "/search",
   "/admin/sign-in",
   "/admin/sign-in?expired",
   "/admin/sign-in/code",
@@ -31,6 +32,17 @@ test("the open filter panel has no serious accessibility violations", async ({
   await page.goto("/");
   await page.getByText("Filter by category, level, length or date").click();
   await expect(page.getByLabel("Level")).toBeVisible();
+
+  expect(await seriousViolations(page)).toEqual([]);
+});
+
+test("search results have no serious accessibility violations", async ({
+  page,
+}) => {
+  await page.goto("/search?q=bicycle");
+  await expect(
+    page.getByRole("region", { name: "Results for “bicycle”" }),
+  ).toBeVisible();
 
   expect(await seriousViolations(page)).toEqual([]);
 });

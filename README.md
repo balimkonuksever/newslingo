@@ -140,7 +140,7 @@ The import publishes a marked article with that day, after the checks an admin's
 
 ## Static site
 
-The live site is a static site on GitHub Pages, at `https://<owner>.github.io/newslingo/`, rebuilt from the repository on every push to `main` (`IMPLEMENTATION_PLAN.md` M9). It has the public pages only: the homepage, whose filters run in the browser, the category and expression pages, every published article and a word file for each, `/words/<slug>.json`, which word lookups read. The admin, sign-in and `POST /api/dictionary` stay on your computer: their route files are named `*.local.tsx` or `*.local.ts`, which the site build leaves out, and `*.site.ts` files exist only in it.
+The live site is a static site on GitHub Pages, at `https://<owner>.github.io/newslingo/`, rebuilt from the repository on every push to `main` (`IMPLEMENTATION_PLAN.md` M9). It has the public pages only: the homepage, whose filters run in the browser, the category and expression pages, every published article and a word file for each, `/words/<slug>.json`, which word lookups read, and the search page, `/search`, which searches every story's title, summary, category, source, and English and Turkish text in the browser, over an index built with the site, `/search-index.json`. The admin, sign-in and `POST /api/dictionary` stay on your computer: their route files are named `*.local.tsx` or `*.local.ts`, which the site build leaves out, and `*.site.ts` files exist only in it.
 
 ```bash
 pnpm site:build

@@ -1,5 +1,6 @@
 "use client";
 
+import Form from "next/form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, type ReactNode, useTransition } from "react";
@@ -63,9 +64,9 @@ export function ArticleFiltersForm({
   }
 
   return (
-    <form
+    // Form adds the site's base path to the action, for the static site.
+    <Form
       action="/"
-      method="get"
       aria-label="Filter articles"
       onSubmit={handleSubmit}
       className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
@@ -142,6 +143,6 @@ export function ArticleFiltersForm({
           </Link>
         )}
       </div>
-    </form>
+    </Form>
   );
 }
