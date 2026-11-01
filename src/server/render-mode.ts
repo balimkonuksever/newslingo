@@ -23,14 +23,6 @@ export async function renderPerRequest() {
 }
 
 /**
- * A dynamic route's parameters: every public one in the static site, and
- * none on the local server, which renders each page when it is asked for.
- */
-export async function staticParams<T>(list: () => Promise<T[]>) {
-  return isSiteBuild ? list() : [];
-}
-
-/**
  * A page's absolute address, as the site serves it: the static site's pages
  * live under its base path, which NEXT_PUBLIC_SITE_URL includes, and end with
  * a slash.

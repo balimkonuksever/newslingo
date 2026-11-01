@@ -11,14 +11,14 @@ const siteBuild = process.env.SITE_BUILD === "1";
 const SITE_BASE_PATH = "/newslingo";
 
 // Route files named `*.local.tsx` or `*.local.ts` exist only on the local
-// server (the admin, sign-in and the dictionary endpoint), and `*.site.ts`
-// only in the static site.
+// server (the admin, sign-in and the dictionary endpoint), and `*.site.tsx`
+// or `*.site.ts` only in the static site.
 const nextConfig: NextConfig = siteBuild
   ? {
       output: "export",
       basePath: SITE_BASE_PATH,
       trailingSlash: true,
-      pageExtensions: ["site.ts", "tsx", "ts"],
+      pageExtensions: ["site.tsx", "site.ts", "tsx", "ts"],
       env: { NEXT_PUBLIC_BASE_PATH: SITE_BASE_PATH },
       // Route types here would leave out the admin, which `pnpm typecheck`
       // checks with the rest of the project before any site build.

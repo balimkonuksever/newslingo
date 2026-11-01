@@ -52,6 +52,21 @@ describe("parseArticleFilters", () => {
     ).toEqual({});
   });
 
+  it.each([
+    ["an inherited property name as a length", { length: "toString" }],
+    ["a month that does not exist", { from: "2026-13-01" }],
+    ["a date without leading zeros", { to: "2026-1-5" }],
+    ["a date with a time", { from: "2026-01-05T10:00" }],
+  ])("drops %s", (_name, searchParams) => {
+    expect(parseArticleFilters(searchParams, categories)).toEqual({});
+  });
+
+  it("keeps a leap day only in a leap year", () => {
+    expect(
+      parseArticleFilters({ from: "2028-02-29", to: "2026-02-29" }, categories),
+    ).toEqual({ from: "2028-02-29" });
+  });
+
   it("uses the first value when a parameter repeats", () => {
     expect(parseArticleFilters({ level: ["C1", "A2"] }, categories)).toEqual({
       level: "C1",

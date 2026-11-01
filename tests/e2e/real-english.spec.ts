@@ -17,7 +17,7 @@ test("opens a whole expression's card without asking the dictionary", async ({
 }) => {
   const lookups: string[] = [];
   page.on("request", (request) => {
-    if (request.url().endsWith("/api/dictionary")) {
+    if (new URL(request.url()).pathname.startsWith("/words/")) {
       lookups.push(request.url());
     }
   });

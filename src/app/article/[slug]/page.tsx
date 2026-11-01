@@ -5,9 +5,8 @@ import { ArticleView } from "@/components/article/article-view";
 import {
   type ArticleDetail,
   getPublicArticleBySlug,
-  listPublicArticleSlugs,
 } from "@/server/articles/queries";
-import { pageUrl, staticParams } from "@/server/render-mode";
+import { pageUrl } from "@/server/render-mode";
 
 const DESCRIPTION_LENGTH = 160;
 
@@ -21,10 +20,6 @@ function describe(article: ArticleDetail) {
   return text.length <= DESCRIPTION_LENGTH
     ? text
     : `${text.slice(0, DESCRIPTION_LENGTH - 1).trimEnd()}…`;
-}
-
-export function generateStaticParams() {
-  return staticParams(listPublicArticleSlugs);
 }
 
 export async function generateMetadata(

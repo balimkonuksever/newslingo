@@ -7,17 +7,9 @@ import { categoryAccent } from "@/components/news/category-accent";
 import { EmptyState } from "@/components/shared/empty-state";
 import { textLink } from "@/components/ui/styles";
 import { formatArticleCount, formatExpressionCount } from "@/lib/format";
-import {
-  getCategoryWithArticles,
-  listCategoriesWithArticleCounts,
-} from "@/server/categories/queries";
-import { staticParams } from "@/server/render-mode";
+import { getCategoryWithArticles } from "@/server/categories/queries";
 
 const CATEGORY_ARTICLE_LIMIT = 24;
-
-export function generateStaticParams() {
-  return staticParams(listCategoriesWithArticleCounts);
-}
 
 export async function generateMetadata(
   props: PageProps<"/category/[slug]">,
