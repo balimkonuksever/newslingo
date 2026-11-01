@@ -322,6 +322,7 @@ test.describe("layout and keyboard", () => {
       "/category/world",
       "/category/world/expressions",
       `/article/${longestArticle.slug}`,
+      "/search?q=the",
     ]) {
       await page.goto(path);
 

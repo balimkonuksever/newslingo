@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 import { DEMO_ARTICLES } from "../../prisma/fixtures/articles";
 import { countWords } from "../../src/lib/reading-time";
@@ -12,6 +12,24 @@ const ELEMENTS_BESIDES_WORDS = 600;
 const MAX_HTML_BYTES = 50 * 1024;
 const MAX_SCRIPT_BYTES = 175 * 1024;
 
+/** Compressed sizes as sent over the network, headers included. */
+function measurePage(page: Page) {
+  return page.evaluate(() => {
+    const [navigation] = performance.getEntriesByType(
+      "navigation",
+    ) as PerformanceNavigationTiming[];
+    const scripts = (
+      performance.getEntriesByType("resource") as PerformanceResourceTiming[]
+    ).filter(({ name }) => new URL(name).pathname.endsWith(".js"));
+
+    return {
+      elements: document.getElementsByTagName("*").length,
+      html: navigation.transferSize,
+      scripts: scripts.reduce((total, entry) => total + entry.transferSize, 0),
+    };
+  });
+}
+
 for (const article of DEMO_ARTICLES) {
   const words = article.paragraphs.reduce(
     (total, { english }) => total + countWords(english),
@@ -24,27 +42,26 @@ for (const article of DEMO_ARTICLES) {
     await page.goto(`/article/${article.slug}`);
     await page.waitForLoadState("networkidle");
 
-    // Compressed sizes as sent over the network, headers included.
-    const size = await page.evaluate(() => {
-      const [navigation] = performance.getEntriesByType(
-        "navigation",
-      ) as PerformanceNavigationTiming[];
-      const scripts = (
-        performance.getEntriesByType("resource") as PerformanceResourceTiming[]
-      ).filter(({ name }) => new URL(name).pathname.endsWith(".js"));
-
-      return {
-        elements: document.getElementsByTagName("*").length,
-        html: navigation.transferSize,
-        scripts: scripts.reduce(
-          (total, entry) => total + entry.transferSize,
-          0,
-        ),
-      };
-    });
+    const size = await measurePage(page);
 
     expect(size.elements).toBeLessThanOrEqual(words + ELEMENTS_BESIDES_WORDS);
     expect(size.html).toBeLessThanOrEqual(MAX_HTML_BYTES);
     expect(size.scripts).toBeLessThanOrEqual(MAX_SCRIPT_BYTES);
   });
 }
+
+// The search index's own size is checked in tests/integration/search-index.test.ts.
+test("/search stays within the page budget, showing every article", async ({
+  page,
+}) => {
+  await page.goto("/search?q=the");
+  await expect(
+    page.getByRole("region", { name: "Results for “the”" }),
+  ).toBeVisible();
+  await page.waitForLoadState("networkidle");
+
+  const size = await measurePage(page);
+
+  expect(size.html).toBeLessThanOrEqual(MAX_HTML_BYTES);
+  expect(size.scripts).toBeLessThanOrEqual(MAX_SCRIPT_BYTES);
+});
