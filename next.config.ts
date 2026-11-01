@@ -20,6 +20,9 @@ const nextConfig: NextConfig = siteBuild
       trailingSlash: true,
       pageExtensions: ["site.ts", "tsx", "ts"],
       env: { NEXT_PUBLIC_BASE_PATH: SITE_BASE_PATH },
+      // Route types here would leave out the admin, which `pnpm typecheck`
+      // checks with the rest of the project before any site build.
+      typescript: { ignoreBuildErrors: true },
     }
   : {
       pageExtensions: ["local.tsx", "local.ts", "tsx", "ts"],

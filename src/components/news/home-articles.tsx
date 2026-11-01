@@ -97,7 +97,7 @@ function HomeArticlesView({
       {/* Announces the result count after the filters change without a page load. */}
       <p aria-live="polite" className="sr-only">
         {filteredArticles &&
-          `${formatArticleCount(filteredArticles.length)} match your filters.`}
+          `${formatArticleCount(filteredArticles.length)} ${filteredArticles.length === 1 ? "matches" : "match"} your filters.`}
       </p>
 
       {filteredArticles && (

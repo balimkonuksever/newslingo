@@ -1,10 +1,12 @@
 import { z } from "zod";
 
-type DatabaseVariableName = "DATABASE_URL" | "TEST_DATABASE_URL";
+type DatabaseVariableName =
+  "DATABASE_URL" | "TEST_DATABASE_URL" | "SITE_DATABASE_URL";
 
 const postgresUrlSchema = z.string().min(1).url();
 
 const testDatabaseNamePattern = /(^|[-_])test(?:[-_]|$)/i;
+const siteDatabaseNamePattern = /(^|[-_])site(?:[-_]|$)/i;
 
 const localDatabaseHosts = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
@@ -65,6 +67,29 @@ export function requireTestDatabaseUrl(
   if (!testDatabaseNamePattern.test(databaseIdentity(url).databaseName)) {
     throw new Error(
       `${name} must identify a database with a distinct \`test\` name token.`,
+    );
+  }
+
+  return url;
+}
+
+/**
+ * Returns the URL of the database `pnpm site:build` builds the static site
+ * from, which it empties first: only one on this machine whose name carries a
+ * distinct `site` token, such as `newslingo_site`.
+ */
+export function requireSiteDatabaseUrl(value: string | undefined) {
+  const url = parsePostgresUrl("SITE_DATABASE_URL", value);
+
+  if (!siteDatabaseNamePattern.test(databaseIdentity(url).databaseName)) {
+    throw new Error(
+      "SITE_DATABASE_URL must identify a database with a distinct `site` name token.",
+    );
+  }
+
+  if (!isLocalDatabaseHost(new URL(url).hostname)) {
+    throw new Error(
+      "SITE_DATABASE_URL must be a database on this machine, since the site build empties it.",
     );
   }
 

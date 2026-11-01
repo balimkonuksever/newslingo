@@ -38,7 +38,9 @@
     "db:studio": "prisma studio",
     "admin:create": "tsx --conditions=react-server scripts/admin-account.ts create",
     "admin:reset": "tsx --conditions=react-server scripts/admin-account.ts reset",
-    "articles:import": "tsx scripts/import-articles.ts"
+    "articles:import": "tsx scripts/import-articles.ts",
+    "site:build": "tsx scripts/build-site.ts",
+    "site:serve": "tsx scripts/serve-site.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

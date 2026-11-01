@@ -2,13 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ArticleView } from "@/components/article/article-view";
-import { env } from "@/lib/env";
 import {
   type ArticleDetail,
   getPublicArticleBySlug,
   listPublicArticleSlugs,
 } from "@/server/articles/queries";
-import { staticParams } from "@/server/render-mode";
+import { pageUrl, staticParams } from "@/server/render-mode";
 
 const DESCRIPTION_LENGTH = 160;
 
@@ -78,10 +77,7 @@ export default async function ArticlePage(props: PageProps<"/article/[slug]">) {
     datePublished: article.publishedOnSiteAt?.toISOString(),
     isBasedOn: article.sourceUrl ?? undefined,
     publisher: { "@type": "Organization", name: "Newslingo" },
-    mainEntityOfPage: new URL(
-      `/article/${article.slug}`,
-      env.NEXT_PUBLIC_SITE_URL,
-    ).toString(),
+    mainEntityOfPage: pageUrl(`/article/${article.slug}`),
   };
 
   return (

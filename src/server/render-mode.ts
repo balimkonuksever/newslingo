@@ -2,6 +2,8 @@ import "server-only";
 
 import { connection } from "next/server";
 
+import { env } from "@/lib/env";
+
 /**
  * True while `pnpm site:build` builds the static site for GitHub Pages
  * (IMPLEMENTATION_PLAN.md M9): every public page is rendered once, from a
@@ -26,4 +28,15 @@ export async function renderPerRequest() {
  */
 export async function staticParams<T>(list: () => Promise<T[]>) {
   return isSiteBuild ? list() : [];
+}
+
+/**
+ * A page's absolute address, as the site serves it: the static site's pages
+ * live under its base path, which NEXT_PUBLIC_SITE_URL includes, and end with
+ * a slash.
+ */
+export function pageUrl(path: string) {
+  const base = env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/u, "");
+
+  return `${base}${path}${isSiteBuild && !path.endsWith("/") ? "/" : ""}`;
 }
