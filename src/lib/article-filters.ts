@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import type { Difficulty } from "@/generated/prisma/enums";
 import { startOfDisplayDay, startOfNextDisplayDay } from "@/lib/dates";
 import { DIFFICULTIES } from "@/lib/difficulty";
@@ -18,11 +16,27 @@ export type ArticleFilters = {
 
 export type SearchParams = Record<string, string | string[] | undefined>;
 
-const levelSchema = z.enum(DIFFICULTIES);
-const lengthSchema = z.enum(
-  Object.keys(READING_TIME_BANDS) as [ReadingTimeBand, ...ReadingTimeBand[]],
-);
-const isoDateSchema = z.iso.date();
+// The homepage parses its filters in the browser, so these checks avoid
+// zod, which would add tens of kilobytes to every page that links to it.
+const isLevel = (value: string | undefined): value is Difficulty =>
+  (DIFFICULTIES as readonly string[]).includes(value ?? "");
+
+const isLength = (value: string | undefined): value is ReadingTimeBand =>
+  value !== undefined && Object.hasOwn(READING_TIME_BANDS, value);
+
+/** A real calendar day written as `YYYY-MM-DD`, or undefined. */
+function isoDate(value: string | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/u.test(value)) {
+    return undefined;
+  }
+
+  const day = new Date(`${value}T00:00:00Z`);
+
+  return !Number.isNaN(day.getTime()) &&
+    day.toISOString().slice(0, 10) === value
+    ? value
+    : undefined;
+}
 
 function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -44,18 +58,18 @@ export function parseArticleFilters(
     filters.category = category;
   }
 
-  const level = levelSchema.safeParse(firstValue(searchParams.level));
-  if (level.success) {
-    filters.level = level.data;
+  const level = firstValue(searchParams.level);
+  if (isLevel(level)) {
+    filters.level = level;
   }
 
-  const length = lengthSchema.safeParse(firstValue(searchParams.length));
-  if (length.success) {
-    filters.length = length.data;
+  const length = firstValue(searchParams.length);
+  if (isLength(length)) {
+    filters.length = length;
   }
 
-  let from = isoDateSchema.safeParse(firstValue(searchParams.from)).data;
-  let to = isoDateSchema.safeParse(firstValue(searchParams.to)).data;
+  let from = isoDate(firstValue(searchParams.from));
+  let to = isoDate(firstValue(searchParams.to));
 
   // ISO dates compare correctly as strings.
   if (from && to && from > to) {
@@ -75,6 +89,56 @@ export function parseArticleFilters(
 
 export function hasActiveFilters(filters: ArticleFilters) {
   return Object.values(filters).some((value) => value !== undefined);
+}
+
+/**
+ * The search parameters of a URL as `parseArticleFilters` reads them: a name
+ * that appears more than once keeps every value, in order.
+ */
+export function searchParamsRecord(params: URLSearchParams): SearchParams {
+  const record: Record<string, string | string[]> = {};
+
+  for (const [name, value] of params) {
+    const known = record[name];
+    record[name] =
+      known === undefined
+        ? value
+        : [...(Array.isArray(known) ? known : [known]), value];
+  }
+
+  return record;
+}
+
+/** The fields of an article that the homepage filters look at. */
+export type FilterableArticle = {
+  category: { slug: string };
+  difficulty: Difficulty;
+  readingTimeMinutes: number;
+  datedAt: Date;
+};
+
+/**
+ * The articles that match `filters`, in their given order. The static site
+ * filters in the browser by the same rules the database query applies.
+ */
+export function filterArticles<Article extends FilterableArticle>(
+  articles: readonly Article[],
+  filters: ArticleFilters,
+): Article[] {
+  const band = filters.length ? READING_TIME_BANDS[filters.length] : null;
+  const range = datedAtRange(filters);
+
+  return articles.filter(
+    (article) =>
+      (!filters.category || article.category.slug === filters.category) &&
+      (!filters.level || article.difficulty === filters.level) &&
+      (!band ||
+        (article.readingTimeMinutes >= band.minMinutes &&
+          (band.maxMinutes === null ||
+            article.readingTimeMinutes <= band.maxMinutes))) &&
+      (!range?.gte || article.datedAt >= range.gte) &&
+      (!range?.lt || article.datedAt < range.lt),
+  );
 }
 
 /** The `datedAt` instants covered by the filter's date range. */

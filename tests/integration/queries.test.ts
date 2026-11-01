@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { filterArticles } from "@/lib/article-filters";
 import {
   getFeaturedAndLatestArticles,
   getPublicArticleBySlug,
@@ -203,6 +204,28 @@ describe("listPublicArticles", () => {
     await createFilterFixtures();
 
     expect(await slugsFor(filters)).toEqual(expected);
+  });
+
+  it("agrees with filterArticles, which the static site applies in the browser", async () => {
+    await createFilterFixtures();
+    const all = await listPublicArticles({}, 20);
+
+    for (const filters of [
+      { category: "ai" },
+      { level: "A2" },
+      { length: "short" },
+      { length: "medium" },
+      { length: "long" },
+      { category: "world", level: "C1" },
+      { from: "2026-09-11" },
+      { to: "2026-09-11" },
+      { from: "2026-09-11", to: "2026-09-11" },
+    ] as const) {
+      expect(
+        filterArticles(all, filters).map(({ slug }) => slug),
+        JSON.stringify(filters),
+      ).toEqual(await slugsFor(filters));
+    }
   });
 
   it("includes whole Istanbul days at both ends of a date range", async () => {

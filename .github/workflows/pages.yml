@@ -1,0 +1,88 @@
+name: Pages
+
+# Builds the static site from the repository on every push to main and
+# deploys it to GitHub Pages (IMPLEMENTATION_PLAN.md M9). The build uses a
+# temporary PostgreSQL that holds only the reference data and the written
+# articles. A failed build deploys nothing, so the previous site stays live.
+#
+# GitHub Free offers Pages only for public repositories, so the deploy job
+# runs once the repository is public. Before that, switch Pages on in the
+# repository's settings, with "GitHub Actions" as its source.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deployment at a time, and never cancel one halfway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  SITE_DATABASE_URL: postgresql://newslingo:newslingo_build_only@127.0.0.1:5432/newslingo_site?schema=public
+
+jobs:
+  build:
+    name: Build the static site
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18-bookworm
+        env:
+          POSTGRES_DB: newslingo_site
+          POSTGRES_USER: newslingo
+          POSTGRES_PASSWORD: newslingo_build_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U newslingo -d newslingo_site"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up pinned pnpm and Node.js, then install dependencies
+        uses: pnpm/setup@v2
+        with:
+          cache: true
+          require-lockfile: true
+          runtime: node@24.7.0
+
+      - name: Build the static site
+        run: pnpm site:build
+        env:
+          SITE_URL: https://${{ github.repository_owner }}.github.io/newslingo
+
+      - name: Upload the site for GitHub Pages
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: out
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    if: github.event.repository.visibility == 'public'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5

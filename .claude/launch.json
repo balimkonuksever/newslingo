@@ -38,6 +38,12 @@
         "3200"
       ],
       "port": 3200
+    },
+    {
+      "name": "newslingo-site",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["site:serve", "4173"],
+      "port": 4173
     }
   ]
 }

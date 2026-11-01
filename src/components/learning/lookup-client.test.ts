@@ -1,8 +1,23 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchDictionaryEntry } from "./lookup-client";
+import type { WordFile } from "@/domain/word-file";
 
-const request = { articleSlug: "costs", paragraphOrder: 1, start: 29, end: 33 };
+import { clearWordFiles, fetchDictionaryEntry } from "./lookup-client";
+
+// "Costs will rise" with "rise" at 11–15: an entry for "rise", none for "will".
+const rise = {
+  lemma: "rise",
+  partOfSpeech: "verb",
+  englishDefinition: "To go up.",
+  turkishMeaning: "yükselmek",
+  exampleSentence: null,
+  ipa: null,
+};
+const wordFile: WordFile = {
+  entries: [rise],
+  words: { "1:0": [null, "Costs"], "1:6": [null, "will"], "1:11": [0, "rise"] },
+};
+const request = { articleSlug: "costs", paragraphOrder: 1, start: 11, end: 15 };
 
 /** Makes `fetch` return a response, or throw anything else. */
 function respondWith(response: Response | Error | DOMException) {
@@ -10,7 +25,7 @@ function respondWith(response: Response | Error | DOMException) {
     if (!(response instanceof Response)) {
       throw response;
     }
-    return response;
+    return response.clone();
   });
   vi.stubGlobal("fetch", fetch);
 
@@ -20,34 +35,47 @@ function respondWith(response: Response | Error | DOMException) {
 describe("fetchDictionaryEntry", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    clearWordFiles();
   });
 
-  it("posts the word's position as JSON", async () => {
-    const fetch = respondWith(Response.json({ error: "not_found" }));
+  it("fetches the article's word file once, for every lookup in it", async () => {
+    const fetch = respondWith(Response.json(wordFile));
 
     await fetchDictionaryEntry(request);
+    await fetchDictionaryEntry({ ...request, start: 6, end: 10 });
 
-    expect(fetch).toHaveBeenCalledWith("/api/dictionary", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(request),
-      signal: undefined,
-    });
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(fetch).toHaveBeenCalledWith("/words/costs.json");
   });
 
-  it("returns the route's entry or error", async () => {
-    const entry = { word: "rise", englishDefinition: "To go up." };
+  it("returns the word's entry, or no_entry for a word without one", async () => {
+    respondWith(Response.json(wordFile));
 
-    respondWith(Response.json({ entry }));
-    await expect(fetchDictionaryEntry(request)).resolves.toEqual({ entry });
-
-    respondWith(Response.json({ error: "rate_limited" }, { status: 429 }));
     await expect(fetchDictionaryEntry(request)).resolves.toEqual({
-      error: "rate_limited",
+      entry: { word: "rise", ...rise },
     });
+    await expect(
+      fetchDictionaryEntry({ ...request, start: 6, end: 10 }),
+    ).resolves.toEqual({ error: "no_entry" });
   });
 
-  it("treats a failed network or an unexpected reply as unavailable", async () => {
+  it("returns not_found for a range that is not a word, or an unknown article", async () => {
+    respondWith(Response.json(wordFile));
+
+    await expect(
+      fetchDictionaryEntry({ ...request, start: 12, end: 15 }),
+    ).resolves.toEqual({ error: "not_found" });
+    await expect(
+      fetchDictionaryEntry({ ...request, end: 14 }),
+    ).resolves.toEqual({ error: "not_found" });
+
+    respondWith(Response.json({ error: "not_found" }, { status: 404 }));
+    await expect(
+      fetchDictionaryEntry({ ...request, articleSlug: "missing" }),
+    ).resolves.toEqual({ error: "not_found" });
+  });
+
+  it("treats a failed network or an unreadable file as unavailable, and tries again next time", async () => {
     respondWith(new TypeError("Failed to fetch"));
     await expect(fetchDictionaryEntry(request)).resolves.toEqual({
       error: "unavailable",
@@ -57,12 +85,17 @@ describe("fetchDictionaryEntry", () => {
     await expect(fetchDictionaryEntry(request)).resolves.toEqual({
       error: "unavailable",
     });
+
+    respondWith(Response.json(wordFile));
+    await expect(fetchDictionaryEntry(request)).resolves.toEqual({
+      entry: { word: "rise", ...rise },
+    });
   });
 
   it("rejects when the caller aborts", async () => {
     const controller = new AbortController();
-    controller.abort();
-    respondWith(new DOMException("Aborted", "AbortError"));
+    controller.abort(new DOMException("Aborted", "AbortError"));
+    respondWith(Response.json(wordFile));
 
     await expect(
       fetchDictionaryEntry(request, controller.signal),

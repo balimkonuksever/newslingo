@@ -138,6 +138,24 @@ publishedOnSite: new Date("2026-10-31"),
 
 The import publishes a marked article with that day, after the checks an admin's publish runs, and records no moderation event: the merged pull request that added the mark is the record. The mark must be a whole day, no earlier than the article's date. To publish a draft after reviewing it in the admin preview, add the mark to its file and import again.
 
+## Static site
+
+The live site is a static site on GitHub Pages, at `https://<owner>.github.io/newslingo/`, rebuilt from the repository on every push to `main` (`IMPLEMENTATION_PLAN.md` M9). It has the public pages only: the homepage, whose filters run in the browser, the category and expression pages, every published article and a word file for each, `/words/<slug>.json`, which word lookups read. The admin, sign-in and `POST /api/dictionary` stay on your computer: their route files are named `*.local.tsx` or `*.local.ts`, which the site build leaves out, and `*.site.ts` files exist only in it.
+
+```bash
+pnpm site:build
+```
+
+empties the `newslingo_site` database on your local PostgreSQL (or `SITE_DATABASE_URL`, which must be on this machine and have a distinct `site` name token), applies the migrations, provisions the reference data and imports the written articles, publishing the ones with the publication mark, then builds the static site into `out/`. Demo articles never reach it. Like `pnpm build`, it writes `.next`, so run `pnpm build` again before `pnpm start`.
+
+```bash
+pnpm site:serve
+```
+
+serves `out/` at `http://localhost:4173/newslingo/` the way GitHub Pages does, to check a build before it goes live.
+
+The `Pages` workflow in `.github/workflows/pages.yml` runs the same build against a temporary PostgreSQL and deploys it. A failed build deploys nothing, so the previous site stays live. GitHub Free offers Pages only for public repositories, so its deploy job runs once the repository is public; before that, switch Pages on in the repository's settings, with "GitHub Actions" as the source.
+
 ## Admin accounts
 
 Admins sign in with an email, a password and a code from an authenticator app (ADR-003). There is no public sign-up: an admin is created, or given a new password and authenticator app, only from the command line:
@@ -202,11 +220,11 @@ pnpm lint:fix
 pnpm test:watch
 ```
 
-GitHub Actions runs the same gates for pull requests and pushes to `main`: formatting, linting, schema checks, typechecking, unit tests, database integration tests, a production build, and the browser and accessibility tests. When the browser tests fail, their traces and screenshots are uploaded as a workflow artifact.
+GitHub Actions runs the same gates for pull requests and pushes to `main`: formatting, linting, schema checks, typechecking, unit tests, database integration tests, a production build, the browser and accessibility tests, and a build of the static site. When the browser tests fail, their traces and screenshots are uploaded as a workflow artifact.
 
 ## Environment boundary
 
-The public site URL and database URLs are validated through the environment boundary under `src/lib/`. Database values are read lazily. Pages read PostgreSQL on every request, so `pnpm build` needs a valid `DATABASE_URL` but no running database. The committed `.env.example` contains safe development defaults, while real secrets belong only in ignored local environment files. Privileged integrations belong under `src/server/` and must remain inaccessible to Client Components.
+The public site URL and database URLs are validated through the environment boundary under `src/lib/`. Database values are read lazily. On the local server pages read PostgreSQL on every request, so `pnpm build` needs a valid `DATABASE_URL` but no running database; the static site build reads it once, at build time. The committed `.env.example` contains safe development defaults, while real secrets belong only in ignored local environment files. Privileged integrations belong under `src/server/` and must remain inaccessible to Client Components.
 
 ## Project documents
 

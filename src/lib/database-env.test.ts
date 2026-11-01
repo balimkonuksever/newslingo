@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertDemoSeedAllowed,
   parsePostgresUrl,
+  requireSiteDatabaseUrl,
   requireTestDatabaseUrl,
   validateTestDatabaseUrls,
 } from "./database-env";
@@ -82,6 +83,35 @@ describe("requireTestDatabaseUrl", () => {
     ).toThrow(
       "DATABASE_URL must identify a database with a distinct `test` name token",
     );
+  });
+});
+
+describe("requireSiteDatabaseUrl", () => {
+  it("accepts a database on this machine whose name has a site token", () => {
+    const url =
+      "postgresql://newslingo:local-only@127.0.0.1:5432/newslingo_site?schema=public";
+
+    expect(requireSiteDatabaseUrl(url)).toBe(url);
+  });
+
+  it.each([
+    [
+      "the development database",
+      "postgresql://newslingo:local-only@127.0.0.1:5432/newslingo",
+      "a distinct `site` name token",
+    ],
+    [
+      "a name that only contains the word",
+      "postgresql://newslingo:local-only@127.0.0.1:5432/website",
+      "a distinct `site` name token",
+    ],
+    [
+      "a database on another machine",
+      "postgresql://newslingo:secret@db.example.com:5432/newslingo_site",
+      "a database on this machine",
+    ],
+  ])("refuses %s", (_name, url, message) => {
+    expect(() => requireSiteDatabaseUrl(url)).toThrow(message);
   });
 });
 

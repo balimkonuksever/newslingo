@@ -2,8 +2,9 @@ import { expect, type Page, test } from "@playwright/test";
 
 import { DEMO_ARTICLES } from "../../prisma/fixtures/articles";
 
-// `pnpm test:e2e` runs the server without a dictionary provider: every
-// lookup is answered by the editorial entries seeded with the demo articles.
+// Lookups read the article's word file, `/words/<slug>.json`, which holds the
+// editorial entries seeded with the demo articles. The static site serves the
+// same file without a server.
 
 const article = DEMO_ARTICLES[0];
 const path = `/article/${article.slug}`;
@@ -32,24 +33,22 @@ function entryShown(page: Page) {
   ).toBeVisible();
 }
 
+const WORD_FILES = "**/words/*.json";
+
+/** The paths of the word files the page fetches. */
 function lookupRequests(page: Page) {
-  const requests: Array<Record<string, unknown>> = [];
+  const requests: string[] = [];
 
   page.on("request", (request) => {
-    if (request.url().endsWith("/api/dictionary")) {
-      requests.push(request.postDataJSON());
+    const { pathname } = new URL(request.url());
+
+    if (pathname.startsWith("/words/")) {
+      requests.push(pathname);
     }
   });
 
   return requests;
 }
-
-test.beforeEach(async ({ page }, testInfo) => {
-  // The route limits lookups per client address; give each test its own.
-  await page.setExtraHTTPHeaders({
-    "x-forwarded-for": `e2e-${testInfo.testId}`,
-  });
-});
 
 test("looks nothing up until the reader chooses a word", async ({ page }) => {
   const requests = lookupRequests(page);
@@ -74,14 +73,7 @@ test("explains a word in its sentence", async ({ page }) => {
   await expect(dialog.getByRole("heading", { name: text })).toBeVisible();
   await expect(dialog.getByText("anlaşma", { exact: true })).toBeVisible();
   await expect(chosen).toHaveAttribute("data-active", "");
-  expect(requests).toEqual([
-    {
-      articleSlug: article.slug,
-      paragraphOrder: 1,
-      start: Number(await chosen.getAttribute("data-w")),
-      end: Number(await chosen.getAttribute("data-w")) + text.length,
-    },
-  ]);
+  expect(requests).toEqual([`/words/${article.slug}.json`]);
 });
 
 test("closes with Escape and returns focus to the word", async ({ page }) => {
@@ -175,9 +167,10 @@ test.describe("keyboard", () => {
 });
 
 test.describe("failures", () => {
-  function answerWith(page: Page, status: number, error: string) {
-    return page.route("**/api/dictionary", (route) =>
-      route.fulfill({ status, json: { error } }),
+  /** Answers the word file with a server error. */
+  function failWith(page: Page, status: number) {
+    return page.route(WORD_FILES, (route) =>
+      route.fulfill({ status, body: "Unavailable" }),
     );
   }
 
@@ -185,7 +178,7 @@ test.describe("failures", () => {
     page,
   }) => {
     await page.goto(path);
-    await answerWith(page, 503, "unavailable");
+    await failWith(page, 503);
     await word(page, 1, 3).click();
 
     const dialog = card(page);
@@ -198,23 +191,17 @@ test.describe("failures", () => {
     await entryShown(page);
   });
 
-  test("asks the reader to slow down when rate limited", async ({ page }) => {
-    await page.goto(path);
-    await answerWith(page, 429, "rate_limited");
-    await word(page, 1, 3).click();
-
-    await expect(
-      card(page).getByText("Wait a moment, then try again."),
-    ).toBeVisible();
-    await expect(
-      card(page).getByRole("button", { name: "Try again" }),
-    ).toBeVisible();
-  });
-
   test("says when a word has no entry yet", async ({ page }) => {
     await page.goto(path);
-    await answerWith(page, 404, "no_entry");
-    await word(page, 1, 3).click();
+    const chosen = word(page, 1, 3);
+    const start = Number(await chosen.getAttribute("data-w"));
+    const text = (await chosen.textContent()) ?? "";
+    await page.route(WORD_FILES, (route) =>
+      route.fulfill({
+        json: { entries: [], words: { [`1:${start}`]: [null, text] } },
+      }),
+    );
+    await chosen.click();
 
     await expect(
       card(page).getByText("This word isn’t in the dictionary yet."),
@@ -224,9 +211,9 @@ test.describe("failures", () => {
     ).toHaveCount(0);
   });
 
-  test("says when a word cannot be looked up", async ({ page }) => {
+  test("says when the article has no word file", async ({ page }) => {
     await page.goto(path);
-    await answerWith(page, 404, "not_found");
+    await failWith(page, 404);
     await word(page, 1, 3).click();
 
     await expect(
@@ -239,7 +226,7 @@ test.describe("failures", () => {
 
   test("survives a network failure", async ({ page }) => {
     await page.goto(path);
-    await page.route("**/api/dictionary", (route) => route.abort("failed"));
+    await page.route(WORD_FILES, (route) => route.abort("failed"));
     await word(page, 1, 3).click();
 
     await expect(

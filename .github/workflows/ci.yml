@@ -77,6 +77,11 @@ jobs:
       - name: Browser and accessibility tests
         run: pnpm test:e2e
 
+      # After the browser tests, since it replaces the build they serve. It
+      # builds from its own database, newslingo_site, as the Pages workflow does.
+      - name: Build the static site
+        run: pnpm site:build
+
       - name: Upload the browser test report
         if: failure()
         uses: actions/upload-artifact@v7
