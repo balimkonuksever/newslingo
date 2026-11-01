@@ -23,7 +23,11 @@ export default defineConfig({
         test: {
           name: "unit",
           environment: "jsdom",
-          include: ["src/**/*.test.{ts,tsx}", "prisma/**/*.test.ts"],
+          include: [
+            "src/**/*.test.{ts,tsx}",
+            "prisma/**/*.test.ts",
+            "scripts/**/*.test.ts",
+          ],
           setupFiles: ["./vitest.setup.ts"],
         },
       },

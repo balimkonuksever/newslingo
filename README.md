@@ -146,7 +146,7 @@ The live site is a static site on GitHub Pages, at `https://<owner>.github.io/ne
 pnpm site:build
 ```
 
-empties the `newslingo_site` database on your local PostgreSQL (or `SITE_DATABASE_URL`, which must be on this machine and have a distinct `site` name token), applies the migrations, provisions the reference data and imports the written articles, publishing the ones with the publication mark, then builds the static site into `out/`. Demo articles never reach it. Like `pnpm build`, it writes `.next`, so run `pnpm build` again before `pnpm start`.
+empties the `newslingo_site` database on your local PostgreSQL (or `SITE_DATABASE_URL`, which must be on this machine and have a distinct `site` name token), applies the migrations, provisions the reference data and imports the written articles, publishing the ones with the publication mark, then builds the static site into `out/`. Last, it gives every page its content security policy, a `<meta>` tag that allows only the site's own files and the page's own inline scripts, and checks the site: only the written articles marked published, and no admin page, dictionary endpoint, demo article, draft, server setting or source map (`scripts/site-security.ts`). A failed check fails the build, so nothing is deployed. Demo articles never reach it. Like `pnpm build`, it writes `.next`, so run `pnpm build` again before `pnpm start`.
 
 ```bash
 pnpm site:serve
