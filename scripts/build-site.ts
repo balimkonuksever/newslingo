@@ -7,8 +7,10 @@
 // on DATABASE_URL's server, creating it if it is missing. It then applies the
 // migrations, provisions the reference data and imports the written articles,
 // publishing the ones whose files are marked, so the site never holds demo
-// articles. Last, `next build` renders every public page, and each article's
-// word file, from that database. SITE_URL sets the site's address; it must end
+// articles. Then `next build` renders every public page, and each article's
+// word file, from that database. Last, every page gets its content security
+// policy, and the site is checked for anything that must not be published
+// (scripts/site-security.ts). SITE_URL sets the site's address; it must end
 // with the base path in next.config.ts.
 //
 // Like `pnpm build`, it writes .next, so run `pnpm build` again before
@@ -18,11 +20,15 @@ import { spawn } from "node:child_process";
 import nextEnv from "@next/env";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+import { WRITTEN_ARTICLES } from "../prisma/editorial/articles";
+import { DEMO_ARTICLES, DEMO_SOURCE_NAME } from "../prisma/fixtures/articles";
+import { DEMO_DRAFTS } from "../prisma/fixtures/drafts";
 import { PrismaClient } from "../src/generated/prisma/client";
 import {
   parsePostgresUrl,
   requireSiteDatabaseUrl,
 } from "../src/lib/database-env";
+import { checkSite, secureSite } from "./site-security";
 
 const { loadEnvConfig } = nextEnv;
 
@@ -128,4 +134,32 @@ await run("Building the static site into out/", ["next", "build"], {
 });
 // The site build's route types leave out the admin; put the local ones back.
 await run("Restoring the local server's route types", ["next", "typegen"]);
+
+console.log("\n▸ Adding each page's content security policy");
+console.log(`Secured ${await secureSite("out")} pages.`);
+
+console.log("\n▸ Checking the site for anything that must not be published");
+const problems = await checkSite("out", {
+  published: WRITTEN_ARTICLES.filter((article) => article.publishedOnSite).map(
+    ({ slug }) => slug,
+  ),
+  forbidden: [
+    ...[...DEMO_ARTICLES, ...DEMO_DRAFTS].map(({ slug }) => ({
+      text: slug,
+      what: "a demo article",
+    })),
+    ...WRITTEN_ARTICLES.filter((article) => !article.publishedOnSite).map(
+      ({ slug }) => ({ text: slug, what: "a draft" }),
+    ),
+    { text: DEMO_SOURCE_NAME, what: "the demo articles' source" },
+    { text: "newslingo.example", what: "a demo article's address" },
+  ],
+});
+
+if (problems.length > 0) {
+  for (const problem of problems) {
+    console.error(`  ✗ ${problem}`);
+  }
+  throw new Error("The site failed its check. Nothing was deployed.");
+}
 console.log("\nThe static site is in out/.");

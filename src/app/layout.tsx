@@ -33,6 +33,10 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_GB",
   },
+  // Other sites never learn which article a reader came from. `no-referrer`
+  // would also blank the Origin of the local admin's form posts, which Next.js
+  // checks before running a server action.
+  referrer: "same-origin",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
