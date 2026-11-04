@@ -17,13 +17,13 @@ The plan intentionally separates two outcomes:
 
 This separation prevents the content pipeline from hiding usability or data-model problems in the core reader.
 
-Until 2026-10-27 the Launch MVP also included licensed news ingestion, automated AI adaptation and scheduled operation (M6–M8). They are on hold: Newslingo is a small, non-commercial project with no budget for a lawyer, a paid news API or paid model calls, so articles are written by hand instead (decision log, 2026-10-27).
+Until 2026-10-27 the Launch MVP also included licensed news ingestion, automated AI adaptation and scheduled operation (M6–M8). They are on hold: Newslingo is a small, non-commercial project with no budget for a lawyer, a paid news API or paid model calls, so articles are written by hand instead (decision log, 2026-10-27). On 2026-11-04 the user brought automated adaptation back in a smaller form: M7 now drafts an article from a GOV.UK story the user picks, through Claude Code on the user's existing plan, so it still needs no paid API call. Milestone C adds the CEFR difficulty classifier that checks each article's level independently. M6 and M8 stay on hold (decision log, 2026-11-04).
 
 Since 2026-10-31 the public site is planned as a static site on GitHub Pages, rebuilt from the repository on every merge to `main`, with no server or database in production. The admin runs only on the user's computer (decision log, 2026-10-31).
 
 ### How to use this plan
 
-- Implementation milestones follow their dependency order unless the dependency map explicitly permits parallel work. Milestone W, written articles, follows M5; M6–M8 are on hold, and M9 follows W.
+- Implementation milestones follow their dependency order unless the dependency map explicitly permits parallel work. Milestone W, written articles, follows M5, and M9 follows W. Milestone C, the CEFR classifier, and M7, automated drafting, follow W and run alongside M9; launch does not wait for them. M6 and M8 are on hold.
 - M0 is a rolling decision track: an open decision blocks only the milestone that names it as a dependency, and all M0 items must close before launch.
 - A milestone is complete only when its exit gate passes.
 - Deferred features should not appear as non-functional controls in the UI.
@@ -125,7 +125,7 @@ These are the working defaults. Items marked **Open** must be resolved before th
 | Public article route | `/article/[slug]` | Accepted | Resolves the specification's `/article` versus `/news` inconsistency. |
 | Article difficulty | One CEFR level per article in V1 | Accepted | Lower generation cost and simpler storage. |
 | Publication | Imported and generated content enters `DRAFT` | Accepted | Prevents unsafe automatic publishing. |
-| Article writing | Claude writes articles in Claude Code sessions, and the user reviews them (milestone W) | Accepted | No paid API, licence or legal review; the same method as the editorial dictionary. Decided on 2026-10-27. |
+| Article writing | Claude writes articles in Claude Code sessions, and the user reviews them (milestone W). Since 2026-11-04 a command can also draft a news article from a GOV.UK story the user picks (M7), reviewed the same way | Accepted | No paid API, licence or legal review; the same method as the editorial dictionary. Decided on 2026-10-27; drafting added on 2026-11-04. |
 | Article kinds | News, adapted from one source, and explainers, written from general knowledge with references | Accepted | Explainers cover what free news sources cannot. Decided on 2026-10-27. |
 | Launch moderation | Human approval required | Accepted | Reduces factual, translation, and copyright risk. Since 2026-10-31 the approval is a publication mark in the article's file, merged to `main`. |
 | Seed data | PostgreSQL seed data, not a parallel mock-data path | Accepted | Ensures the first release exercises real queries and relationships. |
@@ -136,12 +136,13 @@ These are the working defaults. Items marked **Open** must be resolved before th
 | Search at launch | In the browser, over an index built with the site | Accepted | Search is in the product MVP. Since 2026-10-31 the static site has no database to search; PostgreSQL full-text search waits until the site has a server. |
 | Prisma workflow | Prisma ORM 7.10.0 with `prisma-client`, `prisma.config.ts`, and the PostgreSQL driver adapter | Accepted | ADR-001 pins the stable M2 generator, runtime, migration, and seeding workflow. |
 | News source | GOV.UK news under the Open Government Licence v3.0, picked by hand (ADR-004) | Accepted | Explicit commercial and adaptation rights with no key, contract or fee. Decided on 2026-10-27. |
-| AI provider/model | Anthropic Claude through the official SDK, `claude-opus-5` by default | Provider accepted | Structured outputs are supported. The model for each task is chosen by measured comparison (ML roadmap item 3) before M7, which is on hold. |
+| AI provider/model | Anthropic Claude: through the official SDK, `claude-opus-5` by default, for the dictionary; through Claude Code run headless (`claude -p`) on the user's plan for M7 drafting, behind a provider interface | Provider accepted | Structured outputs are supported on both routes (`--json-schema` in Claude Code). Drafting through Claude Code needs no API key or bill (2026-11-04). The model for each task is chosen by measured comparison (ML roadmap item 3) before M7's exit gate. |
 | Dictionary fallback | Contextual Claude lookup, cache-first | Accepted; off on the static site | Word plus sentence gives the contextual Turkish sense; results are cached in `VocabularyEntry`. Since 2026-10-31 the static site has no server to call it from, and every word of a written article has an editorial entry. |
 | Admin authentication | Better Auth: an email, a password and an authenticator-app code (ADR-003) | Accepted | Decided on 2026-10-14; no third-party service or host dependency. Since 2026-10-31 the admin runs only on the user's computer. |
 | Hosting | GitHub Pages: a static site built by a GitHub Actions workflow on every push to `main`, at `https://balimkonuksever.github.io/newslingo/`. No server or database in production | Accepted | Chosen by the user on 2026-10-31. Free, nothing online to secure or back up, and the articles already live in the repository. GitHub Free offers Pages only for public repositories. |
 | Scheduler | Vercel Cron or Trigger.dev | On hold | Waits with M8. |
-| CEFR inventory mix | Each category rotates A2, B1, B2 and C1, so every level appears | Accepted | Decided on 2026-10-27. Levels are assigned when an article is written; an independent level check waits for the CEFR classifier. |
+| CEFR inventory mix | Each category rotates A2, B1, B2 and C1, so every level appears | Accepted | Decided on 2026-10-27. Levels are assigned when an article is written; an independent level check comes with the CEFR classifier (milestone C). |
+| CEFR classifier | Trained in `ml/` (ADR-002) on CEFR-SP's Wiki-Auto subset; Node runs the exported model to check finished articles | Accepted | Training data decided on 2026-09-25, milestone C on 2026-11-04. Independent of the model that writes the article. |
 | Article length | English words per level: A2 150–250, B1 250–350, B2 300–450, C1 450–650, never more than 900 | Accepted | Decided on 2026-10-27, close to the demo articles. The 900-word ceiling is the one the page budget is set for (§17). |
 
 Version numbers for framework and database dependencies will be verified for compatibility during bootstrap and then pinned in the lockfile. This plan does not assume floating dependency versions.
@@ -171,8 +172,9 @@ Version numbers for framework and database dependencies will be verified for com
 | Adapted GOV.UK news, picked by hand | | ✓ | |
 | Idempotent article import | | ✓ | |
 | Static site on GitHub Pages | | ✓ | |
+| CEFR difficulty classifier, the independent level check (C) | | ✓ | |
+| Automated drafting of a hand-picked GOV.UK story, rewritten and translated (M7) | | ✓ | |
 | Licensed news ingestion (M6, on hold) | | | ✓ |
-| Automated AI rewrite and translation (M7, on hold) | | | ✓ |
 | Scheduled processing (M8, on hold) | | | ✓ |
 | SEO, accessibility, security hardening | Baseline | ✓ | |
 | Search in the browser | | ✓ | |
@@ -609,7 +611,7 @@ Lineage relations:
 
 ### 8.5 AI-generation migration
 
-On hold with M7 since 2026-10-27.
+Replaced on 2026-11-04: M7 commits a generation record for each attempt beside the article file instead of these tables, which assumed a production database. They stay here in case a server returns.
 
 #### `GenerationAttempt`
 
@@ -678,6 +680,7 @@ newslingo/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml
+├── ml/                           # Python: CEFR classifier, data cards, reports (ADR-002, C)
 ├── prisma/
 │   ├── migrations/
 │   ├── editorial/                # production content written in sessions (W)
@@ -811,7 +814,7 @@ newslingo/
 │       ├── rate-limit.ts         # in-memory limits for lookups and sign-in
 │       ├── ingestion/            # ingestion milestone, on hold
 │       │   └── providers/
-│       └── ai/                   # generation milestone, on hold
+│       └── ai/                   # M7 drafting through Claude Code
 ├── tests/
 │   ├── e2e/                      # Playwright journeys and axe scans
 │   ├── integration/              # Vitest against the test database
@@ -979,18 +982,19 @@ M4 Learning layer   M5 Article moderation  │
        └───────┬───────┘                   │
                ▼                           │
        W Written articles ◄────────────────┘
-               ▼
-       M9 Search and hardening
-               ▼
-             Launch
+               ├──────────────────────┐
+               ▼                      ▼
+       M9 Search and hardening    C CEFR classifier
+               ▼                      ▼
+             Launch               M7 Automated drafting
 
 On hold since 2026-10-27:
-M6 Ingestion + candidate admin → M7 AI generation → M8 Scheduled operation
+M6 Ingestion + candidate admin, M8 Scheduled operation
 ```
 
 The Reader Release consists of M1–M3. M0 is not a sequential implementation milestone: decisions about providers, authentication, or hosting may remain open while unrelated work proceeds, but each must close before the milestone that names it as a dependency.
 
-Milestone W has a letter rather than a number so that M6–M8 keep their names and the decision log's references to them stay correct.
+Milestones W and C have letters rather than numbers so that M6–M8 keep their names and the decision log's references to them stay correct. M7 needs C only for its level check: the rest of M7 can be built first, but its exit gate waits for C.
 
 ---
 
@@ -1525,6 +1529,49 @@ The first batch, at least one article for each chosen category, is written, revi
 
 ---
 
+## C — CEFR difficulty classifier
+
+### Goal
+
+Give every article an independent, measured CEFR level check (ML roadmap item 1): a classifier trained on public data, tested on data it never saw, and compared with simple baselines.
+
+### Dependencies
+
+- ADR-002: ML code lives in `ml/`, and Node runs an exported model.
+- The training data decided on 2026-09-25: CEFR-SP's Wiki-Auto subset, CC BY-SA 3.0, with its published splits. SCoRE (non-commercial) and Newsela (restricted) stay out.
+- W's written articles, for the level report.
+
+### Work items — data
+
+- [ ] Set up `ml/` as a Python project with pinned dependencies and a `.venv` that git ignores.
+- [ ] Download CEFR-SP with a committed script pinned to an exact revision and checked against recorded SHA-256 digests. Raw data stays out of git.
+- [ ] Write the dataset card: source, licence, version, how the labels were made, and the size and level distribution of each split.
+- [ ] Freeze the test split before any training. Choose models and settings on the validation split only.
+
+### Work items — models and evaluation
+
+- [ ] Baselines: the majority class, and a readability formula with level thresholds fit on the training split.
+- [ ] Train sentence-level candidates, starting with a linear model on length and word-frequency features. Try a small fine-tuned transformer only if the linear model leaves a gap worth its cost.
+- [ ] Report accuracy, macro-F1 and adjacent accuracy (within one level) on the test split for every candidate and baseline, with the seed, data version and date.
+- [ ] Compare with a zero-shot LLM on a fixed, seeded sample of the test split, run through Claude Code on the user's plan.
+- [ ] Turn sentence predictions into an article level, and measure it on a held-out set of texts the user labels. Each text is original or openly licensed. The labels are gold data: versioned, with who labelled what and when, and never regenerated.
+
+### Work items — application
+
+- [ ] Export the chosen model so Node runs it, with a test that Node and Python give the same predictions on a fixed sample.
+- [ ] Report each written article's classified level beside its assigned level, and flag a mismatch for review. A mismatch blocks nothing until the article-level accuracy is known.
+
+### Verification
+
+- Every reported number is reproducible from a committed script, the pinned data and a fixed seed.
+- Pull-request CI never runs `ml/`. The Node tests that use the exported model run in CI, since they call no live model.
+
+### Exit gate
+
+The classifier's sentence-level results on the test split and its article-level results on the user's labelled set are committed beside their baselines, and every written article shows its classified level next to its assigned one.
+
+---
+
 ## M6 — Licensed news ingestion
 
 **On hold since 2026-10-27.** Articles are written by hand instead (milestone W). GOV.UK, the source chosen for M6 (ADR-004), is used through stories picked by hand. This section stays as the plan for automated ingestion if it returns.
@@ -1607,18 +1654,28 @@ An authorized manual run imports unique, attributable, categorized candidates wi
 
 ## M7 — AI educational transformation
 
-**On hold since 2026-10-27.** Claude writes and translates articles in Claude Code sessions instead of through paid API calls (milestone W). This section stays as the plan for automated generation if it returns.
+**Resumed on 2026-11-04, in a smaller form.** It was on hold from 2026-10-27 because it would have needed paid API calls and M6's ingestion. Now a command drafts a news article from a GOV.UK story the user picks, through Claude Code run headless on the user's plan, and writes an article file that milestone W's import and review take from there. M6 stays on hold.
 
 ### Goal
 
-Turn a selected candidate into a schema-valid, original bilingual educational draft that is ready for human review.
+Turn a GOV.UK story the user picks into a schema-valid, original bilingual educational draft that is ready for human review.
 
 ### Dependencies
 
 - M0 AI/provider/content-policy, CEFR-assignment, and verification decisions.
 - M4 expression data contract.
 - M5 moderation workflow.
-- M6 raw candidates.
+- W's article files, import and review, which a draft goes through unchanged.
+- C, for the independent level check. The rest of M7 can be built first.
+- A GOV.UK story the user picks, read through the Content API (ADR-004), in place of M6's raw candidates.
+
+### How a draft is made (2026-11-04)
+
+1. The user picks a GOV.UK story that the sensitive-news policy allows and gives the command its URL and category. The level comes from the category's rotation (2026-10-27).
+2. The command reads the story through GOV.UK's Content API and keeps the facts to check against: names, dates and numbers.
+3. It runs Claude Code headless (`claude -p`) with no tools, a versioned system prompt and a JSON schema for the output. The call sits behind a provider interface, so tests use a fixture and another route, such as the API, can be added later.
+4. It validates the output (below), writes dictionary entries for the new words in a second call, and writes the article file and a generation record to the repository. A failed check writes only the record.
+5. `pnpm articles:import`, the admin preview and the publication mark work as in W.
 
 ### Work items — structured contract
 
@@ -1659,6 +1716,8 @@ Turn a selected candidate into a schema-valid, original bilingual educational dr
 - [ ] Flag a target-versus-validated difficulty mismatch for review or regeneration.
 
 ### Work items — persistence and retry
+
+Since 2026-11-04 the article file is the draft and a committed JSON file is the generation record. The items below about tables, transactions and regenerating a published article are replaced by W's import, which writes drafts in one transaction and refuses a changed file for a published article. The record keeps what the second item lists.
 
 - [ ] Add `GenerationAttempt` and `ArticleRevision` migrations.
 - [ ] Record model, prompt, schema version, target/validated difficulty, assignment reason, latency, usage/cost, and errors.
@@ -2370,6 +2429,9 @@ Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code
 | 2026-11-01 | Give every page of the static site a content security policy in a `<meta>` tag, written after the build: the site's own files only, no inline styles, and the page's inline scripts by their SHA-256 hashes. Set the referrer policy to `same-origin`. | A script injected into a page does not run, and nothing loads from another origin. Nonces would need a server. Clickjacking protection (`frame-ancestors`) needs a response header, which GitHub Pages cannot send. The local server has no policy. |
 | 2026-11-01 | Check the built site at the end of every `pnpm site:build`, refusing the build if it holds anything but the written articles marked published, or the admin, the dictionary endpoint, a demo article, a draft, server settings or source maps. | CI checks every pull request, and a failed check deploys nothing. The check depends on the written-article and demo fixture lists, so a demo or draft slug can never ship by mistake. |
 | 2026-11-01 | Update Next.js from 16.3.3 to 16.3.8 and zod from 4.5.2 to 4.6.7 for their security fixes. Leave Next.js 16.4 for its own change. | Three Next.js advisories remain until 16.4.1: the image optimization API and `use cache`, which the project does not use, and Server Actions, which only the local admin runs. None reaches the static site. Next's agent-file writer is unchanged in 16.3.8, so the loader layout holds. |
+| 2026-11-04 | Resume M7 in a smaller form: a command drafts a news article from a GOV.UK story the user picks, and the draft goes through W's import and review. Chosen by the user. | M6 stays on hold, and no source is fetched automatically. The draft is an article file like any written article, so the static site, the import and the publication mark need no change. Generation records are committed JSON files instead of the `GenerationAttempt` and `ArticleRevision` tables, which assumed a production database. |
+| 2026-11-04 | Run M7's model through Claude Code headless (`claude -p`) on the user's plan, with no tools, a versioned system prompt and `--json-schema` output, behind a provider interface. Chosen by the user over the Claude API with a spending cap, about $0.15–0.40 per article on Opus 5.5, and a free local model, which this 8 GB machine limits to small models with weak Turkish. | No API key or bill, so the 2026-10-27 rule against paid model calls holds. Drafting runs only on the user's computer and counts against the plan's limits. Pull-request CI uses a fixture provider. The API can be added behind the same interface if the plan's limits or the evaluation call for it. |
+| 2026-11-04 | Add milestone C, the CEFR difficulty classifier (ML roadmap item 1), ahead of M7's level check. C and M7 follow W and run alongside M9; launch does not wait for them. | The classifier is the independent level check that W's launch definition and M7's validation wait for, and it costs nothing to train on this machine. |
 
 ### Open decisions
 
@@ -2377,17 +2439,17 @@ Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code
 |---|---|---|
 | News source and usage rights | Before M6 | Resolved on 2026-10-27: GOV.UK news under the Open Government Licence v3.0, picked by hand (ADR-004). |
 | Image policy/provider | Before using production images | Omit unless rights are explicit. |
-| AI provider/model | Before M7 | Provider decided on 2026-09-25 (Claude). Still open: the model for each task, chosen by the ML roadmap's comparison. M7 has been on hold since 2026-10-27, so this waits with it. |
+| AI provider/model | Before M7's exit gate | Provider decided on 2026-09-25 (Claude), and M7's route on 2026-11-04: Claude Code on the user's plan. Still open: the model for each task, chosen by the ML roadmap's comparison on the evaluation set. |
 | Dictionary fallback | Before live M4 integration | Resolved on 2026-09-25: contextual Claude lookup, cache-first (see Accepted). |
 | Admin authentication | Before M5 | Resolved on 2026-10-14: Better Auth with an email, a password and an authenticator-app code (ADR-003). |
 | Hosting and managed PostgreSQL | Before M9 | Resolved on 2026-10-31: GitHub Pages, a static site with no production database. |
 | Scheduler | Before M8 | On hold with M8. |
-| CEFR assignment mix and verification rule | Before W's first batch | Mix resolved on 2026-10-27: in each category, rotate A2, B1, B2 and C1 so every level appears. Still open: the independent level check, which waits for the CEFR classifier. |
+| CEFR assignment mix and verification rule | Before W's first batch | Mix resolved on 2026-10-27: in each category, rotate A2, B1, B2 and C1 so every level appears. Still open: the independent level check, which milestone C builds. |
 | Target length per level | Before W's first batch | Resolved on 2026-10-27: A2 150–250 English words, B1 250–350, B2 300–450, C1 450–650, never more than 900. |
 | Categories | Before W's first batch | Resolved on 2026-10-27: the six existing categories stay. |
 | Moderation cadence and freshness SLA | Before M8 | On hold with M8. |
 | Active-content archival duration | Before M8 | On hold with M8. Written articles stay published until an admin archives them. |
-| AI daily budget and batch limits | Before M7/M8 | On hold with M7 and M8: written articles use no paid API. |
+| AI daily budget and batch limits | Before M8 | M7 drafts one story per command on the user's plan, with no paid API. A daily budget waits for M8's scheduling. |
 | Editorial policy for sensitive news | Before W's first batch | Resolved on 2026-10-27: `docs/editorial/sensitive-news.md` approved, with held subjects skipped for now. Its audience question stays open; proposed: adults. |
 | Launch inventory | Before M9 | Proposed: 3–5 reviewed articles per category at launch, growing toward the 10–15 target. |
 
