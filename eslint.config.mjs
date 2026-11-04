@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The ML project's Python virtual environment (ADR-002).
+    "ml/.venv/**",
   ]),
 ]);
 
