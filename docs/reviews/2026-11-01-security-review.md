@@ -1,6 +1,6 @@
 # Pre-launch security review — 2026-11-01
 
-The review `IMPLEMENTATION_PLAN.md` §15 asks for before the repository becomes public and the site goes live on GitHub Pages (M9). Done by Claude in a Claude Code session on 2026-11-01, at `main` commit `e70c89a`.
+The review `IMPLEMENTATION_PLAN.md` §15 asks for before the repository becomes public and the site goes live on GitHub Pages (M9). Done by Claude in a Claude Code session on 2026-11-01, at `main` commit `8182e81` (`e70c89a` before the history was rewritten on 2026-11-08).
 
 ## 1. Secrets and personal data in the history
 
@@ -16,7 +16,7 @@ The review `IMPLEMENTATION_PLAN.md` §15 asks for before the repository becomes 
 - No `.env` file was ever committed. `.env.example` holds no secret, and `.npmrc` only `engine-strict=true`.
 - `AGENTS.md` and `CLAUDE.md` were committed once, in the scaffold commit of 2026-08-30, as create-next-app's boilerplate, and removed on 2026-09-25 when the loaders moved to the agent-config repository. They never held a local path or anything personal.
 - No personal data in any file, commit message or pull request, beyond the GitHub account name, which the repository's address shows anyway. Emails in files are test addresses on `example.test` and `db.example.com`, plus Anthropic's no-reply address in commit trailers. IP addresses are loopback, documentation ranges (RFC 5737) or test values. The one binary file is Next.js's default favicon.
-- **Open, for the owner:** every commit records the author's personal email address, including GitHub's merge commits. Making the repository public publishes it. The choices are to accept it, or to use GitHub's no-reply address for future commits, with "Keep my email addresses private" and "Block command line pushes that expose my email" in GitHub's email settings. Changing past commits would break their signatures and need a force-push, so it is not proposed.
+- **Open, for the owner:** every commit records the author's personal email address, including GitHub's merge commits. Making the repository public publishes it. The choices are to accept it, or to use GitHub's no-reply address for future commits, with "Keep my email addresses private" and "Block command line pushes that expose my email" in GitHub's email settings. Changing past commits would break their signatures and need a force-push, so it is not proposed. **Resolved on 2026-11-08:** the owner chose to publish the code as a new public repository whose history was rewritten so that every commit carries GitHub's no-reply address. The files are unchanged and the rewritten commits are unsigned; the original repository stays private as `balimkonuksever/newslingo-archive` (decision log, 2026-11-08).
 
 ## 2. What the static build contains
 
@@ -69,4 +69,4 @@ Follow-ups: Next.js 16.4 in its own change, re-checking Next's agent-file writer
 - The workflows use no secrets. Their token is read-only except in the deploy job, which can only write to Pages.
 - Pull requests from forks run CI with a read-only token, and by default GitHub holds runs from first-time contributors until the owner approves them.
 - Actions are pinned to major versions, from GitHub and from pnpm. Pinning them to commit hashes would guard against a moved tag, at the cost of updating them by hand.
-- Confirm in the repository's settings that secret scanning, push protection and Dependabot alerts are on; GitHub offers them free for public repositories.
+- Confirm in the repository's settings that secret scanning, push protection and Dependabot alerts are on; GitHub offers them free for public repositories. Done on 2026-11-08: secret scanning and push protection were on by default, and Dependabot alerts were turned on.
