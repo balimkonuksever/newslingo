@@ -28,9 +28,12 @@ export async function SiteHeader() {
           <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
             <Link
               href="/"
-              className="brand-mark rounded-sm font-serif text-3xl font-semibold tracking-tight text-ink sm:text-4xl"
+              className="rounded-sm font-serif text-4xl font-semibold tracking-tight text-ink sm:text-[3.25rem]"
             >
-              News<span className="text-brand">lingo</span>
+              News
+              <span className="font-medium tracking-[-0.01em] text-brand italic">
+                lingo
+              </span>
             </Link>
             <p className="text-sm text-ink-muted">
               English news for Turkish speakers

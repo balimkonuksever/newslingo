@@ -14,9 +14,11 @@ const geist = Geist({
   subsets: ["latin", "latin-ext"],
 });
 
+// The italic sets "lingo" in the site's name (site-header.tsx).
 const newsreader = Newsreader({
   variable: "--font-newsreader",
   subsets: ["latin", "latin-ext"],
+  style: ["normal", "italic"],
   axes: ["opsz"],
 });
 

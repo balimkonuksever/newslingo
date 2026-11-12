@@ -1,7 +1,7 @@
-// Draws the site's İznik motifs, in src/app/motifs/: vine.svg, the vine that
-// grows down each side of the page on wide screens, corner.svg, the spray in
-// each top corner that the vine grows from, and emblem.svg, the İznik plate
-// beside the site's name. They use the motifs of İznik tiles: lale (tulip),
+// Draws the İznik flowers that grow into every page from its sides, in
+// src/app/motifs/: vine.svg, the vine down each side of the page on wide
+// screens, and corner.svg, the spray in each top corner that the vine grows
+// from. They use the motifs of İznik tiles: lale (tulip),
 // karanfil (carnation), hatayi and penç flowers, serrated saz leaves, sümbül
 // (hyacinth) sprigs and çintemani's three pearls, on running stems. Every
 // shape is drawn here from geometry; nothing is traced or copied from an
@@ -20,7 +20,6 @@ type Curve = [Point, Point, Point, Point];
 
 /** İznik colours. The drawings have no ground: they sit on the page. */
 const COLOURS = {
-  glaze: "#fffdf8",
   cobalt: "#1f3d93",
   turquoise: "#35a19c",
   red: "#c63c2c",
@@ -551,26 +550,6 @@ function corner() {
   ]);
 }
 
-/**
- * The mark beside the site's name: an İznik plate, a hatayi inside a cobalt
- * rim of white beads, 64 square. The page turns it by one petal (45°) when
- * the name is pointed at, which leaves the drawing looking the same.
- */
-function emblem() {
-  const beads = Array.from({ length: 16 }, (_, k) => {
-    const [x, y] = polar(27.4, k * 22.5, [32, 32]);
-
-    return `<circle cx="${fmt(x)}" cy="${fmt(y)}" r="1.3" fill="${COLOURS.white}"/>`;
-  });
-
-  return svg(64, 64, [
-    `<circle cx="32" cy="32" r="31.2" fill="${COLOURS.cobalt}"${OUTLINE}/>`,
-    ...beads,
-    `<circle cx="32" cy="32" r="24.6" fill="${COLOURS.glaze}" stroke="${COLOURS.turquoise}" stroke-width="1.4"/>`,
-    place("hatayi", 32, 32, " scale(1.55)"),
-  ]);
-}
-
 export const MOTIFS_DIRECTORY = fileURLToPath(
   new URL("../src/app/motifs/", import.meta.url),
 );
@@ -580,7 +559,6 @@ export function drawMotifs() {
   return {
     "vine.svg": vine(),
     "corner.svg": corner(),
-    "emblem.svg": emblem(),
   };
 }
 

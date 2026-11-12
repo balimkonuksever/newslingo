@@ -208,30 +208,6 @@
     }
   }
 
-  /* The İznik plate beside the site's name, which turns by one petal when
-     the name is pointed at. */
-  .brand-mark::before {
-    content: "";
-    display: inline-block;
-    width: 1.35em;
-    height: 1.35em;
-    margin-right: 0.28em;
-    vertical-align: -0.34em;
-    background: url("./motifs/emblem.svg") center / contain no-repeat;
-    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .brand-mark:hover::before,
-  .brand-mark:focus-visible::before {
-    transform: rotate(45deg);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .brand-mark::before {
-      transition: none;
-    }
-  }
-
   @media print, (forced-colors: active) {
     .motif-frame::before,
     .motif-frame::after {
