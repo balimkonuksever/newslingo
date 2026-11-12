@@ -166,6 +166,25 @@ describe("secureSite and checkSite", () => {
     ]);
   });
 
+  it("reports SVG files that hold more than drawing", async () => {
+    await put(
+      "_next/static/media/drawing.svg",
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path id="leaf" d="M0 0h4v4z" fill="url(#ink)"/><use href="#leaf" x="4"/></svg>',
+    );
+    await put(
+      "_next/static/media/hazard.svg",
+      `<svg xmlns="http://www.w3.org/2000/svg" onload="go()"><script>go()</script><foreignObject><p>Hi</p></foreignObject><image href="https://example.com/a.png"/><rect style="fill: url('other.svg#a')"/></svg>`,
+    );
+    await secureSite(out);
+
+    expect(await checkSite(out, expected)).toEqual([
+      "_next/static/media/hazard.svg holds a script, but an SVG file holds drawing only.",
+      "_next/static/media/hazard.svg holds an event handler, but an SVG file holds drawing only.",
+      "_next/static/media/hazard.svg holds embedded HTML, but an SVG file holds drawing only.",
+      "_next/static/media/hazard.svg holds a link to another file, but an SVG file holds drawing only.",
+    ]);
+  });
+
   it("reports a missing search index", async () => {
     await rm(join(out, "search-index.json"));
     await secureSite(out);

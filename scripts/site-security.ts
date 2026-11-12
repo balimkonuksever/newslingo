@@ -143,7 +143,20 @@ const SERVER_TEXT = [
   { text: "sourceMappingURL=", what: "a link to a source map" },
 ];
 
-const TEXT_FILE = /\.(?:html|txt|json|js|css|xml)$/;
+const TEXT_FILE = /\.(?:html|txt|json|js|css|xml|svg)$/;
+
+/**
+ * What an SVG file may not hold. Only pages carry the content security policy,
+ * so an SVG file opened on its own would run its scripts on the site's origin:
+ * the site's SVG files, such as the motif drawings, hold drawing only.
+ */
+const SVG_HAZARDS = [
+  { pattern: /<script/i, what: "a script" },
+  { pattern: /\son[a-z]+\s*=/i, what: "an event handler" },
+  { pattern: /<foreignObject/i, what: "embedded HTML" },
+  { pattern: /href\s*=\s*["'](?!#)/i, what: "a link to another file" },
+  { pattern: /url\(\s*["']?(?!#)/i, what: "a link to another file" },
+];
 
 function slugsOf(files: readonly string[], pattern: RegExp) {
   return new Set(files.flatMap((path) => pattern.exec(path)?.[1] ?? []));
@@ -153,8 +166,8 @@ function slugsOf(files: readonly string[], pattern: RegExp) {
  * Lists everything in the built site that must not be published: the admin
  * and the dictionary endpoint, which stay on the user's computer, any article
  * but the published written ones, demo articles and drafts, server settings,
- * source maps, and pages without their content security policy. An empty list
- * means the site may be deployed.
+ * source maps, pages without their content security policy, and SVG files that
+ * hold more than drawing. An empty list means the site may be deployed.
  */
 export async function checkSite(
   outDirectory: string,
@@ -225,6 +238,19 @@ export async function checkSite(
       problems.push(
         `${path} does not start its <head> with its content security policy.`,
       );
+    }
+    if (path.endsWith(".svg")) {
+      const hazards = new Set(
+        SVG_HAZARDS.filter(({ pattern }) => pattern.test(content)).map(
+          ({ what }) => what,
+        ),
+      );
+
+      for (const what of hazards) {
+        problems.push(
+          `${path} holds ${what}, but an SVG file holds drawing only.`,
+        );
+      }
     }
   }
 

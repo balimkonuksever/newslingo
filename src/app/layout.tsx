@@ -50,7 +50,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geist.variable} ${newsreader.variable} antialiased`}
     >
-      <body className="flex min-h-dvh flex-col bg-paper font-sans text-ink">
+      <body className="motif-frame flex min-h-dvh flex-col bg-paper font-sans text-ink">
         <a
           href="#main"
           className="sr-only rounded-md bg-ink px-4 py-2 text-paper focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50"

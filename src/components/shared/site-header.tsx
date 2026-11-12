@@ -21,7 +21,7 @@ export async function SiteHeader() {
   const categories = await loadNavigationCategories();
 
   return (
-    <header className="border-b border-rule">
+    <header className="motif-band-top border-b border-rule">
       <div className="mx-auto max-w-page px-4 sm:px-6">
         <div className="flex items-center justify-between gap-x-6 pt-5 pb-3">
           <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">

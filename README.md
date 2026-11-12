@@ -138,6 +138,16 @@ publishedOnSite: new Date("2026-10-31"),
 
 The import publishes a marked article with that day, after the checks an admin's publish runs, and records no moderation event: the merged pull request that added the mark is the record. The mark must be a whole day, no earlier than the article's date. To publish a draft after reviewing it in the admin preview, add the mark to its file and import again.
 
+## Turkish motifs
+
+Every page is framed with İznik tile motifs: tulips, carnations, hatayi and penç flowers, saz leaves, hyacinths and çintemani pearls, in a band across the top and bottom and, on screens at least 82rem (1312px) wide, down both sides. They are CSS backgrounds (`src/app/globals.css`) drawn from two SVG files in `src/app/motifs/`, so pages gain no elements or scripts. `scripts/draw-motifs.ts` draws both files from geometry; nothing is traced or copied from an existing artwork. To change them, edit the script and run
+
+```bash
+pnpm exec tsx scripts/draw-motifs.ts
+```
+
+`scripts/draw-motifs.test.ts` fails while the committed files differ from what the script draws.
+
 ## Static site
 
 The live site is a static site on GitHub Pages, at `https://<owner>.github.io/newslingo/`, rebuilt from the repository on every push to `main` (`IMPLEMENTATION_PLAN.md` M9). It has the public pages only: the homepage, whose filters run in the browser, the category and expression pages, every published article and a word file for each, `/words/<slug>.json`, which word lookups read, and the search page, `/search`, which searches every story's title, summary, category, source, and English and Turkish text in the browser, over an index built with the site, `/search-index.json`. The admin, sign-in and `POST /api/dictionary` stay on your computer: their route files are named `*.local.tsx` or `*.local.ts`, which the site build leaves out, and `*.site.ts` files exist only in it.
@@ -146,7 +156,7 @@ The live site is a static site on GitHub Pages, at `https://<owner>.github.io/ne
 pnpm site:build
 ```
 
-empties the `newslingo_site` database on your local PostgreSQL (or `SITE_DATABASE_URL`, which must be on this machine and have a distinct `site` name token), applies the migrations, provisions the reference data and imports the written articles, publishing the ones with the publication mark, then builds the static site into `out/`. Last, it gives every page its content security policy, a `<meta>` tag that allows only the site's own files and the page's own inline scripts, and checks the site: only the written articles marked published, and no admin page, dictionary endpoint, demo article, draft, server setting or source map (`scripts/site-security.ts`). A failed check fails the build, so nothing is deployed. Demo articles never reach it. Like `pnpm build`, it writes `.next`, so run `pnpm build` again before `pnpm start`.
+empties the `newslingo_site` database on your local PostgreSQL (or `SITE_DATABASE_URL`, which must be on this machine and have a distinct `site` name token), applies the migrations, provisions the reference data and imports the written articles, publishing the ones with the publication mark, then builds the static site into `out/`. Last, it gives every page its content security policy, a `<meta>` tag that allows only the site's own files and the page's own inline scripts, and checks the site: only the written articles marked published, no admin page, dictionary endpoint, demo article, draft, server setting or source map, and no SVG file that holds more than drawing (`scripts/site-security.ts`). A failed check fails the build, so nothing is deployed. Demo articles never reach it. Like `pnpm build`, it writes `.next`, so run `pnpm build` again before `pnpm start`.
 
 ```bash
 pnpm site:serve

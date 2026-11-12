@@ -162,6 +162,76 @@
 }
 
 /*
+ * Turkish motifs: İznik tile bands (./motifs/, drawn by scripts/draw-motifs.ts)
+ * across the top and bottom of every page and, when the window has room beside
+ * the page, down both sides. They are decoration only. As CSS backgrounds they
+ * add no element, markup or script to a page (§17), and as the site's own
+ * files they pass the content security policy, which allows no data: images.
+ */
+@layer components {
+  .motif-frame {
+    --motif-band-height: 2.5rem;
+  }
+
+  .motif-band-top::before,
+  .motif-band-bottom::after {
+    content: "";
+    display: block;
+    height: var(--motif-band-height);
+    background: url("./motifs/band.svg") repeat-x 50% 0 / auto 100%;
+  }
+
+  @media (min-width: 40rem) {
+    .motif-frame {
+      --motif-band-height: 3.25rem;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .motif-frame {
+      --motif-band-height: 4rem;
+    }
+  }
+
+  /* 72rem of page, a band and a gap on each side. Only the header's and the
+     footer's full-width rules reach the bands, which cover their ends. */
+  @media (min-width: 82rem) {
+    .motif-frame {
+      position: relative;
+    }
+
+    .motif-frame::before,
+    .motif-frame::after {
+      content: "";
+      position: absolute;
+      top: var(--motif-band-height);
+      bottom: var(--motif-band-height);
+      width: 4rem;
+      background: url("./motifs/side.svg") repeat-y 50% 0 / 100% auto;
+      pointer-events: none;
+    }
+
+    .motif-frame::before {
+      left: 0;
+    }
+
+    .motif-frame::after {
+      right: 0;
+      transform: scaleX(-1);
+    }
+  }
+
+  @media print, (forced-colors: active) {
+    .motif-band-top::before,
+    .motif-band-bottom::after,
+    .motif-frame::before,
+    .motif-frame::after {
+      display: none;
+    }
+  }
+}
+
+/*
  * Tailwind's layers are real cascade layers, where a later layer wins over any
  * specificity. This rule sits in the utilities layer so that it overrides the
  * `grid` utility on the Turkish rows.
