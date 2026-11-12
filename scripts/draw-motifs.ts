@@ -1,25 +1,24 @@
-// Draws the Turkish motif bands that frame every page, in src/app/motifs/:
-// band.svg, the frieze across the top and bottom of the page, and side.svg,
-// the bands down both sides on wide screens. They follow İznik tile borders:
-// a running stem with lale (tulip), karanfil (carnation), hatayi and penç
-// flowers, serrated saz leaves, sümbül (hyacinth) sprigs and çintemani's
-// three pearls, between cobalt guard strips. Every shape is drawn here from
-// geometry; nothing is traced or copied from an existing artwork.
+// Draws the İznik flowers that grow into every page from its sides, in
+// src/app/motifs/: vine.svg, which grows down each side on wide screens, and
+// corner.svg, the spray in each top corner that the vine grows from. They use
+// the motifs of İznik tiles: lale (tulip), karanfil (carnation), hatayi and
+// penç flowers, serrated saz leaves, sümbül (hyacinth) sprigs and çintemani's
+// three pearls, on running stems. Every shape is drawn here from geometry;
+// nothing is traced or copied from an existing artwork.
 //
 //   pnpm exec tsx scripts/draw-motifs.ts
 //
-// rewrites both files. scripts/draw-motifs.test.ts fails while the committed
+// rewrites the files. scripts/draw-motifs.test.ts fails while the committed
 // files differ from what this script draws, so edit the drawing here.
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 type Point = [number, number];
 type Curve = [Point, Point, Point, Point];
 
-/** İznik colours, with a ground warm enough to sit on the site's paper. */
+/** İznik colours. The drawings have no ground: they sit on the page. */
 const COLOURS = {
-  ground: "#fdfaf3",
   cobalt: "#1f3d93",
   turquoise: "#35a19c",
   red: "#c63c2c",
@@ -29,8 +28,14 @@ const COLOURS = {
   white: "#ffffff",
 };
 
-/** Drawing units are pixels at full size: bands 64 units across. */
+/**
+ * Outlines. Each motif is drawn once at a small size with `OUTLINE`, and
+ * placed at about twice that size; shapes drawn straight onto a piece, such as
+ * leaves, use `LINE` to match. Drawing units are pixels at the largest size,
+ * where the vines are 160 wide.
+ */
 const OUTLINE = ` stroke="${COLOURS.line}" stroke-width="0.5" stroke-linejoin="round"`;
+const LINE = 0.9;
 
 // ---------- geometry ----------
 
@@ -154,7 +159,12 @@ function leaf(
 
 const shape = (d: string, fill: string, extra = "") =>
   `<path d="${d}" fill="${fill}"${extra}/>`;
-const outlined = (d: string, fill: string) => shape(d, fill, OUTLINE);
+const outlined = (d: string, fill: string, width = 0.5) =>
+  shape(
+    d,
+    fill,
+    ` stroke="${COLOURS.line}" stroke-width="${width}" stroke-linejoin="round"`,
+  );
 const stroke = (d: string, colour: string, width: number) =>
   `<path d="${d}" fill="none" stroke="${colour}" stroke-width="${width}" stroke-linecap="round"/>`;
 const place = (id: string, x: number, y: number, transform = "") =>
@@ -326,7 +336,7 @@ function saz(spine: Curve, width: number, teeth: number) {
   const { d, plain } = leaf(spine, {
     width,
     teeth,
-    depth: 0.85,
+    depth: width * 0.3,
     bulge: 0.38,
     base: 0.3,
   });
@@ -341,7 +351,7 @@ function saz(spine: Curve, width: number, teeth: number) {
     );
 
   return [
-    outlined(d, COLOURS.cobalt),
+    outlined(d, COLOURS.cobalt, LINE),
     shape(
       `M${xy(midrib[0])}${through(midrib)}${through([...edge].reverse())}Z`,
       COLOURS.turquoise,
@@ -349,7 +359,7 @@ function saz(spine: Curve, width: number, teeth: number) {
     stroke(
       `M${xy(midrib[0])}${through(midrib.slice(0, 9))}`,
       COLOURS.white,
-      0.4,
+      width * 0.13,
     ),
   ].join("");
 }
@@ -360,12 +370,12 @@ function greenLeaf(spine: Curve, width: number) {
   const vein = [0, 0.25, 0.5, 0.72].map((t) => onCurve(spine, t));
 
   return (
-    outlined(d, COLOURS.green) +
-    stroke(`M${xy(vein[0])}${through(vein)}`, COLOURS.white, 0.3)
+    outlined(d, COLOURS.green, LINE) +
+    stroke(`M${xy(vein[0])}${through(vein)}`, COLOURS.white, width * 0.15)
   );
 }
 
-// ---------- the bands ----------
+// ---------- the vines and the corner sprays ----------
 
 /**
  * A running stem: a sine-like wave of cubic segments along x (or y), rising
@@ -404,16 +414,12 @@ function stem(
     d += `C${xy(c1)} ${xy(c2)} ${xy(point(position, outward ? peak : centre))}`;
   }
 
-  return stroke(d, COLOURS.stem, 1.15);
+  return stroke(d, COLOURS.stem, 2);
 }
 
-/** Cobalt guard strips: a white bead every 8 units, a turquoise dot between. */
-const GUARDS =
-  `<pattern id="guard-x" width="8" height="6" patternUnits="userSpaceOnUse"><rect width="8" height="6" fill="${COLOURS.cobalt}"/><circle cx="2" cy="3" r="1.2" fill="${COLOURS.white}"/><circle cx="6" cy="3" r=".5" fill="${COLOURS.turquoise}"/></pattern>` +
-  `<pattern id="guard-y" width="6" height="8" patternUnits="userSpaceOnUse"><rect width="6" height="8" fill="${COLOURS.cobalt}"/><circle cx="3" cy="2" r="1.2" fill="${COLOURS.white}"/><circle cx="3" cy="6" r=".5" fill="${COLOURS.turquoise}"/></pattern>`;
-
-const guard = (x: number, y: number, w: number, h: number, along: "x" | "y") =>
-  `<rect width="${w}" height="${h}" transform="translate(${x} ${y})" fill="url(#guard-${along})"/>`;
+/** A stalk from a stem to a flower, curving through `bend`. */
+const stalk = (from: Point, bend: Point, to: Point, width = 1.6) =>
+  stroke(`M${xy(from)}Q${xy(bend)} ${xy(to)}`, COLOURS.stem, width);
 
 const MOTIFS: Array<[string, () => string]> = [
   ["tulip", tulip],
@@ -430,7 +436,6 @@ function svg(width: number, height: number, body: string[]) {
     "<!-- Drawn by scripts/draw-motifs.ts: edit the drawing there, not here. -->",
     "<defs>",
     ...MOTIFS.map(([id, draw]) => `<g id="${id}">${draw()}</g>`),
-    GUARDS,
     "</defs>",
     ...body,
     "</svg>",
@@ -438,197 +443,109 @@ function svg(width: number, height: number, body: string[]) {
   ].join("\n");
 }
 
+/** A tendril curling in from `at`, about `size` across, turning 1.2 times. */
+function curl(at: Point, size: number, startDegrees: number, turn: 1 | -1) {
+  const start = polar(size, startDegrees);
+  const centre = sub(at, start);
+  const points = Array.from({ length: 17 }, (_, i) => {
+    const t = i / 16;
+
+    return polar(size * (1 - 0.8 * t), startDegrees + turn * 430 * t, centre);
+  });
+
+  return stroke(`M${xy(points[0])}${through(points)}`, COLOURS.stem, 1.1);
+}
+
 /**
- * The frieze: 256 wide and 64 high, repeating sideways. Guard strips at the
- * top and bottom, and a field from 7 to 57 where the stem crests at x 32 and
- * 160 and dips at 96 and 224.
+ * A vine: 160 wide and 384 high, repeating down the left of the page; the
+ * right one is its mirror image. Its stem runs near the outer edge, furthest
+ * in (x 34) at both ends of the piece, where it joins the corner spray.
+ * From it grow a tulip with a saz leaf curling over it, and a hatayi under an
+ * arching saz leaf with a carnation below.
  */
-function band() {
-  const width = 256;
-  const stemY = (x: number) => 32 - 10 * Math.sin((2 * Math.PI * x) / 128);
-  const leaves = [
+function vine() {
+  const height = 384;
+  const stemX = (y: number) => 26 + 8 * Math.cos((2 * Math.PI * y) / 192);
+  const on = (y: number): Point => [stemX(y), y];
+
+  return svg(160, height, [
+    saz([on(112), [24, 70], [50, 30], [94, 14]], 5.6, 12),
     saz(
       [
-        [58, stemY(58)],
-        [52, 18],
-        [42, 11],
-        [27, 10],
+        [40, 146],
+        [76, 140],
+        [108, 152],
+        [126, 182],
+      ],
+      5,
+      11,
+    ),
+    saz([on(222), [62, 198], [106, 204], [132, 236]], 5.6, 12),
+    greenLeaf(
+      [
+        [42, 300],
+        [60, 310],
+        [70, 326],
+        [70, 344],
       ],
       3,
-      8,
     ),
-    saz(
-      [
-        [70, stemY(70)],
-        [76, 45],
-        [86, 51.5],
-        [100, 52.5],
-      ],
-      2.8,
-      8,
-    ),
-  ].join("");
-
-  return svg(width, 64, [
-    `<rect width="${width}" height="64" fill="${COLOURS.ground}"/>`,
-    guard(0, 0, width, 6, "x"),
-    guard(0, 58, width, 6, "x"),
-    `<rect y="6" width="${width}" height="1" fill="${COLOURS.turquoise}"/>`,
-    `<rect y="57" width="${width}" height="1" fill="${COLOURS.turquoise}"/>`,
-    `<g id="saz-pair">${leaves}</g>`,
-    `<use href="#saz-pair" transform="translate(128 0)"/>`,
-    greenLeaf(
-      [
-        [96, 41],
-        [90, 38.5],
-        [85, 33],
-        [83.5, 26],
-      ],
-      2,
-    ),
-    greenLeaf(
-      [
-        [96, 41],
-        [102, 38.5],
-        [107, 33],
-        [108.5, 26],
-      ],
-      2,
-    ),
-    greenLeaf(
-      [
-        [224, 41],
-        [218, 39.5],
-        [213.5, 36],
-        [212, 30],
-      ],
-      1.8,
-    ),
-    greenLeaf(
-      [
-        [224, 41],
-        [230, 39.5],
-        [234.5, 36],
-        [236, 30],
-      ],
-      1.8,
-    ),
-    greenLeaf(
-      [
-        [160, 22],
-        [151, 24],
-        [146, 30],
-        [146.5, 37],
-      ],
+    stem(-144, height + 288, 26, 8, 192, "y"),
+    stroke(
+      `M${xy(on(150))}C44 146 58 128 68 104M${xy(on(246))}C45 248 58 262 66 268M${xy(on(330))}C40 332 50 338 56 336`,
+      COLOURS.stem,
       1.6,
     ),
-    greenLeaf(
-      [
-        [160, 22],
-        [169, 24],
-        [174, 30],
-        [173.5, 37],
-      ],
-      1.6,
-    ),
-    stem(-128, width + 256, 32, 10, 128, "x"),
-    stroke("M32 22V28M160 22V29", COLOURS.stem, 1),
-    place("hatayi", 32, 41.5, " scale(.97)"),
-    place("tulip", 96, 41, " scale(1.06)"),
-    place("penc", 160, 38, " scale(1.12)"),
-    place("carnation", 224, 41, " scale(1.1)"),
-    place("hyacinth", 12, 54, " rotate(-8)"),
-    place("hyacinth", 132, 26, " scale(.95)"),
-    place("pearls", 13, 15),
-    place("pearls", 122, 48),
-    place("pearls", 197, 14),
-    place("pearls", 245, 49),
+    curl([112, 112], 7, 250, 1),
+    curl([58, 226], 6, 330, -1),
+    place("tulip", 68, 104, " rotate(28) scale(2.4)"),
+    place("hatayi", 90, 276, " scale(2.2)"),
+    place("carnation", 56, 336, " rotate(80) scale(1.9)"),
+    place("hyacinth", stemX(190), 190, " rotate(52) scale(1.6)"),
+    place("pearls", 132, 120, " scale(1.4)"),
+    place("pearls", 120, 342, " scale(1.4)"),
   ]);
 }
 
 /**
- * The side band: 64 wide and 256 high, repeating downwards. The stem bulges
- * left at y 32 and 160 and right at 96 and 224, and the flowers fill the
- * wider side of each bulge.
+ * The spray in the top left corner, 160 wide and 240 high; the top right one
+ * is its mirror image. A hatayi sits in the corner, a tulip grows from it into
+ * the page, a short stem with a hyacinth curls along the top, and the vine's
+ * stem leaves at the bottom edge (x 34, upright), where the vine joins it.
  */
-function side() {
-  const height = 256;
-  const stemX = (y: number) => 32 - 8 * Math.sin((2 * Math.PI * y) / 128);
-  const branch = (y: number, x: number, toY: number) =>
-    `M${fmt(stemX(y))} ${y}C${fmt(stemX(y) + 6)} ${y} ${fmt(x - 2)} ${fmt(toY + 3)} ${fmt(x)} ${fmt(toY)}`;
-  const leaves = [
+function corner() {
+  return svg(160, 240, [
     saz(
       [
-        [stemX(6), 6],
-        [21, 12],
-        [13.5, 23],
-        [12, 40],
+        [78, 30],
+        [104, 34],
+        [128, 48],
+        [152, 72],
       ],
-      2.7,
-      7,
+      5.6,
+      12,
     ),
-    greenLeaf(
+    saz(
       [
-        [stemX(70), 70],
-        [44, 74],
-        [50.5, 85],
-        [51, 101],
+        [30, 80],
+        [34, 108],
+        [46, 136],
+        [66, 164],
       ],
-      1.9,
+      5.6,
+      12,
     ),
-  ].join("");
-
-  return svg(64, height, [
-    `<rect width="64" height="${height}" fill="${COLOURS.ground}"/>`,
-    guard(0, 0, 6, height, "y"),
-    guard(58, 0, 6, height, "y"),
-    `<rect x="6" width="1" height="${height}" fill="${COLOURS.turquoise}"/>`,
-    `<rect x="57" width="1" height="${height}" fill="${COLOURS.turquoise}"/>`,
-    `<g id="leaf-pair">${leaves}</g>`,
-    `<use href="#leaf-pair" transform="translate(0 128)"/>`,
-    stem(-128, height + 256, 32, 8, 128, "y"),
-    stroke(
-      `${branch(60, 43, 52)}${branch(188, 43, 180)}M40 96H35M40 224H30`,
-      COLOURS.stem,
-      1,
-    ),
-    greenLeaf(
-      [
-        [43, 52],
-        [38, 49],
-        [35, 44],
-        [35.5, 37],
-      ],
-      1.7,
-    ),
-    greenLeaf(
-      [
-        [43, 180],
-        [38, 177],
-        [35, 172],
-        [35.5, 165],
-      ],
-      1.7,
-    ),
-    greenLeaf(
-      [
-        [22, 232],
-        [17, 236],
-        [13, 242],
-        [13, 249],
-      ],
-      1.6,
-    ),
-    place("tulip", 43, 52, " scale(1.02)"),
-    place("hatayi", 21, 96, " scale(.92)"),
-    place("carnation", 43, 180, " scale(1.05)"),
-    place("penc", 21, 224, " scale(1.05)"),
-    place("hyacinth", 48, 126, " scale(.9)"),
-    place("hyacinth", 15, 190, " scale(.9) rotate(-6)"),
-    place("pearls", 49, 72),
-    place("pearls", 13, 130),
-    place("pearls", 49, 240),
-    place("pearls", 14, 62),
+    stroke("M-8 0C40 14 92 10 124 20M0-8C18 30 34 150 34 240", COLOURS.stem, 2),
+    curl([124, 20], 6, 18, 1),
+    stalk([70, 70], [86, 88], [100, 100], 1.8),
+    stalk([34, 196], [46, 200], [56, 194]),
+    curl([118, 92], 6, 200, -1),
+    place("tulip", 100, 100, " rotate(135) scale(2.3)"),
+    place("hatayi", 46, 46, " scale(2.4)"),
+    place("carnation", 56, 194, " rotate(65) scale(1.9)"),
+    place("hyacinth", 98, 14, " rotate(165) scale(1.5)"),
+    place("pearls", 126, 112, " scale(1.5)"),
+    place("pearls", 86, 158, " scale(1.4)"),
   ]);
 }
 
@@ -638,13 +555,14 @@ export const MOTIFS_DIRECTORY = fileURLToPath(
 
 /** Each drawing's file name and content. */
 export function drawMotifs() {
-  return { "band.svg": band(), "side.svg": side() };
+  return { "vine.svg": vine(), "corner.svg": corner() };
 }
 
 if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
+  await mkdir(MOTIFS_DIRECTORY, { recursive: true });
   for (const [name, content] of Object.entries(drawMotifs())) {
     await writeFile(join(MOTIFS_DIRECTORY, name), content);
     console.log(`Drew src/app/motifs/${name}.`);

@@ -140,7 +140,7 @@ The import publishes a marked article with that day, after the checks an admin's
 
 ## Turkish motifs
 
-Every page is framed with İznik tile motifs: tulips, carnations, hatayi and penç flowers, saz leaves, hyacinths and çintemani pearls, in a band across the top and bottom and, on screens at least 82rem (1312px) wide, down both sides. They are CSS backgrounds (`src/app/globals.css`) drawn from two SVG files in `src/app/motifs/`, so pages gain no elements or scripts. `scripts/draw-motifs.ts` draws both files from geometry; nothing is traced or copied from an existing artwork. To change them, edit the script and run
+On screens at least 86rem (1376px) wide, İznik flowers grow into every page from both sides: a spray in each top corner, with a hatayi, a tulip and a carnation, and below it a vine of tulips, hatayi, carnations, saz leaves, hyacinths and çintemani pearls down the margin beside the page. They are strongest at the window's edge and fade out towards the page, so the text keeps a quiet margin. Narrower screens have no margin for them. They are CSS backgrounds (`src/app/globals.css`) drawn from two SVG files in `src/app/motifs/`, so pages gain no elements or scripts. `scripts/draw-motifs.ts` draws both files from geometry; nothing is traced or copied from an existing artwork. To change them, edit the script and run
 
 ```bash
 pnpm exec tsx scripts/draw-motifs.ts

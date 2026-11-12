@@ -162,41 +162,24 @@
 }
 
 /*
- * Turkish motifs: İznik tile bands (./motifs/, drawn by scripts/draw-motifs.ts)
- * across the top and bottom of every page and, when the window has room beside
- * the page, down both sides. They are decoration only. As CSS backgrounds they
- * add no element, markup or script to a page (§17), and as the site's own
- * files they pass the content security policy, which allows no data: images.
+ * Turkish motifs: İznik flowers (./motifs/, drawn by scripts/draw-motifs.ts)
+ * grow into every page from both sides when the window has room beside the
+ * page: a spray in each top corner, and a vine down each side. They are
+ * decoration only. As CSS backgrounds they add no element, markup or script
+ * to a page (§17), and as the site's own files they pass the content security
+ * policy, which allows no data: images.
  */
 @layer components {
-  .motif-frame {
-    --motif-band-height: 2.5rem;
-  }
-
-  .motif-band-top::before,
-  .motif-band-bottom::after {
-    content: "";
-    display: block;
-    height: var(--motif-band-height);
-    background: url("./motifs/band.svg") repeat-x 50% 0 / auto 100%;
-  }
-
-  @media (min-width: 40rem) {
+  /*
+   * The vines fill the margin beside the 72rem page, up to 10rem across. The
+   * corner spray is 3/2 of the vines' width high, and the vine repeats below
+   * it from the point where their stems meet. They fade out towards the page,
+   * strongest at the window's edge, so the text keeps a quiet margin. The
+   * right one is mirrored, its fade with it.
+   */
+  @media (min-width: 86rem) {
     .motif-frame {
-      --motif-band-height: 3.25rem;
-    }
-  }
-
-  @media (min-width: 64rem) {
-    .motif-frame {
-      --motif-band-height: 4rem;
-    }
-  }
-
-  /* 72rem of page, a band and a gap on each side. Only the header's and the
-     footer's full-width rules reach the bands, which cover their ends. */
-  @media (min-width: 82rem) {
-    .motif-frame {
+      --motif-vine: min((100vw - 72rem) / 2, 10rem);
       position: relative;
     }
 
@@ -204,10 +187,14 @@
     .motif-frame::after {
       content: "";
       position: absolute;
-      top: var(--motif-band-height);
-      bottom: var(--motif-band-height);
-      width: 4rem;
-      background: url("./motifs/side.svg") repeat-y 50% 0 / 100% auto;
+      top: 0;
+      bottom: 0;
+      width: var(--motif-vine);
+      padding-top: calc(var(--motif-vine) * 1.5);
+      background:
+        url("./motifs/corner.svg") 0 0 / 100% auto no-repeat border-box,
+        url("./motifs/vine.svg") 0 0 / 100% auto repeat-y content-box;
+      mask-image: linear-gradient(to right, #000 30%, transparent);
       pointer-events: none;
     }
 
@@ -222,8 +209,6 @@
   }
 
   @media print, (forced-colors: active) {
-    .motif-band-top::before,
-    .motif-band-bottom::after,
     .motif-frame::before,
     .motif-frame::after {
       display: none;
