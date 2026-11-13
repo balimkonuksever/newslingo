@@ -205,7 +205,10 @@ def provenance() -> dict:
 
     return {
         "commit": git("rev-parse", "HEAD"),
-        "uncommitted_changes_in_ml": bool(git("status", "--porcelain", "--", ".")),
+        # Reports are the runs' own output, not code, so they do not count.
+        "uncommitted_changes_in_ml": bool(
+            git("status", "--porcelain", "--", ".", ":(exclude)reports")
+        ),
         "python": platform.python_version(),
         "packages": {name: metadata.version(name) for name in ("numpy", "scikit-learn", "scipy")},
     }
