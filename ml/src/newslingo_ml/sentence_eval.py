@@ -18,11 +18,19 @@ from dataclasses import dataclass
 from importlib import metadata
 
 import numpy as np
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.preprocessing import StandardScaler
 
 from newslingo_ml import corpus
 from newslingo_ml.corpus import LEVEL_NAMES, LEVELS, ML_ROOT, Sentence
+from newslingo_ml.extended import (
+    EXTENDED_NAMES,
+    Tables,
+    extended_matrix,
+    out_of_fold_extended_matrix,
+)
 from newslingo_ml.features import (
     FEATURE_NAMES,
     WordLevels,
@@ -32,11 +40,15 @@ from newslingo_ml.features import (
     sentence_words,
 )
 from newslingo_ml.metrics import annotator_agreement, bootstrap_interval, confusion, scores
+from newslingo_ml.ordinal import apply_cutpoints, fit_cutpoints
 
 SEED = 20261104
 SMOOTHING = (2.0, 5.0, 10.0, 20.0)
 LOGISTIC_C = (0.03, 0.1, 0.3, 1.0, 3.0)
 RIDGE_ALPHA = (0.1, 1.0, 10.0)
+EXTENDED_SMOOTHING = (2.0, 5.0)
+EXTENDED_RIDGE_ALPHA = (1.0, 10.0, 100.0)
+EXTENDED_LOGISTIC_C = (0.1, 0.3, 1.0)
 MODEL_VERSION = "cefr-sentence-1"
 INTERVAL_METRICS = ("either", "exact", "adjacent")
 
@@ -51,21 +63,49 @@ class Candidate:
     kind: str
     smoothing: float
     strength: float
-    model: LogisticRegression | Ridge
+    model: LogisticRegression | Ridge | HistGradientBoostingRegressor
     scaler: StandardScaler
-    table: WordLevels
+    table: WordLevels | Tables
     dev: dict[str, float]
+    feature_set: str = "basic"
+    cuts: list[float] | None = None
 
     @property
     def name(self) -> str:
-        knob = "C" if self.kind == "logistic" else "alpha"
-        return f"{self.kind} (smoothing {self.smoothing:g}, {knob} {self.strength:g})"
+        if self.kind == "boosting":
+            knob = "learning rate"
+        else:
+            knob = "C" if self.kind == "logistic" else "alpha"
+        features = "" if self.feature_set == "basic" else f"{self.feature_set} features, "
+        cuts = ", fitted cuts" if self.cuts else ""
+        return (
+            f"{self.kind} ({features}smoothing {self.smoothing:g}, "
+            f"{knob} {self.strength:g}{cuts})"
+        )
+
+    @property
+    def exportable(self) -> bool:
+        """Whether the app can run it: linear models on the basic features.
+
+        The extended features need a 0.9 MB table of word-pair levels, too much
+        to send to a browser for a gain within the noise of the validation
+        split (2026-11-13), so they stay a measured reference, like boosting.
+        """
+        return self.kind != "boosting" and self.feature_set == "basic"
+
+    def rows(self, texts: list[str], words: list[list[str]]) -> np.ndarray:
+        if self.feature_set == "basic":
+            return matrix(words, self.table)
+        return extended_matrix(texts, self.table)
 
     def predict(self, rows: np.ndarray) -> np.ndarray:
         scaled = self.scaler.transform(rows)
         if self.kind == "logistic":
             return self.model.predict(scaled).astype(int)
-        return round_levels(self.model.predict(scaled))
+        values = self.model.predict(scaled)
+        if self.cuts:
+            return apply_cutpoints(values, self.cuts)
+        return round_levels(values)
 
 
 def candidates(
@@ -89,6 +129,71 @@ def candidates(
             candidate = Candidate(kind, smoothing, strength, model, scaler, table, {})
             candidate.dev = scores(candidate.predict(dev_rows), data["dev"])
             found.append(candidate)
+    return found
+
+
+def train_cutpoints(
+    model: Ridge | HistGradientBoostingRegressor,
+    scaled: np.ndarray,
+    mean: np.ndarray,
+    train: list[Sentence],
+) -> list[float]:
+    """Cut points fit on out-of-fold predictions for the training split."""
+    folds = KFold(n_splits=5, shuffle=True, random_state=SEED)
+    predicted = cross_val_predict(model, scaled, mean, cv=folds)
+    return fit_cutpoints(
+        predicted,
+        np.array([s.level_a for s in train]),
+        np.array([s.level_b for s in train]),
+    )
+
+
+def extended_candidates(
+    texts: dict[str, list[str]],
+    words: dict[str, list[list[str]]],
+    data: dict[str, list[Sentence]],
+) -> list[Candidate]:
+    """Linear models on the extended features, with and without fitted cut
+    points, and gradient boosting as a non-linear reference."""
+    high = np.array([s.high for s in data["train"]])
+    mean = np.array([s.mean for s in data["train"]])
+    found = []
+    for smoothing in EXTENDED_SMOOTHING:
+        train_rows = out_of_fold_extended_matrix(texts["train"], mean, smoothing, SEED)
+        tables = Tables.fit(words["train"], mean, smoothing)
+        dev_rows = extended_matrix(texts["dev"], tables)
+        scaler = StandardScaler().fit(train_rows)
+        scaled = scaler.transform(train_rows)
+
+        def add(kind: str, strength: float, model, cuts: list[float] | None = None) -> None:
+            candidate = Candidate(
+                kind, smoothing, strength, model, scaler, tables, {}, "extended", cuts
+            )
+            candidate.dev = scores(candidate.predict(dev_rows), data["dev"])
+            found.append(candidate)
+
+        for alpha in EXTENDED_RIDGE_ALPHA:
+            ridge = Ridge(alpha=alpha)
+            add("ridge", alpha, Ridge(alpha=alpha).fit(scaled, mean))
+            add(
+                "ridge",
+                alpha,
+                Ridge(alpha=alpha).fit(scaled, mean),
+                train_cutpoints(ridge, scaled, mean, data["train"]),
+            )
+        for c in EXTENDED_LOGISTIC_C:
+            add("logistic", c, LogisticRegression(C=c, max_iter=5000).fit(scaled, high))
+        boosting = HistGradientBoostingRegressor(
+            learning_rate=0.05, max_iter=300, max_leaf_nodes=15, random_state=SEED
+        )
+        add(
+            "boosting",
+            0.05,
+            HistGradientBoostingRegressor(
+                learning_rate=0.05, max_iter=300, max_leaf_nodes=15, random_state=SEED
+            ).fit(scaled, mean),
+            train_cutpoints(boosting, scaled, mean, data["train"]),
+        )
     return found
 
 
@@ -238,11 +343,17 @@ def report(result: dict) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--date", default=datetime.date.today().isoformat())
+    parser.add_argument(
+        "--dev-only",
+        action="store_true",
+        help="score every candidate on the validation split and stop, never reading the test split",
+    )
     args = parser.parse_args()
 
     manifest = corpus.load_manifest()
     # The test split is loaded, and its digest checked, only after selection.
     data = {split: corpus.load(split) for split in ("train", "dev")}
+    texts = {split: [s.text for s in data[split]] for split in data}
     words = {split: [sentence_words(s.text) for s in data[split]] for split in data}
 
     train_high = [s.high for s in data["train"]]
@@ -253,20 +364,31 @@ def main() -> None:
 
     readability = LogisticRegression(max_iter=5000).fit(grade("train"), train_high)
 
-    found = candidates(words, data)
-    best = max(found, key=lambda c: (c.dev["either"], c.dev["qwk"]))
+    found = candidates(words, data) + extended_candidates(texts, words, data)
+    # Only a model the app can run may be chosen; the others are references.
+    best = max(
+        (c for c in found if c.exportable), key=lambda c: (c.dev["either"], c.dev["qwk"])
+    )
     dev_scores = {
         "Majority class": scores(np.full(len(data["dev"]), majority_level), data["dev"]),
         "Readability (Flesch–Kincaid)": scores(readability.predict(grade("dev")), data["dev"]),
         **{c.name: c.dev for c in found},
     }
 
+    if args.dev_only:
+        print(SCORE_HEADER)
+        for name, values in sorted(dev_scores.items(), key=lambda kv: -kv[1]["either"]):
+            print(score_row(name, values))
+        print(f"\nWould choose: {best.name}. The test split was not read.")
+        return
+
     data["test"] = corpus.load("test")
+    texts["test"] = [s.text for s in data["test"]]
     words["test"] = [sentence_words(s.text) for s in data["test"]]
     predictions = {
         "Majority class": np.full(len(data["test"]), majority_level),
         "Readability (Flesch–Kincaid)": readability.predict(grade("test")),
-        best.name: best.predict(matrix(words["test"], best.table)),
+        best.name: best.predict(best.rows(texts["test"], words["test"])),
     }
     test = {
         name: {

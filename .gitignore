@@ -51,6 +51,8 @@ yarn-error.log*
 # Machine learning (ADR-002): the virtual environment, downloaded data and Python caches
 /ml/.venv/
 /ml/data/raw/
+# Fine-tuned transformer weights: hundreds of MB, rebuilt by newslingo_ml.transformer
+/ml/checkpoints/
 __pycache__/
 *.egg-info/
 .pytest_cache/
