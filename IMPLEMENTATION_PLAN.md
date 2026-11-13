@@ -1543,16 +1543,16 @@ Give every article an independent, measured CEFR level check (ML roadmap item 1)
 
 ### Work items — data
 
-- [ ] Set up `ml/` as a Python project with pinned dependencies and a `.venv` that git ignores.
-- [ ] Download CEFR-SP with a committed script pinned to an exact revision and checked against recorded SHA-256 digests. Raw data stays out of git.
-- [ ] Write the dataset card: source, licence, version, how the labels were made, and the size and level distribution of each split.
-- [ ] Freeze the test split before any training. Choose models and settings on the validation split only.
+- [x] Set up `ml/` as a Python project with pinned dependencies and a `.venv` that git ignores. Done on 2026-11-04.
+- [x] Download CEFR-SP with a committed script pinned to an exact revision and checked against recorded SHA-256 digests. Raw data stays out of git. Done on 2026-11-04 (`newslingo_ml.corpus`).
+- [x] Write the dataset card: source, licence, version, how the labels were made, and the size and level distribution of each split. Done on 2026-11-04 (`ml/datasets/cefr-sp.md`).
+- [x] Freeze the test split before any training. Choose models and settings on the validation split only. Done on 2026-11-04: the scripts load the test split only after a choice is made, and `sentence_eval --dev-only` compares candidates without it.
 
 ### Work items — models and evaluation
 
-- [ ] Baselines: the majority class, and a readability formula with level thresholds fit on the training split.
-- [ ] Train sentence-level candidates, starting with a linear model on length and word-frequency features. Try a small fine-tuned transformer only if the linear model leaves a gap worth its cost.
-- [ ] Report accuracy, macro-F1 and adjacent accuracy (within one level) on the test split for every candidate and baseline, with the seed, data version and date.
+- [x] Baselines: the majority class, and a readability formula with level thresholds fit on the training split. Done on 2026-11-04.
+- [x] Train sentence-level candidates, starting with a linear model on length and word-frequency features. Try a small fine-tuned transformer only if the linear model leaves a gap worth its cost. Done on 2026-11-13: richer light features (word pairs, punctuation, connectives, passives) and fitted cut points gained about a point on the validation split, within its noise, so the light model keeps its basic features; `distilroberta-base`, fine-tuned by `newslingo_ml.transformer`, gained nine.
+- [x] Report accuracy, macro-F1 and adjacent accuracy (within one level) on the test split for every candidate and baseline, with the seed, data version and date. Done: `ml/reports/2026-11-04-sentence-level.md` for the light model and `ml/reports/2026-11-13-transformer.md` for the transformer. On the test split the transformer matches an annotator on 86.7% of sentences against the light model's 78.9% and the readability baseline's 71.7%, with a QWK of 0.682 against the annotators' own 0.675.
 - [ ] Compare with a zero-shot LLM on a fixed, seeded sample of the test split, run through Claude Code on the user's plan.
 - [ ] Turn sentence predictions into an article level, and measure it on a held-out set of texts the user labels. Each text is original or openly licensed. The labels are gold data: versioned, with who labelled what and when, and never regenerated.
 
@@ -2432,6 +2432,7 @@ Since 2026-10-27 articles cost no model calls: Claude writes them in Claude Code
 | 2026-11-04 | Resume M7 in a smaller form: a command drafts a news article from a GOV.UK story the user picks, and the draft goes through W's import and review. Chosen by the user. | M6 stays on hold, and no source is fetched automatically. The draft is an article file like any written article, so the static site, the import and the publication mark need no change. Generation records are committed JSON files instead of the `GenerationAttempt` and `ArticleRevision` tables, which assumed a production database. |
 | 2026-11-04 | Run M7's model through Claude Code headless (`claude -p`) on the user's plan, with no tools, a versioned system prompt and `--json-schema` output, behind a provider interface. Chosen by the user over the Claude API with a spending cap, about $0.15–0.40 per article on Opus 5.5, and a free local model, which this 8 GB machine limits to small models with weak Turkish. | No API key or bill, so the 2026-10-27 rule against paid model calls holds. Drafting runs only on the user's computer and counts against the plan's limits. Pull-request CI uses a fixture provider. The API can be added behind the same interface if the plan's limits or the evaluation call for it. |
 | 2026-11-04 | Add milestone C, the CEFR difficulty classifier (ML roadmap item 1), ahead of M7's level check. C and M7 follow W and run alongside M9; launch does not wait for them. | The classifier is the independent level check that W's launch definition and M7's validation wait for, and it costs nothing to train on this machine. |
+| 2026-11-13 | Fine-tune `distilroberta-base` (Apache 2.0) as the CEFR classifier's accurate model, and keep the basic light model for anything that must run in a browser. Asked for by the user, who wanted the accuracy raised before the classifier faces readers. | On CEFR-SP's test split, read once after choosing on the validation split, the transformer matches an annotator on 86.7% of sentences (95% interval 84.4–89.2%) against the light model's 78.9%, a paired gain of 7.9 points (4.6–11.2). Its 330 MB of weights stay out of git in `ml/checkpoints/`, rebuilt by `newslingo_ml.transformer` in about ten minutes; how the app runs it is decided with the article-level work. Richer light features were measured and not adopted: about a point on the validation split, within its noise, for a 0.9 MB word-pair table. |
 
 ### Open decisions
 
