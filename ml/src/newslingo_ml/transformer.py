@@ -18,10 +18,12 @@ import json
 import random
 import time
 from dataclasses import asdict, dataclass
+from pathlib import Path
 
 import numpy as np
 import torch
 import torch.nn.functional as F
+from huggingface_hub import constants
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -95,6 +97,16 @@ def predict_logits(model, tokenizer, texts: list[str], settings: Settings) -> to
     return torch.cat(chunks)
 
 
+def revision_of(name: str, model=None) -> str | None:
+    """The pretrained model's commit on Hugging Face: from the model when it
+    says, else from the local cache's record of the revision it downloaded."""
+    revision = getattr(getattr(model, "config", None), "_commit_hash", None)
+    if revision:
+        return revision
+    ref = Path(constants.HF_HUB_CACHE) / f"models--{name.replace('/', '--')}" / "refs" / "main"
+    return ref.read_text().strip() if ref.exists() else None
+
+
 def predict_levels(checkpoint: str, texts: list[str], decision: str, max_length: int = 96) -> np.ndarray:
     """Levels for detokenized texts from a kept checkpoint, read with the
     decision rule chosen on the validation split."""
@@ -117,7 +129,7 @@ def train(settings: Settings, run: str, date: str) -> dict:
     model = AutoModelForSequenceClassification.from_pretrained(
         settings.model, num_labels=len(LEVELS)
     ).to(device())
-    pretrained_revision = getattr(model.config, "_commit_hash", None)
+    pretrained_revision = revision_of(settings.model, model)
 
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=settings.learning_rate, weight_decay=settings.weight_decay

@@ -31,7 +31,7 @@ from newslingo_ml.sentence_eval import (
     score_row,
 )
 from newslingo_ml.text import detokenize
-from newslingo_ml.transformer import predict_levels
+from newslingo_ml.transformer import predict_levels, revision_of
 
 
 def paired_difference(
@@ -63,7 +63,7 @@ def report(result: dict) -> str:
         "",
         f"- Data: CEFR-SP, Wiki-Auto subset, revision `{result['data_revision']}`, CC BY-SA 3.0. "
         "Card: `ml/datasets/cefr-sp.md`. Gold level and metrics as in the sentence-level report.",
-        f"- Model: `{settings['model']}` (revision `{run['pretrained']['revision']}`), fine-tuned on the "
+        f"- Model: `{settings['model']}` (revision `{result['pretrained_revision']}`, Apache 2.0), fine-tuned on the "
         f"training split by `python -I -m newslingo_ml.transformer` for {settings['epochs']} epochs: "
         f"learning rate {settings['learning_rate']:g}, batch {settings['batch_size']}, "
         f"warm-up {settings['warmup']:g}, weight decay {settings['weight_decay']:g}, seed {settings['seed']}. "
@@ -179,6 +179,9 @@ def main() -> None:
         "data_revision": manifest["revision"],
         "provenance": provenance(),
         "torch": torch.__version__,
+        # The training run's report records it when the model says; else the
+        # local Hugging Face cache records the revision that was downloaded.
+        "pretrained_revision": run["pretrained"]["revision"] or revision_of(run["settings"]["model"]),
         "run": run,
         "light_model": light.name,
         "human": annotator_agreement(test),
