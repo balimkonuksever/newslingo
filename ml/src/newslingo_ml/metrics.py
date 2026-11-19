@@ -19,6 +19,25 @@ def references(sentences: Sequence[Sentence]) -> tuple[np.ndarray, np.ndarray, n
     return a, b, np.maximum(a, b)
 
 
+def paper_gold(predicted: np.ndarray, sentences: Sequence[Sentence]) -> np.ndarray:
+    """Each sentence's reference level as the CEFR-SP paper scores it (Arase et
+    al., 2022, `get_gold_labels` in their code): the predicted level wherever it
+    matches either annotator, and elsewhere whichever annotator, lower or higher,
+    the predictions match more often overall."""
+    a, b, _ = references(sentences)
+    low, high = np.minimum(a, b), np.maximum(a, b)
+    default = low if np.sum(predicted == low) >= np.sum(predicted == high) else high
+    return np.where((predicted == low) | (predicted == high), predicted, default)
+
+
+def level_f1(predicted: np.ndarray, sentences: Sequence[Sentence]) -> dict[int, float]:
+    """F1 for each level against the paper's references."""
+    values = f1_score(
+        paper_gold(predicted, sentences), predicted, labels=LEVELS, average=None, zero_division=0
+    )
+    return {level: float(value) for level, value in zip(LEVELS, values, strict=True)}
+
+
 def scores(predicted: np.ndarray, sentences: Sequence[Sentence]) -> dict[str, float]:
     a, b, high = references(sentences)
     return {
@@ -29,6 +48,12 @@ def scores(predicted: np.ndarray, sentences: Sequence[Sentence]) -> dict[str, fl
         "mae": float(np.mean(np.abs(predicted - high))),
         "macro_f1": float(
             f1_score(high, predicted, labels=LEVELS, average="macro", zero_division=0)
+        ),
+        # The CEFR-SP paper's metric: macro-F1 against paper_gold, over the
+        # levels that occur in the references or the predictions, as
+        # scikit-learn's default does in the paper's code.
+        "macro_f1_paper": float(
+            f1_score(paper_gold(predicted, sentences), predicted, average="macro", zero_division=0)
         ),
         "qwk": float(cohen_kappa_score(high, predicted, labels=LEVELS, weights="quadratic")),
     }
