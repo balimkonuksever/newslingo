@@ -45,12 +45,12 @@ These come from the project's agent instructions and ADR-002.
 
 ## Layout
 
-| Path                | What it holds                                                                                                 |
-| ------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `data/cefr-sp.json` | The data manifest: source, revision, licence, and each file's path, digest and rows.                          |
-| `datasets/`         | Dataset cards.                                                                                                |
-| `src/newslingo_ml/` | Loading, text rules, features, metrics and the evaluation script.                                             |
-| `models/`           | Exported models, which the Node app loads.                                                                    |
-| `checkpoints/`      | Fine-tuned transformer weights, about 330 MB each. Git ignores them; rebuild with `newslingo_ml.transformer`. |
-| `reports/`          | Evaluation reports, one per run.                                                                              |
-| `tests/`            | pytest tests.                                                                                                 |
+| Path                | What it holds                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `data/cefr-sp.json` | The data manifest: source, revision, licence, and each file's path, digest and rows.                                                      |
+| `datasets/`         | Dataset cards.                                                                                                                            |
+| `src/newslingo_ml/` | Loading, text rules, features, metrics and the evaluation script.                                                                         |
+| `models/`           | Exported models, which the Node app loads.                                                                                                |
+| `checkpoints/`      | Fine-tuned transformer weights, 330–480 MB each; the chosen average uses four. Git ignores them; rebuild with `newslingo_ml.transformer`. |
+| `reports/`          | Evaluation reports, one per run.                                                                                                          |
+| `tests/`            | pytest tests.                                                                                                                             |

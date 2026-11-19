@@ -1,0 +1,502 @@
+{
+  "date": "2026-11-19",
+  "data_revision": "2ba4a5005fbff68ab0f863891cf977c50fdcda29",
+  "provenance": {
+    "commit": "130633b12ccd45204cb69a062e34116e24ff6bc8",
+    "uncommitted_changes_in_ml": false,
+    "python": "3.13.5",
+    "packages": {
+      "numpy": "2.5.4",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1"
+    }
+  },
+  "torch": "2.15.0",
+  "select": "macro_f1_paper",
+  "chosen": {
+    "report": "reports/2026-11-19-ensemble-dev-all-four.json",
+    "name": "average of 4 runs (3 \u00d7 distilroberta-base, 1 \u00d7 FacebookAI/roberta-base)",
+    "members": [
+      {
+        "report": "reports/2026-11-13-transformer-dev-distilroberta-base-lr3e-05-e4.json",
+        "run": "distilroberta-base-lr3e-05-e4",
+        "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4",
+        "max_length": 96,
+        "settings": {
+          "model": "distilroberta-base",
+          "epochs": 4,
+          "learning_rate": 3e-05,
+          "batch_size": 32,
+          "max_length": 96,
+          "warmup": 0.06,
+          "weight_decay": 0.01,
+          "seed": 20261104
+        },
+        "pretrained": {
+          "model": "distilroberta-base",
+          "revision": null
+        },
+        "epoch": 3
+      },
+      {
+        "report": "reports/2026-11-19-transformer-dev-distilroberta-base-lr3e-05-e4-w0.2.json",
+        "run": "distilroberta-base-lr3e-05-e4-w0.2",
+        "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4-w0.2",
+        "max_length": 96,
+        "settings": {
+          "model": "distilroberta-base",
+          "epochs": 4,
+          "learning_rate": 3e-05,
+          "batch_size": 32,
+          "max_length": 96,
+          "warmup": 0.06,
+          "weight_decay": 0.01,
+          "seed": 20261104,
+          "class_weight_alpha": 0.2,
+          "select": "macro_f1_paper"
+        },
+        "pretrained": {
+          "model": "distilroberta-base",
+          "revision": "fb53ab8802853c8e4fbdbcd0529f21fc6f459b2b"
+        },
+        "epoch": 1
+      },
+      {
+        "report": "reports/2026-11-19-transformer-dev-distilroberta-base-lr3e-05-e4-w0.5.json",
+        "run": "distilroberta-base-lr3e-05-e4-w0.5",
+        "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4-w0.5",
+        "max_length": 96,
+        "settings": {
+          "model": "distilroberta-base",
+          "epochs": 4,
+          "learning_rate": 3e-05,
+          "batch_size": 32,
+          "max_length": 96,
+          "warmup": 0.06,
+          "weight_decay": 0.01,
+          "seed": 20261104,
+          "class_weight_alpha": 0.5,
+          "select": "macro_f1_paper"
+        },
+        "pretrained": {
+          "model": "distilroberta-base",
+          "revision": "fb53ab8802853c8e4fbdbcd0529f21fc6f459b2b"
+        },
+        "epoch": 1
+      },
+      {
+        "report": "reports/2026-11-19-transformer-dev-roberta-base-lr2e-05-e4.json",
+        "run": "roberta-base-lr2e-05-e4",
+        "checkpoint": "ml/checkpoints/roberta-base-lr2e-05-e4",
+        "max_length": 96,
+        "settings": {
+          "model": "FacebookAI/roberta-base",
+          "epochs": 4,
+          "learning_rate": 2e-05,
+          "batch_size": 32,
+          "max_length": 96,
+          "warmup": 0.06,
+          "weight_decay": 0.01,
+          "seed": 20261104,
+          "class_weight_alpha": null,
+          "select": "macro_f1_paper",
+          "accumulate": 2
+        },
+        "pretrained": {
+          "model": "FacebookAI/roberta-base",
+          "revision": "e2da8e2f811d1448a5b465c236feacd80ffbac7b"
+        },
+        "epoch": 3
+      }
+    ],
+    "decision": "most likely",
+    "provenance": {
+      "commit": "0476cc935ae2b8c7328f598b67f6a3a7be849aae",
+      "uncommitted_changes_in_ml": false,
+      "python": "3.13.5",
+      "packages": {
+        "numpy": "2.5.4",
+        "scikit-learn": "1.9.1",
+        "scipy": "1.18.1"
+      }
+    },
+    "date": "2026-11-19"
+  },
+  "previous": {
+    "report": "reports/2026-11-13-transformer-dev-distilroberta-base-lr3e-05-e4.json",
+    "name": "distilroberta-base",
+    "members": [
+      {
+        "report": "reports/2026-11-13-transformer-dev-distilroberta-base-lr3e-05-e4.json",
+        "run": "distilroberta-base-lr3e-05-e4",
+        "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4",
+        "max_length": 96,
+        "settings": {
+          "model": "distilroberta-base",
+          "epochs": 4,
+          "learning_rate": 3e-05,
+          "batch_size": 32,
+          "max_length": 96,
+          "warmup": 0.06,
+          "weight_decay": 0.01,
+          "seed": 20261104
+        },
+        "pretrained": {
+          "model": "distilroberta-base",
+          "revision": null
+        },
+        "epoch": 3
+      }
+    ],
+    "decision": "expected",
+    "provenance": {
+      "commit": "8701470fd172040feb42234d48aa5ee5997dbd5b",
+      "uncommitted_changes_in_ml": false,
+      "python": "3.13.5",
+      "packages": {
+        "numpy": "2.5.4",
+        "scikit-learn": "1.9.1",
+        "scipy": "1.18.1"
+      }
+    },
+    "date": "2026-11-13"
+  },
+  "light_model": "ridge (smoothing 2, alpha 10)",
+  "validation": [
+    {
+      "name": "average of 4 runs (3 \u00d7 distilroberta-base, 1 \u00d7 FacebookAI/roberta-base)",
+      "report": "reports/2026-11-19-ensemble-dev-all-four.json",
+      "decision": "most likely",
+      "scores": {
+        "either": 0.8630527817403709,
+        "exact": 0.536376604850214,
+        "adjacent": 0.9757489300998573,
+        "mae": 0.48787446504992865,
+        "macro_f1": 0.5359177921858694,
+        "macro_f1_paper": 0.8654502331628414,
+        "qwk": 0.7440562428385542
+      },
+      "chosen": true
+    },
+    {
+      "name": "distilroberta-base",
+      "report": "reports/2026-11-13-transformer-dev-distilroberta-base-lr3e-05-e4.json",
+      "decision": "expected",
+      "scores": {
+        "either": 0.8616262482168331,
+        "exact": 0.5135520684736091,
+        "adjacent": 0.9771754636233951,
+        "mae": 0.5092724679029957,
+        "macro_f1": 0.47789667018457954,
+        "macro_f1_paper": 0.8331905055945689,
+        "qwk": 0.7195870245923977
+      },
+      "chosen": false
+    },
+    {
+      "name": "distilroberta-base, class weights \u03b1 0.2",
+      "report": "reports/2026-11-19-transformer-dev-distilroberta-base-lr3e-05-e4-w0.2.json",
+      "decision": "expected",
+      "scores": {
+        "either": 0.8216833095577746,
+        "exact": 0.5263908701854494,
+        "adjacent": 0.9728958630527818,
+        "mae": 0.5007132667617689,
+        "macro_f1": 0.5184674667019361,
+        "macro_f1_paper": 0.8116093167476833,
+        "qwk": 0.7427547203630069
+      },
+      "chosen": false
+    },
+    {
+      "name": "distilroberta-base, class weights \u03b1 0.5",
+      "report": "reports/2026-11-19-transformer-dev-distilroberta-base-lr3e-05-e4-w0.5.json",
+      "decision": "expected",
+      "scores": {
+        "either": 0.8530670470756063,
+        "exact": 0.5106990014265336,
+        "adjacent": 0.9743223965763196,
+        "mae": 0.514978601997147,
+        "macro_f1": 0.475870874170057,
+        "macro_f1_paper": 0.8323733193837142,
+        "qwk": 0.716148885237441
+      },
+      "chosen": false
+    },
+    {
+      "name": "FacebookAI/roberta-base",
+      "report": "reports/2026-11-19-transformer-dev-roberta-base-lr2e-05-e4.json",
+      "decision": "most likely",
+      "scores": {
+        "either": 0.8502139800285307,
+        "exact": 0.4921540656205421,
+        "adjacent": 0.978601997146933,
+        "mae": 0.5292439372325249,
+        "macro_f1": 0.46865855319921895,
+        "macro_f1_paper": 0.8417924371276656,
+        "qwk": 0.7181478640577139
+      },
+      "chosen": false
+    },
+    {
+      "name": "average of 3 runs (2 \u00d7 distilroberta-base, 1 \u00d7 FacebookAI/roberta-base)",
+      "report": "reports/2026-11-19-ensemble-dev-best-three.json",
+      "decision": "most likely",
+      "scores": {
+        "either": 0.8587731811697575,
+        "exact": 0.5192582025677603,
+        "adjacent": 0.9771754636233951,
+        "mae": 0.5035663338088445,
+        "macro_f1": 0.5084579861842733,
+        "macro_f1_paper": 0.856737732431971,
+        "qwk": 0.7314729413356655
+      },
+      "chosen": false
+    }
+  ],
+  "human": {
+    "exact": 0.3648293963254593,
+    "adjacent": 1.0,
+    "qwk": 0.6750882299564268
+  },
+  "test": {
+    "Majority class": {
+      "scores": {
+        "either": 0.6404199475065617,
+        "exact": 0.4645669291338583,
+        "adjacent": 0.8858267716535433,
+        "mae": 0.6548556430446194,
+        "macro_f1": 0.1057347670250896,
+        "macro_f1_paper": 0.13013333333333335,
+        "qwk": 0.0
+      },
+      "intervals": {
+        "either": [
+          0.6076115485564304,
+          0.6758530183727034
+        ],
+        "macro_f1_paper": [
+          0.12615129118531587,
+          0.13505074160811867
+        ],
+        "exact": [
+          0.4330708661417323,
+          0.5
+        ],
+        "adjacent": [
+          0.863517060367454,
+          0.9081364829396326
+        ]
+      }
+    },
+    "Readability (Flesch\u2013Kincaid)": {
+      "scores": {
+        "either": 0.7165354330708661,
+        "exact": 0.458005249343832,
+        "adjacent": 0.916010498687664,
+        "mae": 0.631233595800525,
+        "macro_f1": 0.21541985787168497,
+        "macro_f1_paper": 0.3538969369270147,
+        "qwk": 0.3898595620056421
+      },
+      "intervals": {
+        "either": [
+          0.6850393700787402,
+          0.7480314960629921
+        ],
+        "macro_f1_paper": [
+          0.33272051772649186,
+          0.3734696720579423
+        ],
+        "exact": [
+          0.4251968503937008,
+          0.49606299212598426
+        ],
+        "adjacent": [
+          0.8963254593175853,
+          0.9343832020997376
+        ]
+      }
+    },
+    "Light model: ridge (smoothing 2, alpha 10)": {
+      "scores": {
+        "either": 0.7887139107611548,
+        "exact": 0.4868766404199475,
+        "adjacent": 0.9396325459317585,
+        "mae": 0.5761154855643045,
+        "macro_f1": 0.27660633794785894,
+        "macro_f1_paper": 0.480621790987885,
+        "qwk": 0.5046135141589654
+      },
+      "intervals": {
+        "either": [
+          0.7611548556430446,
+          0.8188976377952756
+        ],
+        "macro_f1_paper": [
+          0.42005095158222633,
+          0.5482501184087365
+        ],
+        "exact": [
+          0.4540682414698163,
+          0.5249343832020997
+        ],
+        "adjacent": [
+          0.9225721784776902,
+          0.9553805774278216
+        ]
+      }
+    },
+    "Previous transformer: distilroberta-base": {
+      "scores": {
+        "either": 0.8674540682414699,
+        "exact": 0.5013123359580053,
+        "adjacent": 0.9711286089238845,
+        "mae": 0.5275590551181102,
+        "macro_f1": 0.3493243068230592,
+        "macro_f1_paper": 0.6531320806486557,
+        "qwk": 0.6820419550585766
+      },
+      "intervals": {
+        "either": [
+          0.8438320209973753,
+          0.8923884514435696
+        ],
+        "macro_f1_paper": [
+          0.5867671812595343,
+          0.7152061775061929
+        ],
+        "exact": [
+          0.4671916010498688,
+          0.5393700787401575
+        ],
+        "adjacent": [
+          0.9593175853018373,
+          0.9829396325459318
+        ]
+      }
+    },
+    "Chosen: average of 4 runs (3 \u00d7 distilroberta-base, 1 \u00d7 FacebookAI/roberta-base)": {
+      "scores": {
+        "either": 0.868766404199475,
+        "exact": 0.49343832020997375,
+        "adjacent": 0.9698162729658792,
+        "mae": 0.536745406824147,
+        "macro_f1": 0.42567791809162564,
+        "macro_f1_paper": 0.7727123101629806,
+        "qwk": 0.6902455628755675
+      },
+      "intervals": {
+        "either": [
+          0.8451443569553806,
+          0.8924212598425197
+        ],
+        "macro_f1_paper": [
+          0.6767695832297758,
+          0.8602494077072916
+        ],
+        "exact": [
+          0.46062992125984253,
+          0.5301837270341208
+        ],
+        "adjacent": [
+          0.9566929133858267,
+          0.9816272965879265
+        ]
+      }
+    }
+  },
+  "differences": {
+    "Either-annotator accuracy, chosen minus previous": [
+      0.001312335958005173,
+      -0.011811023622047223,
+      0.013123359580052507
+    ],
+    "Paper's macro-F1, chosen minus previous": [
+      0.1195802295143249,
+      0.022622531816953905,
+      0.2221666645197609
+    ],
+    "Either-annotator accuracy, chosen minus light model": [
+      0.08005249343832022,
+      0.047244094488189003,
+      0.1141732283464566
+    ]
+  },
+  "level_f1": {
+    "Previous transformer: distilroberta-base": {
+      "1": 0.0,
+      "2": 0.7142857142857143,
+      "3": 0.8786764705882353,
+      "4": 0.8771929824561403,
+      "5": 0.8930817610062893,
+      "6": 0.5555555555555556
+    },
+    "Chosen: average of 4 runs (3 \u00d7 distilroberta-base, 1 \u00d7 FacebookAI/roberta-base)": {
+      "1": 0.4,
+      "2": 0.7789473684210526,
+      "3": 0.8722986247544204,
+      "4": 0.8809523809523809,
+      "5": 0.8805460750853242,
+      "6": 0.8235294117647058
+    }
+  },
+  "level_counts": {
+    "1": 4,
+    "2": 11,
+    "3": 139,
+    "4": 354,
+    "5": 182,
+    "6": 72
+  },
+  "confusion_test": [
+    [
+      1,
+      2,
+      1,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      11,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      36,
+      93,
+      9,
+      1,
+      0
+    ],
+    [
+      0,
+      7,
+      154,
+      178,
+      15,
+      0
+    ],
+    [
+      0,
+      0,
+      11,
+      91,
+      79,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      3,
+      55,
+      14
+    ]
+  ]
+}

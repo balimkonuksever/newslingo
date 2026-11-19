@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-19",
+  "run": "roberta-base-lr2e-05-e4",
+  "settings": {
+    "model": "FacebookAI/roberta-base",
+    "epochs": 4,
+    "learning_rate": 2e-05,
+    "batch_size": 32,
+    "max_length": 96,
+    "warmup": 0.06,
+    "weight_decay": 0.01,
+    "seed": 20261104,
+    "class_weight_alpha": null,
+    "select": "macro_f1_paper",
+    "accumulate": 2
+  },
+  "pretrained": {
+    "model": "FacebookAI/roberta-base",
+    "revision": "e2da8e2f811d1448a5b465c236feacd80ffbac7b"
+  },
+  "device": "mps",
+  "provenance": {
+    "commit": "0476cc935ae2b8c7328f598b67f6a3a7be849aae",
+    "uncommitted_changes_in_ml": false,
+    "python": "3.13.5",
+    "packages": {
+      "numpy": "2.5.4",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1"
+    }
+  },
+  "packages": {
+    "torch": "2.15.0",
+    "transformers": "5.22.2"
+  },
+  "class_weights": null,
+  "epochs": [
+    {
+      "epoch": 1,
+      "train_loss": 1.1949947398572613,
+      "seconds": 217.6,
+      "dev": {
+        "most likely": {
+          "either": 0.8559201141226819,
+          "exact": 0.5078459343794579,
+          "adjacent": 0.985734664764622,
+          "mae": 0.5064194008559201,
+          "macro_f1": 0.4176764208527613,
+          "macro_f1_paper": 0.6401317946647062,
+          "qwk": 0.6757083836553325
+        },
+        "expected": {
+          "either": 0.8445078459343794,
+          "exact": 0.4978601997146933,
+          "adjacent": 0.985734664764622,
+          "mae": 0.5164051355206848,
+          "macro_f1": 0.29678267944266373,
+          "macro_f1_paper": 0.5277495171330487,
+          "qwk": 0.660082814368369
+        }
+      }
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.8722877604137478,
+      "seconds": 220.6,
+      "dev": {
+        "most likely": {
+          "either": 0.8530670470756063,
+          "exact": 0.5078459343794579,
+          "adjacent": 0.9828815977175464,
+          "mae": 0.5092724679029957,
+          "macro_f1": 0.4412180435334378,
+          "macro_f1_paper": 0.7162001876472801,
+          "qwk": 0.7218980997968494
+        },
+        "expected": {
+          "either": 0.8559201141226819,
+          "exact": 0.5078459343794579,
+          "adjacent": 0.9828815977175464,
+          "mae": 0.5092724679029957,
+          "macro_f1": 0.45817454092799476,
+          "macro_f1_paper": 0.718504557037451,
+          "qwk": 0.7176718693016348
+        }
+      }
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.7960451620449008,
+      "seconds": 228.5,
+      "dev": {
+        "most likely": {
+          "either": 0.8502139800285307,
+          "exact": 0.4921540656205421,
+          "adjacent": 0.978601997146933,
+          "mae": 0.5292439372325249,
+          "macro_f1": 0.46865855319921895,
+          "macro_f1_paper": 0.8417924371276656,
+          "qwk": 0.7181478640577139
+        },
+        "expected": {
+          "either": 0.8502139800285307,
+          "exact": 0.49358059914407987,
+          "adjacent": 0.978601997146933,
+          "mae": 0.5278174037089871,
+          "macro_f1": 0.4557128775960182,
+          "macro_f1_paper": 0.7217945036040109,
+          "qwk": 0.7101269486829591
+        }
+      }
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.7476844610873368,
+      "seconds": 191.7,
+      "dev": {
+        "most likely": {
+          "either": 0.8516405135520685,
+          "exact": 0.4764621968616263,
+          "adjacent": 0.978601997146933,
+          "mae": 0.5449358059914408,
+          "macro_f1": 0.4447319377158218,
+          "macro_f1_paper": 0.8002961660980902,
+          "qwk": 0.7009113127045276
+        },
+        "expected": {
+          "either": 0.8487874465049928,
+          "exact": 0.47075606276747506,
+          "adjacent": 0.9771754636233951,
+          "mae": 0.5520684736091298,
+          "macro_f1": 0.44153969729895576,
+          "macro_f1_paper": 0.7190344621782896,
+          "qwk": 0.6909057233990383
+        }
+      }
+    }
+  ],
+  "chosen": {
+    "epoch": 3,
+    "decision": "most likely",
+    "select": "macro_f1_paper",
+    "dev": {
+      "either": 0.8502139800285307,
+      "exact": 0.4921540656205421,
+      "adjacent": 0.978601997146933,
+      "mae": 0.5292439372325249,
+      "macro_f1": 0.46865855319921895,
+      "macro_f1_paper": 0.8417924371276656,
+      "qwk": 0.7181478640577139
+    }
+  },
+  "checkpoint": "ml/checkpoints/roberta-base-lr2e-05-e4"
+}
