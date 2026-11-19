@@ -53,6 +53,20 @@ def test_alpha_zero_weights_by_inverse_frequency():
     assert weights == pytest.approx(1 / (6 * ratio), rel=1e-3)
 
 
+def test_batch_parts_add_up_to_the_whole_batch_loss():
+    import torch
+
+    from newslingo_ml.transformer import part_loss
+
+    torch.manual_seed(0)
+    logits = torch.randn(7, 6)
+    targets = torch.softmax(torch.randn(7, 6), dim=-1)
+    weights = torch.tensor([3.0, 2.0, 1.0, 0.5, 1.0, 2.5])
+    whole = part_loss(logits, targets, weights, 7)
+    parts = part_loss(logits[:4], targets[:4], weights, 7) + part_loss(logits[4:], targets[4:], weights, 7)
+    assert float(parts) == pytest.approx(float(whole), rel=1e-6)
+
+
 def test_rare_levels_weigh_more_and_the_mean_weight_stays_one():
     weights = class_weights(SKEWED, 0.2)
     ratio = label_counts(SKEWED) / len(SKEWED)

@@ -58,6 +58,9 @@ class Settings:
     seed: int
     class_weight_alpha: float | None = None
     select: str = "either"
+    # Each batch runs in this many parts whose gradients add up, so a larger
+    # model fits in memory while training exactly as with whole batches.
+    accumulate: int = 1
 
 
 def seed_everything(seed: int) -> None:
@@ -77,6 +80,15 @@ def soft_targets(sentences: list[Sentence]) -> torch.Tensor:
         targets[row, sentence.level_a - 1] += 0.5
         targets[row, sentence.level_b - 1] += 0.5
     return targets
+
+
+def part_loss(
+    logits: torch.Tensor, targets: torch.Tensor, weights: torch.Tensor | None, batch_count: int
+) -> torch.Tensor:
+    """A part's mean loss, scaled by its share of the batch, so the parts of a
+    batch add up to the batch's mean loss. With probability targets,
+    cross_entropy averages over sentences even when levels are weighted."""
+    return F.cross_entropy(logits, targets, weight=weights) * (len(targets) / batch_count)
 
 
 def level_decisions(probabilities: np.ndarray) -> dict[str, np.ndarray]:
@@ -178,27 +190,31 @@ def train(settings: Settings, run: str, date: str) -> dict:
         started = time.time()
         permutation = torch.randperm(len(train_texts), generator=order).tolist()
         total_loss = 0.0
+        part_size = -(-settings.batch_size // settings.accumulate)
         for start in range(0, len(permutation), settings.batch_size):
             index = permutation[start : start + settings.batch_size]
-            batch = tokenizer(
-                [train_texts[i] for i in index],
-                padding=True,
-                truncation=True,
-                max_length=settings.max_length,
-                return_tensors="pt",
-            ).to(device())
-            logits = model(**batch).logits
-            loss = F.cross_entropy(
-                logits,
-                targets[index].to(device()),
-                weight=None if weights is None else weights.to(device()),
-            )
-            loss.backward()
+            for part_start in range(0, len(index), part_size):
+                part = index[part_start : part_start + part_size]
+                batch = tokenizer(
+                    [train_texts[i] for i in part],
+                    padding=True,
+                    truncation=True,
+                    max_length=settings.max_length,
+                    return_tensors="pt",
+                ).to(device())
+                logits = model(**batch).logits
+                loss = part_loss(
+                    logits,
+                    targets[part].to(device()),
+                    None if weights is None else weights.to(device()),
+                    len(index),
+                )
+                loss.backward()
+                total_loss += float(loss.detach()) * len(index)
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             schedule.step()
             optimizer.zero_grad()
-            total_loss += float(loss) * len(index)
 
         dev_logits = predict_logits(model, tokenizer, dev_texts, settings)
         if device().type == "mps":
@@ -265,6 +281,9 @@ def main() -> None:
     parser.add_argument("--alpha", type=float, help="weight each level's loss, as newslingo_ml.weighting")
     parser.add_argument("--seed", type=int, default=SEED)
     parser.add_argument("--select", choices=SELECT_METRICS, default="either")
+    parser.add_argument(
+        "--accumulate", type=int, default=1, help="run each batch in this many parts, to save memory"
+    )
     parser.add_argument("--date", default=datetime.date.today().isoformat())
     args = parser.parse_args()
 
@@ -279,6 +298,7 @@ def main() -> None:
         seed=args.seed,
         class_weight_alpha=args.alpha,
         select=args.select,
+        accumulate=args.accumulate,
     )
     run = f"{settings.model.split('/')[-1]}-lr{settings.learning_rate:g}-e{settings.epochs}"
     if settings.class_weight_alpha is not None:
