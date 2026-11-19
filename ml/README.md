@@ -39,7 +39,8 @@ These come from the project's agent instructions and ADR-002.
 - Every dataset has a card in `datasets/` before it is used.
 - Every pretrained model's source, revision and licence are recorded before it is used, and each run's report records the exact revision. In use:
   - `distilroberta-base` from Hugging Face, Apache 2.0: a six-layer distillation of RoBERTa-base trained on OpenWebTextCorpus.
-  - `answerdotai/ModernBERT-base` from Hugging Face, Apache 2.0, first used at revision `8949b909ec900327062f0ebf497f51aef5e6f0c8`: a 22-layer, 149M-parameter encoder from Answer.AI and LightOn (2024), trained on 2 trillion tokens of English text and code. UniversalCEFR (Imperial et al., 2025) found it the strongest fine-tuned model for English CEFR levels.
+  - `FacebookAI/roberta-base` from Hugging Face, MIT, first used at revision `e2da8e2f811d1448a5b465c236feacd80ffbac7b`: the 12-layer, 125M-parameter RoBERTa that `distilroberta-base` was distilled from, trained on about 160 GB of English text.
+  - `answerdotai/ModernBERT-base` from Hugging Face, Apache 2.0, tried at revision `8949b909ec900327062f0ebf497f51aef5e6f0c8`: a 22-layer, 149M-parameter encoder from Answer.AI and LightOn (2024), which UniversalCEFR (Imperial et al., 2025) found the strongest fine-tuned model for English CEFR levels. On 2026-11-19 its fine-tuning ran out of GPU memory on this 8 GB M1 at batch 32 before finishing an epoch, so it needs a machine with more memory.
 - Training on Apple's MPS is not bit-for-bit deterministic: a transformer report states the run it scores, and a rerun can differ slightly.
 
 ## Layout
