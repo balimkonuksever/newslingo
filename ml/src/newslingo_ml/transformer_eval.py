@@ -36,6 +36,7 @@ from newslingo_ml.transformer import SELECT_METRICS, level_decisions, revision_o
 
 LICENCES = {
     "distilroberta-base": "Apache 2.0",
+    "FacebookAI/roberta-base": "MIT",
     "answerdotai/ModernBERT-base": "Apache 2.0",
     "microsoft/deberta-v3-base": "MIT",
 }
@@ -164,6 +165,14 @@ def report(result: dict) -> str:
         f"- This report's code is at `{result['provenance']['commit']}`"
         + (" with uncommitted changes in `ml/`" if result["provenance"]["uncommitted_changes_in_ml"] else "")
         + ". Training on Apple's MPS is not bit-for-bit deterministic, so a rerun can differ slightly.",
+        *(
+            [
+                f"- This Markdown was rendered from the report's JSON by the code at `{result['rendered_by']}`, "
+                "without scoring anything again."
+            ]
+            if "rendered_by" in result
+            else []
+        ),
         "- Intervals are 95% bootstrap intervals over test sentences (1,000 resamples).",
         "",
         "## Human reference",
@@ -258,7 +267,10 @@ def report(result: dict) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("chosen", help="validation report of the chosen run or average")
+    parser.add_argument("chosen", nargs="?", help="validation report of the chosen run or average")
+    parser.add_argument(
+        "--render", help="write the Markdown for a result JSON this script wrote, without scoring again"
+    )
     parser.add_argument("--previous", help="validation report of the transformer it replaces")
     parser.add_argument("--candidate", action="append", default=[], help="another validation report compared")
     parser.add_argument("--select", choices=SELECT_METRICS, default="macro_f1_paper")
@@ -267,6 +279,16 @@ def main() -> None:
     )
     parser.add_argument("--date", default=datetime.date.today().isoformat())
     args = parser.parse_args()
+
+    if args.render:
+        path = ML_ROOT / args.render
+        rendered = json.loads(path.read_text())
+        rendered["rendered_by"] = provenance()["commit"]
+        path.with_suffix(".md").write_text(report(rendered))
+        print(report(rendered))
+        return
+    if not args.chosen:
+        parser.error("name the chosen validation report, or --render a result")
 
     code = provenance()
     chosen = load_model(args.chosen)
