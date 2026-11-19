@@ -41,6 +41,7 @@ LICENCES = {
     "microsoft/deberta-v3-base": "MIT",
 }
 INTERVAL_METRICS = ("either", "macro_f1_paper", "exact", "adjacent")
+SELECT_LABELS = {"either": "either-annotator accuracy", "macro_f1_paper": "paper's macro-F1"}
 # Arase et al. (2022), Table 6: BERT-base fine-tuned on all of CEFR-SP and
 # scored on its whole test set, mean of 10 runs, per-level F1 the paper's way.
 PAPER_TABLE_6 = {
@@ -68,12 +69,14 @@ def load_model(path: str) -> dict:
                 "epoch": report["chosen"]["epoch"],
             }
         ]
-    settings = members[0]["settings"]
-    name = settings["model"]
-    if settings.get("class_weight_alpha") is not None:
-        name += f", class weights α {settings['class_weight_alpha']:g}"
-    if len(members) > 1:
-        name = f"average of {len(members)} runs of {name}"
+    if len(members) == 1:
+        settings = members[0]["settings"]
+        name = settings["model"]
+        if settings.get("class_weight_alpha") is not None:
+            name += f", class weights α {settings['class_weight_alpha']:g}"
+    else:
+        models = Counter(m["settings"]["model"] for m in members)
+        name = f"average of {len(members)} runs (" + ", ".join(f"{n} × {m}" for m, n in models.items()) + ")"
     return {
         "report": path,
         "name": name,
@@ -152,8 +155,8 @@ def report(result: dict) -> str:
         f"`{chosen['report']}`:",
         *model_lines(chosen),
         f"- Selection: every candidate below was scored on the validation split, and the chosen one "
-        f"has the best {result['select']} (ties broken by QWK). The test split was then read once, "
-        "for the chosen model, the previous transformer, the light model and the two baselines.",
+        f"has the best {SELECT_LABELS[result['select']]} (ties broken by QWK). The test split was then "
+        "read for the chosen model, the previous transformer, the light model and the two baselines.",
     ]
     if previous:
         lines += [
