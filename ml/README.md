@@ -1,0 +1,56 @@
+# Newslingo ML
+
+The CEFR difficulty classifier, milestone C in `IMPLEMENTATION_PLAN.md`. This is a Python project of its own (ADR-002): the Node app runs the exported model, and nothing here runs in pull-request CI.
+
+## Setup
+
+```bash
+cd ml
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/pip install --no-deps -e .
+```
+
+Python 3.13. `requirements.txt` pins every package; update it with `.venv/bin/pip freeze --exclude-editable > requirements.txt` after a change.
+
+## Commands
+
+Run them from `ml/`. The `-I` flag keeps Python from importing modules from the current directory, since the downloaded data is untrusted.
+
+| Command                                                                                                                        | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.venv/bin/python -I -m newslingo_ml.corpus`                                                                                   | Downloads CEFR-SP's Wiki-Auto files at the pinned revision into `data/raw/`, which git ignores, and checks their SHA-256 digests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `.venv/bin/python -I -m newslingo_ml.sentence_eval`                                                                            | Trains the baselines and candidates, chooses one on the validation split, scores the test split once, and writes `reports/<date>-sentence-level.md` and `.json` and the chosen model to `models/cefr-sentence.json`.                                                                                                                                                                                                                                                                                                                                                                                  |
+| `.venv/bin/python -I -m newslingo_ml.sentence_eval --dev-only`                                                                 | Scores every candidate on the validation split and stops, never reading the test split.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `.venv/bin/python -I -m newslingo_ml.transformer`                                                                              | Fine-tunes `distilroberta-base` (or `--model`) on the training split, scores the validation split after every epoch, keeps the best epoch and decision rule in `checkpoints/<run>/`, and writes `reports/<date>-transformer-dev-<run>.json`. `--alpha 0.2` weights rare levels as the CEFR-SP paper does, `--seed` changes the seed, and `--select macro_f1_paper` keeps the epoch by the paper's macro-F1 instead of either-annotator accuracy. Downloads the pretrained model from Hugging Face on first use. Never reads the test split. About 10 minutes on an M1's GPU for `distilroberta-base`. |
+| `.venv/bin/python -I -m newslingo_ml.ensemble --name <name> reports/<run-a>.json reports/<run-b>.json`                         | Averages several kept runs' probabilities on the validation split, chooses the decision rule there, and writes `reports/<date>-ensemble-dev-<name>.json`. Never reads the test split.                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `.venv/bin/python -I -m newslingo_ml.transformer_eval <chosen>.json --previous <old>.json --candidate <other>.json --dev-only` | Scores the chosen run or average and every candidate on the validation split, and stops.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `.venv/bin/python -I -m newslingo_ml.transformer_eval <chosen>.json --previous <old>.json --candidate <other>.json`            | Checks that the chosen model is the best candidate on the validation split by `--select` (the paper's macro-F1 unless set), then scores it once on the test split beside the transformer it replaces, the light model and the baselines, and writes `reports/<date>-transformer.md` and `.json`.                                                                                                                                                                                                                                                                                                      |
+| `.venv/bin/python -I -m pytest`                                                                                                | Unit tests for the text rules, features, metrics and loss weights.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+## Rules
+
+These come from the project's agent instructions and ADR-002.
+
+- The test split is read only after a model is chosen on the validation split, and nothing is tuned on it.
+- Every result sits beside its baselines: the majority class and a Flesch–Kincaid readability formula.
+- Every reported number is reproducible from a committed script, the pinned data and the fixed seed. Reports record the code commit, data revision and package versions. Commit the code before a run, so the report names a commit that holds it.
+- Reports are written by the scripts and committed as they are. Never edit one by hand; rerun it.
+- Every dataset has a card in `datasets/` before it is used.
+- Every pretrained model's source, revision and licence are recorded before it is used, and each run's report records the exact revision. In use:
+  - `distilroberta-base` from Hugging Face, Apache 2.0: a six-layer distillation of RoBERTa-base trained on OpenWebTextCorpus.
+  - `FacebookAI/roberta-base` from Hugging Face, MIT, first used at revision `e2da8e2f811d1448a5b465c236feacd80ffbac7b`: the 12-layer, 125M-parameter RoBERTa that `distilroberta-base` was distilled from, trained on about 160 GB of English text.
+  - `answerdotai/ModernBERT-base` from Hugging Face, Apache 2.0, tried at revision `8949b909ec900327062f0ebf497f51aef5e6f0c8`: a 22-layer, 149M-parameter encoder from Answer.AI and LightOn (2024), which UniversalCEFR (Imperial et al., 2025) found the strongest fine-tuned model for English CEFR levels. On 2026-11-19 its fine-tuning ran out of GPU memory on this 8 GB M1 at batch 32 before finishing an epoch, so it needs a machine with more memory.
+- Training on Apple's MPS is not bit-for-bit deterministic: a transformer report states the run it scores, and a rerun can differ slightly.
+
+## Layout
+
+| Path                | What it holds                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `data/cefr-sp.json` | The data manifest: source, revision, licence, and each file's path, digest and rows.                                                      |
+| `datasets/`         | Dataset cards.                                                                                                                            |
+| `src/newslingo_ml/` | Loading, text rules, features, metrics and the evaluation script.                                                                         |
+| `models/`           | Exported models, which the Node app loads.                                                                                                |
+| `checkpoints/`      | Fine-tuned transformer weights, 330–480 MB each; the chosen average uses four. Git ignores them; rebuild with `newslingo_ml.transformer`. |
+| `reports/`          | Evaluation reports, one per run.                                                                                                          |
+| `tests/`            | pytest tests.                                                                                                                             |

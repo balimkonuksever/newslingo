@@ -10,3 +10,7 @@ pnpm-lock.yaml
 # Preserve long-form project documents without formatter churn.
 IMPLEMENTATION_PLAN.md
 bilingual_news_english_learning_plan.md
+
+# Written by the ML scripts: regenerate them rather than reformat them.
+ml/models/
+ml/reports/

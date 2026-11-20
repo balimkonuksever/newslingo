@@ -1,0 +1,24 @@
+{
+  "name": "CEFR-SP, Wiki-Auto subset",
+  "source": "https://github.com/yukiar/CEFR-SP",
+  "revision": "2ba4a5005fbff68ab0f863891cf977c50fdcda29",
+  "licence": "CC BY-SA 3.0",
+  "card": "ml/datasets/cefr-sp.md",
+  "files": {
+    "train": {
+      "path": "CEFR-SP/Wiki-Auto/CEFR-SP_Wikiauto_train.txt",
+      "sha256": "f431fbeae144844c929ddff594ae7a7ac927469478a9b524738d81e7f2759c48",
+      "rows": 5990
+    },
+    "dev": {
+      "path": "CEFR-SP/Wiki-Auto/CEFR-SP_Wikiauto_dev.txt",
+      "sha256": "e5aaf45e7cba02ae6785716d12c799c1f73e08942d7e2ee36145fdc4bfb8dcf6",
+      "rows": 701
+    },
+    "test": {
+      "path": "CEFR-SP/Wiki-Auto/CEFR-SP_Wikiauto_test.txt",
+      "sha256": "edefde3a3686e9f6fea9c738fde6628ab8fc26a6b5797f75023a274d76cc278a",
+      "rows": 762
+    }
+  }
+}

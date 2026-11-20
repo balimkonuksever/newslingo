@@ -1,0 +1,140 @@
+{
+  "date": "2026-11-13",
+  "run": "distilroberta-base-lr3e-05-e4",
+  "settings": {
+    "model": "distilroberta-base",
+    "epochs": 4,
+    "learning_rate": 3e-05,
+    "batch_size": 32,
+    "max_length": 96,
+    "warmup": 0.06,
+    "weight_decay": 0.01,
+    "seed": 20261104
+  },
+  "pretrained": {
+    "model": "distilroberta-base",
+    "revision": null
+  },
+  "device": "mps",
+  "provenance": {
+    "commit": "8701470fd172040feb42234d48aa5ee5997dbd5b",
+    "uncommitted_changes_in_ml": false,
+    "python": "3.13.5",
+    "packages": {
+      "numpy": "2.5.4",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1"
+    }
+  },
+  "packages": {
+    "torch": "2.15.0",
+    "transformers": "5.22.2"
+  },
+  "epochs": [
+    {
+      "epoch": 1,
+      "train_loss": 1.137456125787184,
+      "seconds": 103.6,
+      "dev": {
+        "most likely": {
+          "either": 0.8601997146932953,
+          "exact": 0.5035663338088445,
+          "adjacent": 0.9843081312410842,
+          "mae": 0.5121255349500713,
+          "macro_f1": 0.4718945697829664,
+          "qwk": 0.6813031820638846
+        },
+        "expected": {
+          "either": 0.8530670470756063,
+          "exact": 0.4964336661911555,
+          "adjacent": 0.985734664764622,
+          "mae": 0.5178316690442225,
+          "macro_f1": 0.31324434351431696,
+          "qwk": 0.6677868999523612
+        }
+      }
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.8542314180149658,
+      "seconds": 119.5,
+      "dev": {
+        "most likely": {
+          "either": 0.8245363766048502,
+          "exact": 0.463623395149786,
+          "adjacent": 0.9629101283880172,
+          "mae": 0.5734664764621968,
+          "macro_f1": 0.375486018772069,
+          "qwk": 0.6937085200412683
+        },
+        "expected": {
+          "either": 0.8288159771754636,
+          "exact": 0.47075606276747506,
+          "adjacent": 0.9629101283880172,
+          "mae": 0.5663338088445078,
+          "macro_f1": 0.39509329865653603,
+          "qwk": 0.6892328593728556
+        }
+      }
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.7882060160023939,
+      "seconds": 143.7,
+      "dev": {
+        "most likely": {
+          "either": 0.8530670470756063,
+          "exact": 0.514978601997147,
+          "adjacent": 0.9743223965763196,
+          "mae": 0.5106990014265336,
+          "macro_f1": 0.4939000251121712,
+          "qwk": 0.7211969611625593
+        },
+        "expected": {
+          "either": 0.8616262482168331,
+          "exact": 0.5135520684736091,
+          "adjacent": 0.9771754636233951,
+          "mae": 0.5092724679029957,
+          "macro_f1": 0.47789667018457954,
+          "qwk": 0.7195870245923977
+        }
+      }
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.7407711963621723,
+      "seconds": 175.9,
+      "dev": {
+        "most likely": {
+          "either": 0.854493580599144,
+          "exact": 0.48787446504992865,
+          "adjacent": 0.9771754636233951,
+          "mae": 0.5349500713266762,
+          "macro_f1": 0.4597000285827102,
+          "qwk": 0.7051440913999887
+        },
+        "expected": {
+          "either": 0.8559201141226819,
+          "exact": 0.4864479315263909,
+          "adjacent": 0.9771754636233951,
+          "mae": 0.536376604850214,
+          "macro_f1": 0.4550251549984435,
+          "qwk": 0.7017046165655689
+        }
+      }
+    }
+  ],
+  "chosen": {
+    "epoch": 3,
+    "decision": "expected",
+    "dev": {
+      "either": 0.8616262482168331,
+      "exact": 0.5135520684736091,
+      "adjacent": 0.9771754636233951,
+      "mae": 0.5092724679029957,
+      "macro_f1": 0.47789667018457954,
+      "qwk": 0.7195870245923977
+    }
+  },
+  "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4"
+}
