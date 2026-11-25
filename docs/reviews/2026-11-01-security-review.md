@@ -59,10 +59,26 @@ The route error page shows only the error's reference, and production server err
 `pnpm audit` on 2026-11-01 found 57 advisories (3 critical, 20 high). Next.js went from 16.3.3 to 16.3.8 and zod from 4.5.2 to 4.6.7, which left 48 (2 critical, 18 high). None of them reaches the static site, whose only third-party code in the browser is React and Next.js's client runtime:
 
 - Next.js 16.3.8: two critical advisories and one high one, fixed only in 16.4.1. They concern the image optimization API and `use cache`, which the project does not use (the site build is a static export, and `sharp` is not even built), and Server Actions, which only the local admin runs. **Resolved on 2026-11-25:** Next.js 16.4.6 fixes them and the medium advisories published since (decision log, 2026-11-25).
-- Prisma's command-line tooling (`deepmerge-ts`, `mysql2`, `fast-uri`), pinned with Prisma by ADR-001. It runs only during builds and on the owner's computer, and `mysql2` is never used.
-- Test, lint and build tooling: `undici`, `vite` and `@vitest/mocker` through Vitest and jsdom, `brace-expansion` and `minimatch` through ESLint, and `source-map-js` through the CSS and React tooling.
+- Prisma's command-line tooling (`deepmerge-ts`, `mysql2`, `fast-uri`), pinned with Prisma by ADR-001. It runs only during builds and on the owner's computer, and `mysql2` is never used. **Partly resolved on 2026-11-25:** `fast-uri` was updated; the rest remain (below).
+- Test, lint and build tooling: `undici`, `vite` and `@vitest/mocker` through Vitest and jsdom, `brace-expansion` and `minimatch` through ESLint, and `source-map-js` through the CSS and React tooling. **Resolved on 2026-11-25** (below).
 
-Follow-ups: Next.js 16.4 in its own change, re-checking Next's agent-file writer as the loader rules require, and routine updates of the test and lint tooling. The first two were done on 2026-11-25: the writer changed in 16.4, so `next.config.ts` switches it off (decision log).
+Follow-ups: Next.js 16.4 in its own change, re-checking Next's agent-file writer as the loader rules require, and routine updates of the test and lint tooling. All three were done on 2026-11-25: the writer changed in 16.4, so `next.config.ts` switches it off, and the tooling updates follow (decision log).
+
+**Tooling updates, 2026-11-25.** With Next.js 16.4.6, `pnpm audit` listed 45 advisories (17 high, none critical), none of them in Next.js. Updating the tooling within the ranges already declared left 4 (3 high), all in packages Prisma pins (below). What changed:
+
+- Vitest 4.1.11 to 4.1.12, which brought `@vitest/mocker` 4.1.12, and jsdom 29.0.0 to 29.1.1, both within their ranges in `package.json`.
+- Within the ranges of the packages that depend on them: `undici` 7.30.2, `vite` 8.3.8, `typescript-eslint` 8.74.0, whose parser moved to `minimatch` 11, `brace-expansion` 1.1.22 and 5.1.0, `source-map-js` 1.2.4, and `fast-uri` 3.1.9, which Prisma's command line reaches through `ajv`.
+- No override was kept. `pnpm update` holds on to the version pnpm installed for a peer dependency, so `vite` moved through an override in `pnpm-workspace.yaml` (pnpm 11 reads overrides there, not from `package.json`), which was removed once the lockfile held 8.3.8.
+
+**Remaining on 2026-11-25:** four advisories in packages that Prisma 7.10.0 pins to exact versions. Only Prisma's command line uses them, in CI, in site builds and on the owner's computer:
+
+- `mysql2` 3.15.3, one high advisory and one moderate: a malicious MySQL server can make it send the password in plain text, or exhaust its memory with compressed packets. Prisma Studio loads it only to open a MySQL database, and this project's database is PostgreSQL. Better Auth lists it as an optional peer and uses Prisma here.
+- `deepmerge-ts` 7.1.5, one high advisory: merging two objects that refer to themselves exhausts the stack. Prisma merges the layers of the project's own `prisma.config.ts` with it.
+- `effect` 3.20.0, one high advisory, published on 2026-11-19: decoding untrusted text with a `Schema.TemplateLiteral` of several string parts can block for seconds. `@prisma/config` checks the project's own configuration with Effect's `Schema` and uses no `Schema.TemplateLiteral`.
+
+Overriding them would run Prisma's command line on versions its release does not pin, and `deepmerge-ts` 8 is a new major version. **Open, for the owner:** Prisma 7.10.1, published on 2026-10-15, pins `mysql2` 3.24.4 and `deepmerge-ts` 8.0.2, which fix three of the four, but moving to it means amending ADR-001's exact pin. It still pins `effect` 3.20.0, so that advisory waits for a later Prisma release.
+
+Major versions were left for their own changes: ESLint 10, Vitest 5 and jsdom 31. npm marks every ESLint 9 release as no longer supported.
 
 ## 7. GitHub, once the repository is public
 
