@@ -83,7 +83,14 @@ CLASSIFIER_REPORT = "reports/2026-11-19-transformer.json"
 
 LEVEL_OF = {name: level for level, name in LEVEL_NAMES.items()}
 TOKEN_FIELDS = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")
-MODEL_USAGE_FIELDS = ("inputTokens", "outputTokens", "cacheReadInputTokens", "cacheCreationInputTokens", "costUSD")
+MODEL_USAGE_FIELDS = (
+    "inputTokens",
+    "cacheCreationInputTokens",
+    "cacheReadInputTokens",
+    "outputTokens",
+    "thinkingTokens",
+    "costUSD",
+)
 INTERVAL_METRICS = ("either", "macro_f1_paper", "exact", "adjacent")
 
 
@@ -221,7 +228,9 @@ def attempt(
     call = claude_code.run(
         system_prompt, message([sentences[i] for i in indices]), SCHEMA, MODEL, EFFORT, TIMEOUT_SECONDS
     )
-    return record(split, batch, indices, sentences, prompt_digest, started, call)
+    entry = record(split, batch, indices, sentences, prompt_digest, started, call)
+    entry["plan_window_used"] = call.plan_window_used  # Printed while running, never logged.
+    return entry
 
 
 def send_pass(
@@ -245,6 +254,7 @@ def send_pass(
             if future.cancelled():
                 continue
             entry = future.result()
+            window = entry.pop("plan_window_used", None)
             log.write(json.dumps(entry, ensure_ascii=False) + "\n")
             log.flush()
             if entry["error"]:
@@ -254,7 +264,10 @@ def send_pass(
                     stopped = entry
                     for other in futures:
                         other.cancel()
-            print(f"  {done} of {len(pending)} batches sent, {failed} failed")
+            print(
+                f"  {done} of {len(pending)} batches sent, {failed} failed"
+                + (f"; {100 * window:.0f}% of the plan's five-hour window used" if window is not None else "")
+            )
     if stopped:
         raise claude_code.RunStopped(
             f"Stopped at batch {stopped['batch']}: {stopped['error']}: {stopped.get('detail')}\n"
@@ -295,7 +308,14 @@ def accounting(records: list[dict]) -> dict:
         "calls": len(records),
         "failed_calls": len(records) - len(answered),
         "errors": dict(Counter(entry["error"] for entry in records if entry["error"])),
-        "tokens": {name: sum(entry["usage"].get(name) or 0 for entry in records) for name in TOKEN_FIELDS},
+        # By model: Claude Code makes small calls of its own beside the rating.
+        "tokens_by_model": {
+            model: {
+                name: sum((entry["model_usage"].get(model) or {}).get(name) or 0 for entry in records)
+                for name in MODEL_USAGE_FIELDS
+            }
+            for model in sorted({model for entry in records for model in entry["model_usage"]})
+        },
         "cost_usd": float(sum(entry["cost_usd"] or 0 for entry in records)),
         "served_models": sorted({name for entry in records for name in entry["model_usage"]}),
         "claude_code_versions": sorted(
@@ -549,7 +569,6 @@ def report(result: dict) -> str:
     ]
     for level, row in zip(LEVELS, result["confusion_llm"], strict=True):
         lines.append(f"| {LEVEL_NAMES[level]} | " + " | ".join(str(n) for n in row) + " |")
-    tokens = use["tokens"]
     errors = ", ".join(f"{n} × {error}" for error, n in use["errors"].items())
     lines += [
         "",
@@ -558,9 +577,12 @@ def report(result: dict) -> str:
         f"- Calls for the test split: {use['calls']} for {sentences} sentences ({use['failed_calls']} failed"
         + (f": {errors}" if errors else "")
         + f"), from {use['first_call']} to {use['last_call']}.",
-        f"- Tokens: {tokens['input_tokens']:,} input, {tokens['cache_creation_input_tokens']:,} written to the "
-        f"cache, {tokens['cache_read_input_tokens']:,} read from it, and {tokens['output_tokens']:,} output, "
-        "thinking included.",
+        *(
+            f"- Tokens on `{model}`: {t['inputTokens']:,} input, {t['cacheCreationInputTokens']:,} written to the "
+            f"cache, {t['cacheReadInputTokens']:,} read from it, and {t['outputTokens']:,} output, of which "
+            f"{t['thinkingTokens']:,} thinking; notional cost ${t['costUSD']:.2f}."
+            for model, t in use["tokens_by_model"].items()
+        ),
         f"- Notional cost at API prices, as Claude Code computes it: ${use['cost_usd']:.2f}, "
         f"${use['cost_usd'] / sentences:.4f} a sentence. The calls ran on the user's plan, which bills none of "
         "it.",
@@ -605,7 +627,7 @@ def print_summary(split: str, result: dict) -> None:
         print(f"{label}: " + ", ".join(f"{LEVEL_NAMES[level]} {result[key][str(level)]}" for level in LEVELS))
     use = result["accounting"]
     print(
-        f"{use['calls']} calls, {use['failed_calls']} failed; tokens {use['tokens']}; notional cost "
+        f"{use['calls']} calls, {use['failed_calls']} failed; tokens {use['tokens_by_model']}; notional cost "
         f"${use['cost_usd']:.2f}; median {seconds(use['seconds_per_call']['median'])} a call."
     )
 

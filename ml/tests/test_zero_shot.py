@@ -87,8 +87,9 @@ def test_record_keeps_sentences_by_digest_never_their_text():
     assert kept["model_usage"]["claude-opus-5-5"] == {
         "inputTokens": 10,
         "outputTokens": 50,
-        "cacheReadInputTokens": None,
         "cacheCreationInputTokens": None,
+        "cacheReadInputTokens": None,
+        "thinkingTokens": None,
         "costUSD": 0.01,
     }
 
@@ -127,7 +128,9 @@ def test_send_pass_logs_every_call_and_stops_at_a_failure_every_call_would_repea
 
     def attempt(split, batch, indices, sentences, system_prompt, prompt_digest):
         call = failed("authentication_failed") if batch == 2 else answered(*["B1"] * len(indices))
-        return zero_shot.record(split, batch, indices, sentences, prompt_digest, "now", call)
+        return zero_shot.record(split, batch, indices, sentences, prompt_digest, "now", call) | {
+            "plan_window_used": 0.5
+        }
 
     monkeypatch.setattr(zero_shot, "attempt", attempt)
     pending = {0: [0, 1], 1: [2, 3], 2: [4, 5]}
@@ -135,6 +138,7 @@ def test_send_pass_logs_every_call_and_stops_at_a_failure_every_call_would_repea
         zero_shot.send_pass("dev", SENTENCES, pending, "Rate them.", PROMPT_DIGEST, workers=1)
     records = zero_shot.read_log(log)
     assert [r["batch"] for r in records] == [0, 1, 2]
+    assert not any("plan_window_used" in r for r in records)
     assert zero_shot.answers(records, SENTENCES, PROMPT_DIGEST) == {0: 3, 1: 3, 2: 3, 3: 3}
 
 
@@ -178,11 +182,15 @@ def test_accounting_counts_tokens_cost_and_failures():
     assert use["calls"] == 3
     assert use["failed_calls"] == 1
     assert use["errors"] == {"timeout": 1}
-    assert use["tokens"] == {
-        "input_tokens": 20,
-        "cache_creation_input_tokens": 0,
-        "cache_read_input_tokens": 1800,
-        "output_tokens": 100,
+    assert use["tokens_by_model"] == {
+        "claude-opus-5-5": {
+            "inputTokens": 20,
+            "cacheCreationInputTokens": 0,
+            "cacheReadInputTokens": 0,
+            "outputTokens": 100,
+            "thinkingTokens": 0,
+            "costUSD": pytest.approx(0.02),
+        }
     }
     assert use["cost_usd"] == pytest.approx(0.02)
     assert use["seconds_per_call"]["median"] == 4.5

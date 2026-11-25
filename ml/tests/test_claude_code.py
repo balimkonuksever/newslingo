@@ -52,8 +52,16 @@ def lines(*messages: dict) -> list[str]:
     return [json.dumps(message) + "\n" for message in messages]
 
 
+# As Claude Code 2.1.332 printed it on 2026-11-25, trimmed.
+WINDOW = {
+    "type": "rate_limit_event",
+    "rate_limit_info": {"status": "allowed", "unifiedWindows": {"five_hour": {"utilization": 0.15}}},
+}
+
+
 def test_read_stream_returns_the_answer_and_what_it_used():
-    call = claude_code.read_stream(lines(INIT, RESULT))
+    call = claude_code.read_stream(lines(INIT, WINDOW, RESULT))
+    assert call.plan_window_used == 0.15
     assert call.error is None
     assert call.output == {"level": "B1"}
     assert call.model == "claude-opus-5-5"

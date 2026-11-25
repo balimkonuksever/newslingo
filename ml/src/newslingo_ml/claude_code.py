@@ -52,6 +52,9 @@ class Call:
     duration_api_ms: int | None = None
     num_turns: int | None = None
     wall_seconds: float | None = None
+    # How much of the plan's five-hour window is used, as Claude Code reports
+    # it: for watching a run, not for the log.
+    plan_window_used: float | None = None
 
 
 def check_not_nested() -> None:
@@ -141,6 +144,9 @@ def read_stream(lines: Iterable[str]) -> Call:
             call.error = str(message["error"])
             call.detail = _text(message)
             return call
+        elif kind == "rate_limit_event":
+            window = ((message.get("rate_limit_info") or {}).get("unifiedWindows") or {}).get("five_hour") or {}
+            call.plan_window_used = window.get("utilization")
         elif kind == "result":
             call.usage = message.get("usage") or {}
             call.model_usage = message.get("modelUsage") or {}
