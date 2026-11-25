@@ -195,6 +195,7 @@ def test_accounting_counts_tokens_cost_and_failures():
     assert use["cost_usd"] == pytest.approx(0.02)
     assert use["seconds_per_call"]["median"] == 4.5
     assert use["served_models"] == ["claude-opus-5-5"]
+    assert use["session_models"] == ["claude-opus-5-5"]
 
 
 def test_the_prompt_is_the_versioned_file():

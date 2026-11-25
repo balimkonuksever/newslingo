@@ -317,6 +317,7 @@ def accounting(records: list[dict]) -> dict:
             for model in sorted({model for entry in records for model in entry["model_usage"]})
         },
         "cost_usd": float(sum(entry["cost_usd"] or 0 for entry in records)),
+        "session_models": sorted({entry["served_model"] for entry in records if entry["served_model"]}),
         "served_models": sorted({name for entry in records for name in entry["model_usage"]}),
         "claude_code_versions": sorted(
             {entry["claude_code_version"] for entry in records if entry["claude_code_version"]}
@@ -476,8 +477,15 @@ def report(result: dict) -> str:
         "sentences of the test split. Card: `ml/datasets/cefr-sp.md`. Gold level and metrics as in the earlier "
         "reports; the paper's macro-F1 is the metric of Arase et al. (2022).",
         f"- Zero-shot LLM: `{llm['model']}` at {llm['effort']} effort, through Claude Code headless (`claude -p`, "
-        f"version {', '.join(use['claude_code_versions'])}) on the user's Claude plan. Models that served the "
-        f"calls: {', '.join(f'`{m}`' for m in use['served_models'])}.",
+        f"version {', '.join(use['claude_code_versions'])}) on the user's Claude plan. Every call's session ran "
+        f"on {', '.join(f'`{m}`' for m in use['session_models'])}"
+        + (
+            "; Claude Code also made small calls of its own to "
+            + ", ".join(f"`{m}`" for m in use["served_models"] if m not in use["session_models"])
+            + ", counted below."
+            if set(use["served_models"]) - set(use["session_models"])
+            else "."
+        ),
         f"- The sentences went in an order fixed by the seed, in batches of {llm['batch_size']}, detokenized and "
         f"numbered, with the system prompt `ml/{llm['prompt']['path']}` (version {llm['prompt']['version']}, "
         f"SHA-256 `{llm['prompt']['sha256'][:16]}…`) and a JSON schema that allows one of the six levels for "
@@ -588,8 +596,9 @@ def report(result: dict) -> str:
         "it.",
         f"- Time per answered call of {llm['batch_size']} sentences: median "
         f"{seconds(use['seconds_per_call']['median'])}, 90th percentile "
-        f"{seconds(use['seconds_per_call']['p90'])}, of which the API took a median of "
-        f"{seconds(use['api_seconds_per_call']['median'])}. The classifier needs no call.",
+        f"{seconds(use['seconds_per_call']['p90'])}. Claude Code counts a median of "
+        f"{seconds(use['api_seconds_per_call']['median'])} of API time a call, its own calls included. The "
+        "classifier needs no call.",
     ]
     if result["pilot"]:
         pilot = result["pilot"]
