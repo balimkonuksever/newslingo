@@ -58,11 +58,11 @@ The route error page shows only the error's reference, and production server err
 
 `pnpm audit` on 2026-11-01 found 57 advisories (3 critical, 20 high). Next.js went from 16.3.3 to 16.3.8 and zod from 4.5.2 to 4.6.7, which left 48 (2 critical, 18 high). None of them reaches the static site, whose only third-party code in the browser is React and Next.js's client runtime:
 
-- Next.js 16.3.8: two critical advisories and one high one, fixed only in 16.4.1. They concern the image optimization API and `use cache`, which the project does not use (the site build is a static export, and `sharp` is not even built), and Server Actions, which only the local admin runs.
+- Next.js 16.3.8: two critical advisories and one high one, fixed only in 16.4.1. They concern the image optimization API and `use cache`, which the project does not use (the site build is a static export, and `sharp` is not even built), and Server Actions, which only the local admin runs. **Resolved on 2026-11-25:** Next.js 16.4.6 fixes them and the medium advisories published since (decision log, 2026-11-25).
 - Prisma's command-line tooling (`deepmerge-ts`, `mysql2`, `fast-uri`), pinned with Prisma by ADR-001. It runs only during builds and on the owner's computer, and `mysql2` is never used.
 - Test, lint and build tooling: `undici`, `vite` and `@vitest/mocker` through Vitest and jsdom, `brace-expansion` and `minimatch` through ESLint, and `source-map-js` through the CSS and React tooling.
 
-Follow-ups: Next.js 16.4 in its own change, re-checking Next's agent-file writer as the loader rules require, and routine updates of the test and lint tooling.
+Follow-ups: Next.js 16.4 in its own change, re-checking Next's agent-file writer as the loader rules require, and routine updates of the test and lint tooling. The first two were done on 2026-11-25: the writer changed in 16.4, so `next.config.ts` switches it off (decision log).
 
 ## 7. GitHub, once the repository is public
 
