@@ -2,7 +2,8 @@
 test split once, beside the transformer it replaces and the baselines.
 
     python -I -m newslingo_ml.transformer_eval CHOSEN [--previous PREVIOUS]
-        [--candidate REPORT ...] [--select either|macro_f1_paper] [--dev-only]
+        [--candidate REPORT ...] [--select either|macro_f1_paper]
+        [--not-below either|macro_f1_paper] [--dev-only]
 
 CHOSEN is the validation report of the model chosen on the validation split:
 one run from newslingo_ml.transformer or an average from
@@ -10,10 +11,14 @@ newslingo_ml.ensemble. --candidate names the other validation reports it was
 compared with, and --previous the transformer it replaces. Every one of them
 is scored again on the validation split, and the script stops unless CHOSEN
 has the best --select metric (ties broken by QWK): nothing here chooses
-anything. The test split is then read once, for the chosen model, the
-previous one, the light model sentence_eval chooses and the two baselines.
-Writes ml/reports/<date>-transformer.md and .json. With --dev-only it prints
-the validation scores and stops before the test split.
+anything. With --not-below, only candidates at least as good as PREVIOUS on
+that metric count, and CHOSEN must also beat PREVIOUS on --select. The test
+split is then read once, for the chosen model, the previous one, the light
+model sentence_eval chooses and the two baselines. Writes
+ml/reports/<date>-transformer.md and .json. With --dev-only it prints the
+validation scores, writes them with each candidate's paired difference from
+PREVIOUS and the rule's verdict to ml/reports/<date>-transformer-dev-selection.json,
+and stops before the test split.
 """
 
 import argparse
@@ -387,13 +392,15 @@ def main() -> None:
     dev = corpus.load("dev")
     dev_texts = [detokenize(s.text) for s in dev]
     validation = []
+    dev_levels = {}
     for model in compared:
+        dev_levels[model["report"]] = predict(model, dev_texts)
         validation.append(
             {
                 "name": model["name"],
                 "report": model["report"],
                 "decision": model["decision"],
-                "scores": scores(predict(model, dev_texts), dev),
+                "scores": scores(dev_levels[model["report"]], dev),
                 "chosen": model is chosen,
                 "previous": model is previous,
             }
@@ -410,7 +417,39 @@ def main() -> None:
                 f"{entry['report']}: {entry['decision']}, either {values['either']:.3f}, paper macro-F1 "
                 f"{values['macro_f1_paper']:.3f}, exact {values['exact']:.3f}, QWK {values['qwk']:.3f}"
             )
-        print(f"{args.chosen}: {problem or 'may go on to the test split.'} The test split was not read.")
+        differences = {}
+        if previous:
+            for entry in validation:
+                if entry["previous"]:
+                    continue
+                differences[entry["report"]] = {
+                    metric: paired_difference(
+                        dev_levels[entry["report"]], dev_levels[previous["report"]], dev, metric, SEED
+                    )
+                    for metric in ("either", "macro_f1_paper")
+                }
+                for metric, (difference, low, high) in differences[entry["report"]].items():
+                    print(
+                        f"{entry['report']} minus {previous['report']}, {metric}: {100 * difference:+.1f} points "
+                        f"(paired 95% interval {100 * low:+.1f} to {100 * high:+.1f})"
+                    )
+        verdict = problem or "may go on to the test split."
+        record = {
+            "date": args.date,
+            "provenance": code,
+            "torch": torch.__version__,
+            "select": args.select,
+            "not_below": args.not_below,
+            "chosen": args.chosen,
+            "previous": args.previous,
+            "candidates": args.candidate,
+            "validation": validation,
+            "differences_from_previous": differences,
+            "verdict": verdict,
+        }
+        path = ML_ROOT / "reports" / f"{args.date}-transformer-dev-selection.json"
+        path.write_text(json.dumps(record, indent=2) + "\n")
+        print(f"{args.chosen}: {verdict} The test split was not read. Written to {path.relative_to(ML_ROOT)}.")
         return
     if problem:
         raise SystemExit(f"{problem} The test split was not read.")
