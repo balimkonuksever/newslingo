@@ -8,7 +8,7 @@ The **Reader Release** (milestones M1–M3) is in place. It runs entirely on Pos
 - category pages
 - a bilingual reader that alternates English paragraphs with their Turkish translations, with controls to hide the translation and change the text size
 
-M4, contextual vocabulary and Real English expressions, is complete: every English word in the reader can be looked up, and marked expressions open their Real English cards. M5, moderation, is complete: admins sign in at `/admin/sign-in`, review every article in any status, and publish, reject, archive or restore it, with each change recorded. Next is milestone W: articles written in Claude Code sessions, both explainers and adapted GOV.UK news, imported as drafts and published through the admin. Licensed news ingestion, automated AI adaptation and scheduled operation (M6–M8) are on hold.
+M4, contextual vocabulary and Real English expressions, is complete: every English word in the reader can be looked up, and marked expressions open their Real English cards. M5, moderation, is complete: admins sign in at `/admin/sign-in`, review every article in any status, and publish, reject, archive or restore it, with each change recorded. Milestone W, articles written in Claude Code sessions, both explainers and adapted GOV.UK news, is under way: its first batch of six, one per category, is published. Since 2026-11-08 they are live as a static site on GitHub Pages, at https://balimkonuksever.github.io/newslingo/, and the release hardening of M9 continues there. Milestone C, a CEFR difficulty classifier in `ml/`, has its sentence-level model trained and evaluated; its article-level check and its use in the app come next. M7, drafting news articles through Claude Code from GOV.UK stories the user picks, is planned. Licensed news ingestion (M6) and scheduled operation (M8) are on hold.
 
 ## Stack
 
@@ -160,7 +160,7 @@ pnpm test:site
 
 runs Playwright against the build in `out/`, served on port 3300 as `pnpm site:serve` serves it, on a desktop and a phone viewport in your installed Google Chrome. It needs no database. Every page the build wrote must load within its content security policy, with no error in the console and no serious axe violation, and an unknown address must get the not-found page. On the published articles it also tries the homepage filters, opening an article, a word lookup from the article's word file, the translation toggle and search, and holds every published article and the search page to the page budget. CI runs it after its site build.
 
-The `Pages` workflow in `.github/workflows/pages.yml` runs the same build against a temporary PostgreSQL and deploys it. A failed build deploys nothing, so the previous site stays live. GitHub Free offers Pages only for public repositories, so its deploy job runs once the repository is public; before that, switch Pages on in the repository's settings, with "GitHub Actions" as the source.
+The `Pages` workflow in `.github/workflows/pages.yml` runs the same build against a temporary PostgreSQL and deploys it. A failed build deploys nothing, so the previous site stays live. GitHub Free offers Pages only for public repositories; this one is public, with "GitHub Actions" as its Pages source.
 
 ## Admin accounts
 
