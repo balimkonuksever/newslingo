@@ -1,0 +1,473 @@
+{
+  "date": "2026-11-25",
+  "data_revision": "2ba4a5005fbff68ab0f863891cf977c50fdcda29",
+  "provenance": {
+    "commit": "cb466f7fcac3e1a86176ca407627c42e76139730",
+    "uncommitted_changes_in_ml": false,
+    "python": "3.13.5",
+    "packages": {
+      "numpy": "2.5.4",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1"
+    }
+  },
+  "torch": "2.15.0",
+  "llm": {
+    "name": "Zero-shot LLM: claude-opus-5-5, high effort, prompt v1",
+    "run": "claude-opus-5-5-high-prompt-v1-batch-20",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "batch_size": 20,
+    "prompt": {
+      "path": "prompts/cefr-zero-shot-v1.txt",
+      "version": "v1",
+      "sha256": "48d8364dce438fb5523da2cd7873d49a80b448d52de0777e6a38e0ff97d34c77"
+    },
+    "schema": {
+      "type": "object",
+      "properties": {
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "level": {
+                "type": "string",
+                "enum": [
+                  "A1",
+                  "A2",
+                  "B1",
+                  "B2",
+                  "C1",
+                  "C2"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "level"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "levels"
+      ],
+      "additionalProperties": false
+    },
+    "timeout_seconds": 600
+  },
+  "pilot": {
+    "log": "reports/zero-shot-dev-claude-opus-5-5-high-prompt-v1-batch-20.jsonl",
+    "sentences": 40,
+    "scores": {
+      "either": 0.675,
+      "exact": 0.525,
+      "adjacent": 0.975,
+      "mae": 0.5,
+      "macro_f1": 0.34392519069938415,
+      "macro_f1_paper": 0.5261904761904762,
+      "qwk": 0.6952908587257618
+    },
+    "human": {
+      "exact": 0.375,
+      "adjacent": 1.0,
+      "qwk": 0.6044303797468353
+    },
+    "predicted_counts": {
+      "1": 0,
+      "2": 2,
+      "3": 6,
+      "4": 14,
+      "5": 12,
+      "6": 6
+    },
+    "level_counts": {
+      "1": 0,
+      "2": 0,
+      "3": 6,
+      "4": 17,
+      "5": 14,
+      "6": 3
+    },
+    "accounting": {
+      "calls": 2,
+      "failed_calls": 0,
+      "errors": {},
+      "tokens_by_model": {
+        "claude-haiku-5-5": {
+          "inputTokens": 4048,
+          "cacheCreationInputTokens": 0,
+          "cacheReadInputTokens": 0,
+          "outputTokens": 211,
+          "thinkingTokens": 166,
+          "costUSD": 0.0005103
+        },
+        "claude-opus-5-5": {
+          "inputTokens": 4,
+          "cacheCreationInputTokens": 2972,
+          "cacheReadInputTokens": 2042,
+          "outputTokens": 666,
+          "thinkingTokens": 0,
+          "costUSD": 0.037520399999999995
+        }
+      },
+      "cost_usd": 0.0380307,
+      "session_models": [
+        "claude-opus-5-5"
+      ],
+      "served_models": [
+        "claude-haiku-5-5",
+        "claude-opus-5-5"
+      ],
+      "claude_code_versions": [
+        "2.1.332"
+      ],
+      "seconds_per_call": {
+        "median": 6.107,
+        "p90": 6.3494
+      },
+      "api_seconds_per_call": {
+        "median": 6.3740000000000006,
+        "p90": 6.9516
+      },
+      "first_call": "2026-11-25T11:19:18+00:00",
+      "last_call": "2026-11-25T11:19:18+00:00"
+    }
+  },
+  "classifier": {
+    "name": "average of 4 runs (3 × distilroberta-base, 1 × FacebookAI/roberta-base)",
+    "report": "reports/2026-11-19-ensemble-dev-all-four.json",
+    "decision": "most likely",
+    "scored_in": "reports/2026-11-19-transformer.json"
+  },
+  "matches_reported": {
+    "Majority class": true,
+    "Readability (Flesch–Kincaid)": true,
+    "Light model: ridge (smoothing 2, alpha 10)": true,
+    "Classifier: average of 4 runs (3 × distilroberta-base, 1 × FacebookAI/roberta-base)": true
+  },
+  "light_model": "ridge (smoothing 2, alpha 10)",
+  "human": {
+    "exact": 0.3648293963254593,
+    "adjacent": 1.0,
+    "qwk": 0.6750882299564268
+  },
+  "test": {
+    "Majority class": {
+      "scores": {
+        "either": 0.6404199475065617,
+        "exact": 0.4645669291338583,
+        "adjacent": 0.8858267716535433,
+        "mae": 0.6548556430446194,
+        "macro_f1": 0.1057347670250896,
+        "macro_f1_paper": 0.13013333333333335,
+        "qwk": 0.0
+      },
+      "intervals": {
+        "either": [
+          0.6076115485564304,
+          0.6758530183727034
+        ],
+        "macro_f1_paper": [
+          0.12615129118531587,
+          0.13505074160811867
+        ],
+        "exact": [
+          0.4330708661417323,
+          0.5
+        ],
+        "adjacent": [
+          0.863517060367454,
+          0.9081364829396326
+        ]
+      }
+    },
+    "Readability (Flesch–Kincaid)": {
+      "scores": {
+        "either": 0.7165354330708661,
+        "exact": 0.458005249343832,
+        "adjacent": 0.916010498687664,
+        "mae": 0.631233595800525,
+        "macro_f1": 0.21541985787168497,
+        "macro_f1_paper": 0.3538969369270147,
+        "qwk": 0.3898595620056421
+      },
+      "intervals": {
+        "either": [
+          0.6850393700787402,
+          0.7480314960629921
+        ],
+        "macro_f1_paper": [
+          0.33272051772649186,
+          0.3734696720579423
+        ],
+        "exact": [
+          0.4251968503937008,
+          0.49606299212598426
+        ],
+        "adjacent": [
+          0.8963254593175853,
+          0.9343832020997376
+        ]
+      }
+    },
+    "Light model: ridge (smoothing 2, alpha 10)": {
+      "scores": {
+        "either": 0.7887139107611548,
+        "exact": 0.4868766404199475,
+        "adjacent": 0.9396325459317585,
+        "mae": 0.5761154855643045,
+        "macro_f1": 0.27660633794785894,
+        "macro_f1_paper": 0.480621790987885,
+        "qwk": 0.5046135141589654
+      },
+      "intervals": {
+        "either": [
+          0.7611548556430446,
+          0.8188976377952756
+        ],
+        "macro_f1_paper": [
+          0.42005095158222633,
+          0.5482501184087365
+        ],
+        "exact": [
+          0.4540682414698163,
+          0.5249343832020997
+        ],
+        "adjacent": [
+          0.9225721784776902,
+          0.9553805774278216
+        ]
+      }
+    },
+    "Classifier: average of 4 runs (3 × distilroberta-base, 1 × FacebookAI/roberta-base)": {
+      "scores": {
+        "either": 0.868766404199475,
+        "exact": 0.49343832020997375,
+        "adjacent": 0.9698162729658792,
+        "mae": 0.536745406824147,
+        "macro_f1": 0.42567791809162564,
+        "macro_f1_paper": 0.7727123101629806,
+        "qwk": 0.6902455628755675
+      },
+      "intervals": {
+        "either": [
+          0.8451443569553806,
+          0.8924212598425197
+        ],
+        "macro_f1_paper": [
+          0.6767695832297758,
+          0.8602494077072916
+        ],
+        "exact": [
+          0.46062992125984253,
+          0.5301837270341208
+        ],
+        "adjacent": [
+          0.9566929133858267,
+          0.9816272965879265
+        ]
+      }
+    },
+    "Zero-shot LLM: claude-opus-5-5, high effort, prompt v1": {
+      "scores": {
+        "either": 0.7020997375328084,
+        "exact": 0.4566929133858268,
+        "adjacent": 0.9330708661417323,
+        "mae": 0.6115485564304461,
+        "macro_f1": 0.39565043678703987,
+        "macro_f1_paper": 0.6060947965575166,
+        "qwk": 0.6156015684116394
+      },
+      "intervals": {
+        "either": [
+          0.6706036745406824,
+          0.7349081364829396
+        ],
+        "macro_f1_paper": [
+          0.521095451169973,
+          0.6904416746179909
+        ],
+        "exact": [
+          0.41863517060367456,
+          0.4921259842519685
+        ],
+        "adjacent": [
+          0.916010498687664,
+          0.9514435695538058
+        ]
+      }
+    }
+  },
+  "differences": {
+    "Either-annotator accuracy, classifier minus zero-shot LLM": [
+      0.16666666666666663,
+      0.1338254593175853,
+      0.2020997375328084
+    ],
+    "Paper's macro-F1, classifier minus zero-shot LLM": [
+      0.16661751360546395,
+      0.014011714881537253,
+      0.31122408692931863
+    ],
+    "QWK, classifier minus zero-shot LLM": [
+      0.07464399446392811,
+      0.038437735819652714,
+      0.11211875416435946
+    ],
+    "Either-annotator accuracy, zero-shot LLM minus light model": [
+      -0.08661417322834641,
+      -0.12339238845144361,
+      -0.04986876640419957
+    ],
+    "Either-annotator accuracy, zero-shot LLM minus readability baseline": [
+      -0.01443569553805768,
+      -0.052526246719160154,
+      0.02496719160104983
+    ]
+  },
+  "level_f1": {
+    "Classifier: average of 4 runs (3 × distilroberta-base, 1 × FacebookAI/roberta-base)": {
+      "1": 0.4,
+      "2": 0.7789473684210526,
+      "3": 0.8722986247544204,
+      "4": 0.8809523809523809,
+      "5": 0.8805460750853242,
+      "6": 0.8235294117647058
+    },
+    "Zero-shot LLM: claude-opus-5-5, high effort, prompt v1": {
+      "1": 0.3333333333333333,
+      "2": 0.65,
+      "3": 0.8,
+      "4": 0.7281399046104928,
+      "5": 0.6050955414012739,
+      "6": 0.52
+    }
+  },
+  "level_counts": {
+    "1": 4,
+    "2": 11,
+    "3": 139,
+    "4": 354,
+    "5": 182,
+    "6": 72
+  },
+  "predicted_counts": {
+    "Classifier: average of 4 runs (3 × distilroberta-base, 1 × FacebookAI/roberta-base)": {
+      "1": 1,
+      "2": 56,
+      "3": 259,
+      "4": 281,
+      "5": 150,
+      "6": 15
+    },
+    "Zero-shot LLM: claude-opus-5-5, high effort, prompt v1": {
+      "1": 2,
+      "2": 51,
+      "3": 189,
+      "4": 301,
+      "5": 166,
+      "6": 53
+    }
+  },
+  "confusion_llm": [
+    [
+      1,
+      2,
+      1,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      8,
+      1,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      27,
+      73,
+      36,
+      3,
+      0
+    ],
+    [
+      0,
+      13,
+      103,
+      170,
+      64,
+      4
+    ],
+    [
+      0,
+      1,
+      11,
+      77,
+      70,
+      23
+    ],
+    [
+      0,
+      0,
+      0,
+      17,
+      29,
+      26
+    ]
+  ],
+  "log": "reports/zero-shot-test-claude-opus-5-5-high-prompt-v1-batch-20.jsonl",
+  "accounting": {
+    "calls": 39,
+    "failed_calls": 0,
+    "errors": {},
+    "tokens_by_model": {
+      "claude-haiku-5-5": {
+        "inputTokens": 78174,
+        "cacheCreationInputTokens": 0,
+        "cacheReadInputTokens": 0,
+        "outputTokens": 6393,
+        "thinkingTokens": 5489,
+        "costUSD": 0.0110139
+      },
+      "claude-opus-5-5": {
+        "inputTokens": 78,
+        "cacheCreationInputTokens": 57135,
+        "cacheReadInputTokens": 39819,
+        "outputTokens": 12735,
+        "thinkingTokens": 0,
+        "costUSD": 0.7200558
+      }
+    },
+    "cost_usd": 0.7310697,
+    "session_models": [
+      "claude-opus-5-5"
+    ],
+    "served_models": [
+      "claude-haiku-5-5",
+      "claude-opus-5-5"
+    ],
+    "claude_code_versions": [
+      "2.1.332"
+    ],
+    "seconds_per_call": {
+      "median": 5.778,
+      "p90": 6.3020000000000005
+    },
+    "api_seconds_per_call": {
+      "median": 6.49,
+      "p90": 7.3154
+    },
+    "first_call": "2026-11-25T11:22:00+00:00",
+    "last_call": "2026-11-25T11:22:51+00:00"
+  }
+}
