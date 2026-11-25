@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-25",
+  "run": "distilroberta-base-lr3e-05-e4-s20261105",
+  "settings": {
+    "model": "distilroberta-base",
+    "epochs": 4,
+    "learning_rate": 3e-05,
+    "batch_size": 32,
+    "max_length": 96,
+    "warmup": 0.06,
+    "weight_decay": 0.01,
+    "seed": 20261105,
+    "class_weight_alpha": null,
+    "select": "either",
+    "accumulate": 1
+  },
+  "pretrained": {
+    "model": "distilroberta-base",
+    "revision": "fb53ab8802853c8e4fbdbcd0529f21fc6f459b2b"
+  },
+  "device": "mps",
+  "provenance": {
+    "commit": "3450cdbd37dd65feb8e4c594a0395204650babfe",
+    "uncommitted_changes_in_ml": false,
+    "python": "3.13.5",
+    "packages": {
+      "numpy": "2.5.4",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1"
+    }
+  },
+  "packages": {
+    "torch": "2.15.0",
+    "transformers": "5.22.2"
+  },
+  "class_weights": null,
+  "epochs": [
+    {
+      "epoch": 1,
+      "train_loss": 1.132321862505752,
+      "seconds": 80.0,
+      "dev": {
+        "most likely": {
+          "either": 0.8416547788873039,
+          "exact": 0.4664764621968616,
+          "adjacent": 0.9686162624821684,
+          "mae": 0.5649072753209701,
+          "macro_f1": 0.4362663880743574,
+          "macro_f1_paper": 0.7084735212492661,
+          "qwk": 0.6763218815390977
+        },
+        "expected": {
+          "either": 0.8445078459343794,
+          "exact": 0.47503566333808844,
+          "adjacent": 0.9714693295292439,
+          "mae": 0.5534950071326676,
+          "macro_f1": 0.2928527925139423,
+          "macro_f1_paper": 0.5567672180085032,
+          "qwk": 0.6705827067669172
+        }
+      }
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.8564331582671215,
+      "seconds": 97.1,
+      "dev": {
+        "most likely": {
+          "either": 0.854493580599144,
+          "exact": 0.48074179743223966,
+          "adjacent": 0.9714693295292439,
+          "mae": 0.5477888730385164,
+          "macro_f1": 0.4807042425781467,
+          "macro_f1_paper": 0.8252745394984978,
+          "qwk": 0.6897187441931355
+        },
+        "expected": {
+          "either": 0.8530670470756063,
+          "exact": 0.47218259629101283,
+          "adjacent": 0.9728958630527818,
+          "mae": 0.5549215406562055,
+          "macro_f1": 0.4318020831556486,
+          "macro_f1_paper": 0.699536569739814,
+          "qwk": 0.6788712478905364
+        }
+      }
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.7848970604460307,
+      "seconds": 86.4,
+      "dev": {
+        "most likely": {
+          "either": 0.854493580599144,
+          "exact": 0.4992867332382311,
+          "adjacent": 0.978601997146933,
+          "mae": 0.5221112696148359,
+          "macro_f1": 0.4748073929452183,
+          "macro_f1_paper": 0.843212635088867,
+          "qwk": 0.7157299067506928
+        },
+        "expected": {
+          "either": 0.8516405135520685,
+          "exact": 0.4893009985734665,
+          "adjacent": 0.978601997146933,
+          "mae": 0.5320970042796006,
+          "macro_f1": 0.44676797981511523,
+          "macro_f1_paper": 0.770400789179198,
+          "qwk": 0.7041050923758381
+        }
+      }
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.7374372801119975,
+      "seconds": 96.5,
+      "dev": {
+        "most likely": {
+          "either": 0.8744650499286734,
+          "exact": 0.5263908701854494,
+          "adjacent": 0.9871611982881597,
+          "mae": 0.4864479315263909,
+          "macro_f1": 0.4971184678465779,
+          "macro_f1_paper": 0.8567475107471109,
+          "qwk": 0.7276703636090152
+        },
+        "expected": {
+          "either": 0.8716119828815977,
+          "exact": 0.5192582025677603,
+          "adjacent": 0.9871611982881597,
+          "mae": 0.49358059914407987,
+          "macro_f1": 0.4819253239164354,
+          "macro_f1_paper": 0.8147042913207452,
+          "qwk": 0.7188244498561968
+        }
+      }
+    }
+  ],
+  "chosen": {
+    "epoch": 4,
+    "decision": "most likely",
+    "select": "either",
+    "dev": {
+      "either": 0.8744650499286734,
+      "exact": 0.5263908701854494,
+      "adjacent": 0.9871611982881597,
+      "mae": 0.4864479315263909,
+      "macro_f1": 0.4971184678465779,
+      "macro_f1_paper": 0.8567475107471109,
+      "qwk": 0.7276703636090152
+    }
+  },
+  "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4-s20261105"
+}

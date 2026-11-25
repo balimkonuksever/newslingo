@@ -1,0 +1,156 @@
+{
+  "date": "2026-11-25",
+  "provenance": {
+    "commit": "dfeab6f730a1fea25cc8aee788aeee6df7754530",
+    "uncommitted_changes_in_ml": false,
+    "python": "3.13.5",
+    "packages": {
+      "numpy": "2.5.4",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1"
+    }
+  },
+  "torch": "2.15.0",
+  "select": "either",
+  "not_below": "macro_f1_paper",
+  "chosen": "reports/2026-11-25-ensemble-dev-four-and-all-new.json",
+  "previous": "reports/2026-11-19-ensemble-dev-all-four.json",
+  "candidates": [
+    "reports/2026-11-25-ensemble-dev-four-and-seeds.json",
+    "reports/2026-11-25-ensemble-dev-four-and-modernbert.json",
+    "reports/2026-11-25-transformer-dev-ModernBERT-base-lr5e-05-e4.json"
+  ],
+  "validation": [
+    {
+      "name": "average of 7 runs (5 \u00d7 distilroberta-base, 1 \u00d7 FacebookAI/roberta-base, 1 \u00d7 answerdotai/ModernBERT-base)",
+      "report": "reports/2026-11-25-ensemble-dev-four-and-all-new.json",
+      "decision": "expected",
+      "scores": {
+        "either": 0.8801711840228246,
+        "exact": 0.5306704707560628,
+        "adjacent": 0.985734664764622,
+        "mae": 0.48359486447931527,
+        "macro_f1": 0.5106341722700215,
+        "macro_f1_paper": 0.8555570595432408,
+        "qwk": 0.7300754774860001
+      },
+      "chosen": true,
+      "previous": false
+    },
+    {
+      "name": "average of 4 runs (3 \u00d7 distilroberta-base, 1 \u00d7 FacebookAI/roberta-base)",
+      "report": "reports/2026-11-19-ensemble-dev-all-four.json",
+      "decision": "most likely",
+      "scores": {
+        "either": 0.8630527817403709,
+        "exact": 0.536376604850214,
+        "adjacent": 0.9757489300998573,
+        "mae": 0.48787446504992865,
+        "macro_f1": 0.5359177921858694,
+        "macro_f1_paper": 0.8654502331628414,
+        "qwk": 0.7440562428385542
+      },
+      "chosen": false,
+      "previous": true
+    },
+    {
+      "name": "average of 6 runs (5 \u00d7 distilroberta-base, 1 \u00d7 FacebookAI/roberta-base)",
+      "report": "reports/2026-11-25-ensemble-dev-four-and-seeds.json",
+      "decision": "most likely",
+      "scores": {
+        "either": 0.8659058487874465,
+        "exact": 0.5320970042796006,
+        "adjacent": 0.9800285306704708,
+        "mae": 0.48787446504992865,
+        "macro_f1": 0.5233273337913372,
+        "macro_f1_paper": 0.8638963101309126,
+        "qwk": 0.7392663630789027
+      },
+      "chosen": false,
+      "previous": false
+    },
+    {
+      "name": "average of 5 runs (3 \u00d7 distilroberta-base, 1 \u00d7 FacebookAI/roberta-base, 1 \u00d7 answerdotai/ModernBERT-base)",
+      "report": "reports/2026-11-25-ensemble-dev-four-and-modernbert.json",
+      "decision": "expected",
+      "scores": {
+        "either": 0.8787446504992867,
+        "exact": 0.5263908701854494,
+        "adjacent": 0.9843081312410842,
+        "mae": 0.4893009985734665,
+        "macro_f1": 0.5047694021108677,
+        "macro_f1_paper": 0.8517719896082108,
+        "qwk": 0.7305518492737384
+      },
+      "chosen": false,
+      "previous": false
+    },
+    {
+      "name": "answerdotai/ModernBERT-base",
+      "report": "reports/2026-11-25-transformer-dev-ModernBERT-base-lr5e-05-e4.json",
+      "decision": "expected",
+      "scores": {
+        "either": 0.8730385164051355,
+        "exact": 0.5249643366619116,
+        "adjacent": 0.9871611982881597,
+        "mae": 0.48787446504992865,
+        "macro_f1": 0.4958084433954202,
+        "macro_f1_paper": 0.8036972341739793,
+        "qwk": 0.7141005655452436
+      },
+      "chosen": false,
+      "previous": false
+    }
+  ],
+  "differences_from_previous": {
+    "reports/2026-11-25-ensemble-dev-four-and-all-new.json": {
+      "either": [
+        0.01711840228245365,
+        0.0014265335235378318,
+        0.032810271041369465
+      ],
+      "macro_f1_paper": [
+        -0.009893173619600626,
+        -0.05486924872769694,
+        0.01964968349757135
+      ]
+    },
+    "reports/2026-11-25-ensemble-dev-four-and-seeds.json": {
+      "either": [
+        0.0028530670470755526,
+        -0.007132667617689048,
+        0.012838801711840264
+      ],
+      "macro_f1_paper": [
+        -0.0015539230319288055,
+        -0.01698381904386028,
+        0.011205558004129567
+      ]
+    },
+    "reports/2026-11-25-ensemble-dev-four-and-modernbert.json": {
+      "either": [
+        0.015691868758915817,
+        0.0013908701854492798,
+        0.029957203994293805
+      ],
+      "macro_f1_paper": [
+        -0.013678243554630654,
+        -0.05749648523613141,
+        0.016016459796187002
+      ]
+    },
+    "reports/2026-11-25-transformer-dev-ModernBERT-base-lr5e-05-e4.json": {
+      "either": [
+        0.0099857346647646,
+        -0.014265335235377988,
+        0.03427246790299571
+      ],
+      "macro_f1_paper": [
+        -0.06175299898886211,
+        -0.15232687595876998,
+        -0.005434347130303357
+      ]
+    }
+  },
+  "verdict": "reports/2026-11-25-ensemble-dev-four-and-all-new.json has a lower macro_f1_paper than reports/2026-11-19-ensemble-dev-all-four.json on the validation split."
+}

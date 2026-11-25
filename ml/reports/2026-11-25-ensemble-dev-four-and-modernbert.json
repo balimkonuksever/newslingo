@@ -1,0 +1,164 @@
+{
+  "date": "2026-11-25",
+  "name": "four-and-modernbert",
+  "provenance": {
+    "commit": "f7bb9c79673e6fcb49a8f334b5d8d73c2c27399e",
+    "uncommitted_changes_in_ml": false,
+    "python": "3.13.5",
+    "packages": {
+      "numpy": "2.5.4",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1"
+    }
+  },
+  "members": [
+    {
+      "report": "reports/2026-11-13-transformer-dev-distilroberta-base-lr3e-05-e4.json",
+      "run": "distilroberta-base-lr3e-05-e4",
+      "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4",
+      "max_length": 96,
+      "settings": {
+        "model": "distilroberta-base",
+        "epochs": 4,
+        "learning_rate": 3e-05,
+        "batch_size": 32,
+        "max_length": 96,
+        "warmup": 0.06,
+        "weight_decay": 0.01,
+        "seed": 20261104
+      },
+      "pretrained": {
+        "model": "distilroberta-base",
+        "revision": null
+      },
+      "epoch": 3
+    },
+    {
+      "report": "reports/2026-11-19-transformer-dev-distilroberta-base-lr3e-05-e4-w0.2.json",
+      "run": "distilroberta-base-lr3e-05-e4-w0.2",
+      "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4-w0.2",
+      "max_length": 96,
+      "settings": {
+        "model": "distilroberta-base",
+        "epochs": 4,
+        "learning_rate": 3e-05,
+        "batch_size": 32,
+        "max_length": 96,
+        "warmup": 0.06,
+        "weight_decay": 0.01,
+        "seed": 20261104,
+        "class_weight_alpha": 0.2,
+        "select": "macro_f1_paper"
+      },
+      "pretrained": {
+        "model": "distilroberta-base",
+        "revision": "fb53ab8802853c8e4fbdbcd0529f21fc6f459b2b"
+      },
+      "epoch": 1
+    },
+    {
+      "report": "reports/2026-11-19-transformer-dev-distilroberta-base-lr3e-05-e4-w0.5.json",
+      "run": "distilroberta-base-lr3e-05-e4-w0.5",
+      "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4-w0.5",
+      "max_length": 96,
+      "settings": {
+        "model": "distilroberta-base",
+        "epochs": 4,
+        "learning_rate": 3e-05,
+        "batch_size": 32,
+        "max_length": 96,
+        "warmup": 0.06,
+        "weight_decay": 0.01,
+        "seed": 20261104,
+        "class_weight_alpha": 0.5,
+        "select": "macro_f1_paper"
+      },
+      "pretrained": {
+        "model": "distilroberta-base",
+        "revision": "fb53ab8802853c8e4fbdbcd0529f21fc6f459b2b"
+      },
+      "epoch": 1
+    },
+    {
+      "report": "reports/2026-11-19-transformer-dev-roberta-base-lr2e-05-e4.json",
+      "run": "roberta-base-lr2e-05-e4",
+      "checkpoint": "ml/checkpoints/roberta-base-lr2e-05-e4",
+      "max_length": 96,
+      "settings": {
+        "model": "FacebookAI/roberta-base",
+        "epochs": 4,
+        "learning_rate": 2e-05,
+        "batch_size": 32,
+        "max_length": 96,
+        "warmup": 0.06,
+        "weight_decay": 0.01,
+        "seed": 20261104,
+        "class_weight_alpha": null,
+        "select": "macro_f1_paper",
+        "accumulate": 2
+      },
+      "pretrained": {
+        "model": "FacebookAI/roberta-base",
+        "revision": "e2da8e2f811d1448a5b465c236feacd80ffbac7b"
+      },
+      "epoch": 3
+    },
+    {
+      "report": "reports/2026-11-25-transformer-dev-ModernBERT-base-lr5e-05-e4.json",
+      "run": "ModernBERT-base-lr5e-05-e4",
+      "checkpoint": "ml/checkpoints/ModernBERT-base-lr5e-05-e4",
+      "max_length": 96,
+      "settings": {
+        "model": "answerdotai/ModernBERT-base",
+        "epochs": 4,
+        "learning_rate": 5e-05,
+        "batch_size": 32,
+        "max_length": 96,
+        "warmup": 0.06,
+        "weight_decay": 0.01,
+        "seed": 20261104,
+        "class_weight_alpha": null,
+        "select": "either",
+        "accumulate": 4
+      },
+      "pretrained": {
+        "model": "answerdotai/ModernBERT-base",
+        "revision": "8949b909ec900327062f0ebf497f51aef5e6f0c8"
+      },
+      "epoch": 4
+    }
+  ],
+  "decisions": {
+    "most likely": {
+      "either": 0.8716119828815977,
+      "exact": 0.5249643366619116,
+      "adjacent": 0.9828815977175464,
+      "mae": 0.4921540656205421,
+      "macro_f1": 0.49953253717320734,
+      "macro_f1_paper": 0.8603439456128704,
+      "qwk": 0.7342686581270423
+    },
+    "expected": {
+      "either": 0.8787446504992867,
+      "exact": 0.5263908701854494,
+      "adjacent": 0.9843081312410842,
+      "mae": 0.4893009985734665,
+      "macro_f1": 0.5047694021108677,
+      "macro_f1_paper": 0.8517719896082108,
+      "qwk": 0.7305518492737384
+    }
+  },
+  "chosen": {
+    "decision": "expected",
+    "select": "either",
+    "dev": {
+      "either": 0.8787446504992867,
+      "exact": 0.5263908701854494,
+      "adjacent": 0.9843081312410842,
+      "mae": 0.4893009985734665,
+      "macro_f1": 0.5047694021108677,
+      "macro_f1_paper": 0.8517719896082108,
+      "qwk": 0.7305518492737384
+    }
+  }
+}
