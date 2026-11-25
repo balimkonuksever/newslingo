@@ -21,6 +21,7 @@
     "test:integration": "tsx scripts/with-test-database.ts vitest run --project integration",
     "test:e2e": "tsx scripts/with-test-database.ts playwright test",
     "test:e2e:ui": "tsx scripts/with-test-database.ts playwright test --ui",
+    "test:site": "playwright test --config playwright.site.config.ts",
     "postinstall": "prisma generate --no-hints",
     "db:up": "docker compose up -d --wait postgres",
     "db:down": "docker compose down",

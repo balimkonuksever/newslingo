@@ -1839,7 +1839,7 @@ Since 2026-10-27 M9 follows milestone W. Items that served only the ingestion an
 - [x] Apply the homepage filters in the browser, keeping their shareable URLs and their validation rules. Done on 2026-11-01, on the local server too: the page sends every public article's card data, and `HomeArticles` filters it with `filterArticles`, which an integration test checks against the database query. The filters are parsed without zod, which would have put article pages over their script budget through prefetching. The static HTML holds the unfiltered homepage, so filters need JavaScript there; filtered views share the homepage's canonical address.
 - [x] Give each article a static file of its words' and expressions' editorial entries, fetched on the first click, so a lookup needs no server and the page budget (§17) still holds. Done on 2026-11-01: `/words/<slug>.json` holds every word with the entry a server lookup returns, each distinct entry once; the largest, the C1 article's, is 74 KB, 21 KB compressed. Expression cards were already part of the page. The reader reads word files on the local server too, so `POST /api/dictionary` and its provider fallback are no longer called by it.
 - [x] Add `pnpm site:build` and a GitHub Actions workflow that starts a temporary PostgreSQL, applies the migrations, provisions reference data, imports the written articles, publishing the marked ones, builds the static export and deploys it to GitHub Pages. It runs on every push to `main` and never includes demo articles; a failing step leaves the previous site live. Done on 2026-11-01: `scripts/build-site.ts` builds from the `newslingo_site` database, which a guard keeps local and named; `pnpm site:serve` serves `out/` as GitHub Pages does. `.github/workflows/pages.yml` deploys only once the repository is public, and CI builds the static site on every pull request.
-- [ ] Run the browser tests, accessibility scans and page budget against the static build in CI.
+- [x] Run the browser tests, accessibility scans and page budget against the static build in CI. Done on 2026-11-25: `pnpm test:site` (`playwright.site.config.ts`, `tests/site/`) runs after CI's site build, on the desktop and phone viewports, against `out/` served by `pnpm site:serve`, which now compresses text as GitHub Pages does so that transfer sizes match the live site's. It needs no database and finds its pages and articles in the build. Every page the build wrote must answer 200 with its content security policy and break neither the policy nor the console, with no serious axe violation, and an unknown address gets the not-found page with a 404; an inline script added to a built page fails it. On the published articles it runs the reader's journeys (the homepage filters, opening an article, a word lookup, the translation toggle, search) and holds every published article and the search page to the page budget (§17), whose limits `tests/support/page-budget.ts` now shares with `tests/e2e`.
 
 ### Work items — MVP search
 
@@ -1871,7 +1871,7 @@ Since 2026-10-27 M9 follows milestone W. Items that served only the ingestion an
 
 ### Work items — performance and SEO
 
-- [ ] Confirm no word file is fetched before the first click.
+- [x] Confirm no word file is fetched before the first click. Done on 2026-11-25: on the static build, `tests/site/reader.spec.ts` checks that an article page fetches no word file until a word is clicked, and then only its own, once.
 - [ ] Profile the DOM and hydration cost of long tokenized articles.
 - [ ] Measure the page budget again on the deployed site, served by GitHub Pages.
 - [ ] Optimize fonts and mobile loading.
@@ -2076,7 +2076,7 @@ The M1 build order applies only while the application is database-free.
 2. Run critical desktop/mobile Playwright and axe checks.
 3. Upload traces/screenshots/videos only on failure.
 
-As implemented, the Playwright global setup resets and seeds the test database itself, and the tests run in Google Chrome through Playwright's `chrome` channel on a desktop and a Pixel 7 viewport.
+As implemented, the Playwright global setup resets and seeds the test database itself, and the tests run in Google Chrome through Playwright's `chrome` channel on a desktop and a Pixel 7 viewport. After them CI builds the static site (since 2026-11-01) and tests it with `pnpm test:site` (since 2026-11-25), on the same viewports and with no database (M9).
 
 CI should cancel superseded runs on the same branch. Static checks and database/build/E2E work may be split into parallel jobs once the pipeline exists.
 

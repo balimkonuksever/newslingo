@@ -82,6 +82,12 @@ jobs:
       - name: Build the static site
         run: pnpm site:build
 
+      # Serves the static build as GitHub Pages serves it, and tests every
+      # page within its content security policy, the reader's journeys on the
+      # published articles, accessibility and the page budget.
+      - name: Browser and accessibility tests against the static site
+        run: pnpm test:site
+
       - name: Upload the browser test report
         if: failure()
         uses: actions/upload-artifact@v7

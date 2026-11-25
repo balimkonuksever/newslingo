@@ -152,7 +152,13 @@ empties the `newslingo_site` database on your local PostgreSQL (or `SITE_DATABAS
 pnpm site:serve
 ```
 
-serves `out/` at `http://localhost:4173/newslingo/` the way GitHub Pages does, to check a build before it goes live.
+serves `out/` at `http://localhost:4173/newslingo/` the way GitHub Pages does, compressed as well, to check a build before it goes live.
+
+```bash
+pnpm test:site
+```
+
+runs Playwright against the build in `out/`, served on port 3300 as `pnpm site:serve` serves it, on a desktop and a phone viewport in your installed Google Chrome. It needs no database. Every page the build wrote must load within its content security policy, with no error in the console and no serious axe violation, and an unknown address must get the not-found page. On the published articles it also tries the homepage filters, opening an article, a word lookup from the article's word file, the translation toggle and search, and holds every published article and the search page to the page budget. CI runs it after its site build.
 
 The `Pages` workflow in `.github/workflows/pages.yml` runs the same build against a temporary PostgreSQL and deploys it. A failed build deploys nothing, so the previous site stays live. GitHub Free offers Pages only for public repositories, so its deploy job runs once the repository is public; before that, switch Pages on in the repository's settings, with "GitHub Actions" as the source.
 
@@ -210,7 +216,7 @@ Browser tests run Playwright in your installed Google Chrome, on a desktop and a
 pnpm test:e2e
 ```
 
-`pnpm test:e2e:ui` opens the same tests in Playwright's interactive UI.
+`pnpm test:e2e:ui` opens the same tests in Playwright's interactive UI. `pnpm test:site` tests the static site after `pnpm site:build` (see [Static site](#static-site)).
 
 Useful fix/watch commands:
 
@@ -220,7 +226,7 @@ pnpm lint:fix
 pnpm test:watch
 ```
 
-GitHub Actions runs the same gates for pull requests and pushes to `main`: formatting, linting, schema checks, typechecking, unit tests, database integration tests, a production build, the browser and accessibility tests, and a build of the static site. When the browser tests fail, their traces and screenshots are uploaded as a workflow artifact.
+GitHub Actions runs the same gates for pull requests and pushes to `main`: formatting, linting, schema checks, typechecking, unit tests, database integration tests, a production build, the browser and accessibility tests, a build of the static site, and the browser tests against it. When the browser tests fail, their traces and screenshots are uploaded as a workflow artifact.
 
 ## Environment boundary
 

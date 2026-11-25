@@ -4,11 +4,14 @@
 //   pnpm site:serve [port]    then open http://localhost:4173/newslingo/
 //
 // A folder is answered with its index.html, a folder without the trailing
-// slash is redirected to it, and anything else missing gets 404.html.
+// slash is redirected to it, and anything else missing gets 404.html. Text is
+// sent gzipped, as GitHub Pages sends it, so the page budget's transfer sizes
+// (tests/site) match the live site's.
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
+import { createGzip } from "node:zlib";
 
 const BASE_PATH = "/newslingo";
 const ROOT = join(process.cwd(), "out");
@@ -25,6 +28,16 @@ const TYPES: Record<string, string> = {
   ".woff2": "font/woff2",
   ".xml": "application/xml; charset=utf-8",
 };
+
+const COMPRESSED = new Set([
+  ".html",
+  ".js",
+  ".css",
+  ".json",
+  ".txt",
+  ".svg",
+  ".xml",
+]);
 
 async function isFile(path: string) {
   return (await stat(path).catch(() => null))?.isFile() ?? false;
@@ -51,10 +64,16 @@ createServer(async (request, response) => {
   const found = file && (await isFile(file));
   const served = found ? file : join(ROOT, "404.html");
 
+  const gzip =
+    COMPRESSED.has(extname(served)) &&
+    /\bgzip\b/.test(request.headers["accept-encoding"] ?? "");
+
   response.writeHead(found ? 200 : 404, {
     "content-type": TYPES[extname(served)] ?? "application/octet-stream",
+    ...(gzip && { "content-encoding": "gzip", vary: "Accept-Encoding" }),
   });
-  createReadStream(served).pipe(response);
+  const body = createReadStream(served);
+  (gzip ? body.pipe(createGzip()) : body).pipe(response);
 }).listen(port, () => {
   console.log(`Serving out/ at http://localhost:${port}${BASE_PATH}/`);
 });

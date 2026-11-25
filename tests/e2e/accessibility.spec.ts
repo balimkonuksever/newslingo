@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { DEMO_ARTICLES } from "../../prisma/fixtures/articles";
-import { seriousViolations } from "./axe";
+import { seriousViolations } from "../support/axe";
 
 const article = DEMO_ARTICLES[0];
 const explainer = DEMO_ARTICLES.find(({ kind }) => kind === "EXPLAINER")!;

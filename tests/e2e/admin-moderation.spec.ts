@@ -7,7 +7,7 @@ import {
 import { DEMO_DRAFTS } from "../../prisma/fixtures/drafts";
 import { signIn } from "./admin-session";
 import { testAdminFor } from "./admins";
-import { seriousViolations } from "./axe";
+import { seriousViolations } from "../support/axe";
 import {
   demoDraft,
   moderationState,
