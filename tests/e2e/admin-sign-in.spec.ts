@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { authenticatorCode } from "../support/sign-in";
 import { enterCode, enterPassword, refusal } from "./admin-session";
 import { testAdminFor } from "./admins";
-import { seriousViolations } from "./axe";
+import { seriousViolations } from "../support/axe";
 
 // Admin sign-in in the browser (ADR-003): a password, then a code from the
 // authenticator app or a backup code. Each project signs in as its own test
