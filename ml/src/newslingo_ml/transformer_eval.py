@@ -20,17 +20,18 @@ import argparse
 import datetime
 import json
 from collections import Counter
+from dataclasses import dataclass
 
 import numpy as np
 import torch
 from sklearn.linear_model import LogisticRegression
 
 from newslingo_ml import corpus
-from newslingo_ml.corpus import LEVEL_NAMES, LEVELS, ML_ROOT
+from newslingo_ml.corpus import LEVEL_NAMES, LEVELS, ML_ROOT, Sentence
 from newslingo_ml.ensemble import average_probabilities
 from newslingo_ml.features import fk_grade, sentence_words
 from newslingo_ml.metrics import annotator_agreement, bootstrap_interval, confusion, level_f1, scores
-from newslingo_ml.sentence_eval import SEED, candidates, percent, provenance
+from newslingo_ml.sentence_eval import SEED, Candidate, candidates, percent, provenance
 from newslingo_ml.text import detokenize
 from newslingo_ml.transformer import SELECT_METRICS, level_decisions, revision_of
 
@@ -89,6 +90,45 @@ def load_model(path: str) -> dict:
 
 def predict(model: dict, texts: list[str]) -> np.ndarray:
     return level_decisions(average_probabilities(model["members"], texts))[model["decision"]]
+
+
+@dataclass
+class References:
+    """The majority class, the readability baseline and the light model, fit
+    and chosen on the training and validation splits exactly as sentence_eval
+    does, so a report can put them beside a model on the test split."""
+
+    majority_level: int
+    readability: LogisticRegression
+    light: Candidate
+
+    @classmethod
+    def fit(cls) -> "References":
+        data = {split: corpus.load(split) for split in ("train", "dev")}
+        words = {split: [sentence_words(s.text) for s in data[split]] for split in data}
+        train_high = [s.high for s in data["train"]]
+        readability = LogisticRegression(max_iter=5000).fit(
+            np.array([[fk_grade(s)] for s in words["train"]]), train_high
+        )
+        light = max(
+            (c for c in candidates(words, data) if c.exportable),
+            key=lambda c: (c.dev["either"], c.dev["qwk"]),
+        )
+        return cls(int(Counter(train_high).most_common(1)[0][0]), readability, light)
+
+    @property
+    def light_name(self) -> str:
+        return f"Light model: {self.light.name}"
+
+    def predict(self, sentences: list[Sentence]) -> dict[str, np.ndarray]:
+        words = [sentence_words(s.text) for s in sentences]
+        return {
+            "Majority class": np.full(len(sentences), self.majority_level),
+            "Readability (Flesch–Kincaid)": self.readability.predict(
+                np.array([[fk_grade(s)] for s in words])
+            ),
+            self.light_name: self.light.predict(self.light.rows([s.text for s in sentences], words)),
+        }
 
 
 def paired_difference(
@@ -261,7 +301,6 @@ def report(result: dict) -> str:
         "",
         "## Not yet measured",
         "",
-        "- A zero-shot LLM on a seeded sample of the test split (ML roadmap item 1).",
         "- Article-level accuracy on texts the user labels (milestone C).",
         "",
     ]
@@ -332,31 +371,14 @@ def main() -> None:
             f"{best['report']} is. The test split was not read."
         )
 
-    # The light model and the baselines, chosen exactly as sentence_eval does.
-    data = {split: corpus.load(split) for split in ("train", "dev")}
-    words = {split: [sentence_words(s.text) for s in data[split]] for split in data}
-    train_high = [s.high for s in data["train"]]
-    majority_level = int(Counter(train_high).most_common(1)[0][0])
-    readability = LogisticRegression(max_iter=5000).fit(
-        np.array([[fk_grade(s)] for s in words["train"]]), train_high
-    )
-    light = max(
-        (c for c in candidates(words, data) if c.exportable),
-        key=lambda c: (c.dev["either"], c.dev["qwk"]),
-    )
+    references = References.fit()
 
     test = corpus.load("test")
-    test_words = [sentence_words(s.text) for s in test]
-    test_texts = [s.text for s in test]
-    detokenized = [detokenize(text) for text in test_texts]
-    light_name = f"Light model: {light.name}"
+    detokenized = [detokenize(s.text) for s in test]
+    light_name = references.light_name
     previous_name = f"Previous transformer: {previous['name']}" if previous else None
     chosen_name = f"Chosen: {chosen['name']}"
-    predictions = {
-        "Majority class": np.full(len(test), majority_level),
-        "Readability (Flesch–Kincaid)": readability.predict(np.array([[fk_grade(s)] for s in test_words])),
-        light_name: light.predict(light.rows(test_texts, test_words)),
-    }
+    predictions = references.predict(test)
     if previous:
         predictions[previous_name] = predict(previous, detokenized)
     predictions[chosen_name] = predict(chosen, detokenized)
@@ -381,7 +403,7 @@ def main() -> None:
         "select": args.select,
         "chosen": chosen,
         "previous": previous,
-        "light_model": light.name,
+        "light_model": references.light.name,
         "validation": validation,
         "human": annotator_agreement(test),
         "test": {

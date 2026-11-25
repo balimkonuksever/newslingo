@@ -336,7 +336,6 @@ def report(result: dict) -> str:
         "",
         "## Not yet measured",
         "",
-        "- A zero-shot LLM on a seeded sample of the test split (ML roadmap item 1).",
         "- Article-level accuracy on texts the user labels (milestone C).",
         "",
     ]
