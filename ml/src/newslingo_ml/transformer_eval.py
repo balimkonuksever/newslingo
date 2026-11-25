@@ -131,6 +131,40 @@ class References:
         }
 
 
+def selection_problem(validation: list[dict], select: str, not_below: str | None = None) -> str | None:
+    """Why the chosen model may not go on to the test split, or None if it may.
+
+    Each entry holds a model's validation scores and whether it is the chosen
+    or the previous model. The chosen one needs the best `select` metric (ties
+    broken by QWK). With `not_below`, only models whose `not_below` metric is
+    at least the previous model's count, and the chosen one must also beat the
+    previous model on `select`, so a switch never trades one metric for the
+    other."""
+
+    def key(entry: dict) -> tuple[float, float]:
+        return (entry["scores"][select], entry["scores"]["qwk"])
+
+    chosen = next(entry for entry in validation if entry["chosen"])
+    eligible = validation
+    if not_below:
+        previous = next((entry for entry in validation if entry.get("previous")), None)
+        if previous is None:
+            return f"--not-below {not_below} needs the model it compares with: name it with --previous."
+        floor = previous["scores"][not_below]
+        eligible = [entry for entry in validation if entry["scores"][not_below] >= floor]
+        if chosen not in eligible:
+            return f"{chosen['report']} has a lower {not_below} than {previous['report']} on the validation split."
+        if chosen["scores"][select] <= previous["scores"][select]:
+            return f"{chosen['report']} does not beat {previous['report']} on {select} on the validation split."
+    best = max(eligible, key=key)
+    if key(chosen) < key(best):
+        return (
+            f"{chosen['report']} is not the best candidate on the validation split by {select}: "
+            f"{best['report']} is."
+        )
+    return None
+
+
 def paired_difference(
     first: np.ndarray, second: np.ndarray, sentences: list, metric: str, seed: int, resamples: int = 1000
 ) -> tuple[float, float, float]:
@@ -195,8 +229,15 @@ def report(result: dict) -> str:
         f"`{chosen['report']}`:",
         *model_lines(chosen),
         f"- Selection: every candidate below was scored on the validation split, and the chosen one "
-        f"has the best {SELECT_LABELS[result['select']]} (ties broken by QWK). The test split was then "
-        "read for the chosen model, the previous transformer, the light model and the two baselines.",
+        f"has the best {SELECT_LABELS[result['select']]} (ties broken by QWK)"
+        + (
+            f" among those whose {SELECT_LABELS[result['not_below']]} is not below the previous transformer's, "
+            f"and beats the previous transformer's {SELECT_LABELS[result['select']]}"
+            if result.get("not_below")
+            else ""
+        )
+        + ". The test split was then read for the chosen model, the previous transformer, the light model and "
+        "the two baselines.",
     ]
     if previous:
         lines += [
@@ -317,6 +358,11 @@ def main() -> None:
     parser.add_argument("--candidate", action="append", default=[], help="another validation report compared")
     parser.add_argument("--select", choices=SELECT_METRICS, default="macro_f1_paper")
     parser.add_argument(
+        "--not-below",
+        choices=SELECT_METRICS,
+        help="count only candidates at least as good as --previous on this metric, and beat it on --select",
+    )
+    parser.add_argument(
         "--dev-only", action="store_true", help="score the candidates on the validation split and stop"
     )
     parser.add_argument("--date", default=datetime.date.today().isoformat())
@@ -349,13 +395,14 @@ def main() -> None:
                 "decision": model["decision"],
                 "scores": scores(predict(model, dev_texts), dev),
                 "chosen": model is chosen,
+                "previous": model is previous,
             }
         )
 
     def key(entry: dict) -> tuple[float, float]:
         return (entry["scores"][args.select], entry["scores"]["qwk"])
 
-    best = max(validation, key=key)
+    problem = selection_problem(validation, args.select, args.not_below)
     if args.dev_only:
         for entry in sorted(validation, key=key, reverse=True):
             values = entry["scores"]
@@ -363,13 +410,10 @@ def main() -> None:
                 f"{entry['report']}: {entry['decision']}, either {values['either']:.3f}, paper macro-F1 "
                 f"{values['macro_f1_paper']:.3f}, exact {values['exact']:.3f}, QWK {values['qwk']:.3f}"
             )
-        print(f"Best by {args.select}: {best['report']}. The test split was not read.")
+        print(f"{args.chosen}: {problem or 'may go on to the test split.'} The test split was not read.")
         return
-    if key(validation[0]) < key(best):
-        raise SystemExit(
-            f"{args.chosen} is not the best candidate on the validation split by {args.select}: "
-            f"{best['report']} is. The test split was not read."
-        )
+    if problem:
+        raise SystemExit(f"{problem} The test split was not read.")
 
     references = References.fit()
 
@@ -401,6 +445,7 @@ def main() -> None:
         "provenance": code,
         "torch": torch.__version__,
         "select": args.select,
+        "not_below": args.not_below,
         "chosen": chosen,
         "previous": previous,
         "light_model": references.light.name,
