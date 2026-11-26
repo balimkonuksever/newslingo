@@ -121,6 +121,18 @@ def predict_logits(model, tokenizer, texts: list[str], settings: Settings) -> to
     return torch.cat(chunks)
 
 
+def load_pretrained(name: str, **options):
+    """A model in float32, whatever precision its checkpoint stores. Since
+    version 5, transformers keeps a checkpoint's dtype, and DeBERTa-v3's is
+    float16, in which AdamW's epsilon rounds to zero and the first update
+    turns the weights to NaN (2026-11-25)."""
+    model = AutoModelForSequenceClassification.from_pretrained(name, dtype=torch.float32, **options)
+    dtypes = {parameter.dtype for parameter in model.parameters()}
+    if dtypes != {torch.float32}:
+        raise ValueError(f"{name} loaded as {sorted(map(str, dtypes))}, not float32")
+    return model
+
+
 def revision_of(name: str, model=None) -> str | None:
     """The pretrained model's commit on Hugging Face: from the model when it
     says, else from the local cache's record of the revision it downloaded."""
@@ -135,7 +147,7 @@ def predict_probabilities(checkpoint: str, texts: list[str], max_length: int = 9
     """Class probabilities for detokenized texts from a kept checkpoint."""
     path = ML_ROOT.parent / checkpoint
     tokenizer = AutoTokenizer.from_pretrained(path)
-    model = AutoModelForSequenceClassification.from_pretrained(path).to(device())
+    model = load_pretrained(str(path)).to(device())
     settings = Settings(str(path), 0, 0.0, 64, max_length, 0.0, 0.0, SEED)
     probabilities = predict_logits(model, tokenizer, texts, settings).softmax(dim=-1).numpy()
     del model
@@ -167,9 +179,7 @@ def train(settings: Settings, run: str, date: str) -> dict:
     )
 
     tokenizer = AutoTokenizer.from_pretrained(settings.model)
-    model = AutoModelForSequenceClassification.from_pretrained(
-        settings.model, num_labels=len(LEVELS)
-    ).to(device())
+    model = load_pretrained(settings.model, num_labels=len(LEVELS)).to(device())
     pretrained_revision = revision_of(settings.model, model)
 
     optimizer = torch.optim.AdamW(

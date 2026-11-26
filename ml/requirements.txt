@@ -23,6 +23,7 @@ networkx==3.7
 numpy==2.5.4
 packaging==26.3
 pluggy==1.7.0
+protobuf==7.36.2
 pydantic==2.14.3
 pydantic_core==2.50.4
 Pygments==2.21.0
@@ -33,6 +34,7 @@ rich==15.0.0
 safetensors==0.8.0
 scikit-learn==1.9.1
 scipy==1.18.1
+sentencepiece==0.2.3
 setuptools==84.2.1
 shellingham==1.5.4
 sympy==1.14.0

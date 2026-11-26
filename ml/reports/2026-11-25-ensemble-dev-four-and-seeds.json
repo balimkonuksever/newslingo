@@ -1,0 +1,188 @@
+{
+  "date": "2026-11-25",
+  "name": "four-and-seeds",
+  "provenance": {
+    "commit": "f7bb9c79673e6fcb49a8f334b5d8d73c2c27399e",
+    "uncommitted_changes_in_ml": false,
+    "python": "3.13.5",
+    "packages": {
+      "numpy": "2.5.4",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1"
+    }
+  },
+  "members": [
+    {
+      "report": "reports/2026-11-13-transformer-dev-distilroberta-base-lr3e-05-e4.json",
+      "run": "distilroberta-base-lr3e-05-e4",
+      "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4",
+      "max_length": 96,
+      "settings": {
+        "model": "distilroberta-base",
+        "epochs": 4,
+        "learning_rate": 3e-05,
+        "batch_size": 32,
+        "max_length": 96,
+        "warmup": 0.06,
+        "weight_decay": 0.01,
+        "seed": 20261104
+      },
+      "pretrained": {
+        "model": "distilroberta-base",
+        "revision": null
+      },
+      "epoch": 3
+    },
+    {
+      "report": "reports/2026-11-19-transformer-dev-distilroberta-base-lr3e-05-e4-w0.2.json",
+      "run": "distilroberta-base-lr3e-05-e4-w0.2",
+      "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4-w0.2",
+      "max_length": 96,
+      "settings": {
+        "model": "distilroberta-base",
+        "epochs": 4,
+        "learning_rate": 3e-05,
+        "batch_size": 32,
+        "max_length": 96,
+        "warmup": 0.06,
+        "weight_decay": 0.01,
+        "seed": 20261104,
+        "class_weight_alpha": 0.2,
+        "select": "macro_f1_paper"
+      },
+      "pretrained": {
+        "model": "distilroberta-base",
+        "revision": "fb53ab8802853c8e4fbdbcd0529f21fc6f459b2b"
+      },
+      "epoch": 1
+    },
+    {
+      "report": "reports/2026-11-19-transformer-dev-distilroberta-base-lr3e-05-e4-w0.5.json",
+      "run": "distilroberta-base-lr3e-05-e4-w0.5",
+      "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4-w0.5",
+      "max_length": 96,
+      "settings": {
+        "model": "distilroberta-base",
+        "epochs": 4,
+        "learning_rate": 3e-05,
+        "batch_size": 32,
+        "max_length": 96,
+        "warmup": 0.06,
+        "weight_decay": 0.01,
+        "seed": 20261104,
+        "class_weight_alpha": 0.5,
+        "select": "macro_f1_paper"
+      },
+      "pretrained": {
+        "model": "distilroberta-base",
+        "revision": "fb53ab8802853c8e4fbdbcd0529f21fc6f459b2b"
+      },
+      "epoch": 1
+    },
+    {
+      "report": "reports/2026-11-19-transformer-dev-roberta-base-lr2e-05-e4.json",
+      "run": "roberta-base-lr2e-05-e4",
+      "checkpoint": "ml/checkpoints/roberta-base-lr2e-05-e4",
+      "max_length": 96,
+      "settings": {
+        "model": "FacebookAI/roberta-base",
+        "epochs": 4,
+        "learning_rate": 2e-05,
+        "batch_size": 32,
+        "max_length": 96,
+        "warmup": 0.06,
+        "weight_decay": 0.01,
+        "seed": 20261104,
+        "class_weight_alpha": null,
+        "select": "macro_f1_paper",
+        "accumulate": 2
+      },
+      "pretrained": {
+        "model": "FacebookAI/roberta-base",
+        "revision": "e2da8e2f811d1448a5b465c236feacd80ffbac7b"
+      },
+      "epoch": 3
+    },
+    {
+      "report": "reports/2026-11-25-transformer-dev-distilroberta-base-lr3e-05-e4-s20261105.json",
+      "run": "distilroberta-base-lr3e-05-e4-s20261105",
+      "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4-s20261105",
+      "max_length": 96,
+      "settings": {
+        "model": "distilroberta-base",
+        "epochs": 4,
+        "learning_rate": 3e-05,
+        "batch_size": 32,
+        "max_length": 96,
+        "warmup": 0.06,
+        "weight_decay": 0.01,
+        "seed": 20261105,
+        "class_weight_alpha": null,
+        "select": "either",
+        "accumulate": 1
+      },
+      "pretrained": {
+        "model": "distilroberta-base",
+        "revision": "fb53ab8802853c8e4fbdbcd0529f21fc6f459b2b"
+      },
+      "epoch": 4
+    },
+    {
+      "report": "reports/2026-11-25-transformer-dev-distilroberta-base-lr3e-05-e4-s20261106.json",
+      "run": "distilroberta-base-lr3e-05-e4-s20261106",
+      "checkpoint": "ml/checkpoints/distilroberta-base-lr3e-05-e4-s20261106",
+      "max_length": 96,
+      "settings": {
+        "model": "distilroberta-base",
+        "epochs": 4,
+        "learning_rate": 3e-05,
+        "batch_size": 32,
+        "max_length": 96,
+        "warmup": 0.06,
+        "weight_decay": 0.01,
+        "seed": 20261106,
+        "class_weight_alpha": null,
+        "select": "either",
+        "accumulate": 1
+      },
+      "pretrained": {
+        "model": "distilroberta-base",
+        "revision": "fb53ab8802853c8e4fbdbcd0529f21fc6f459b2b"
+      },
+      "epoch": 3
+    }
+  ],
+  "decisions": {
+    "most likely": {
+      "either": 0.8659058487874465,
+      "exact": 0.5320970042796006,
+      "adjacent": 0.9800285306704708,
+      "mae": 0.48787446504992865,
+      "macro_f1": 0.5233273337913372,
+      "macro_f1_paper": 0.8638963101309126,
+      "qwk": 0.7392663630789027
+    },
+    "expected": {
+      "either": 0.8644793152639088,
+      "exact": 0.5164051355206848,
+      "adjacent": 0.9800285306704708,
+      "mae": 0.5035663338088445,
+      "macro_f1": 0.48176305961535165,
+      "macro_f1_paper": 0.8440914261019047,
+      "qwk": 0.7212101031209779
+    }
+  },
+  "chosen": {
+    "decision": "most likely",
+    "select": "either",
+    "dev": {
+      "either": 0.8659058487874465,
+      "exact": 0.5320970042796006,
+      "adjacent": 0.9800285306704708,
+      "mae": 0.48787446504992865,
+      "macro_f1": 0.5233273337913372,
+      "macro_f1_paper": 0.8638963101309126,
+      "qwk": 0.7392663630789027
+    }
+  }
+}

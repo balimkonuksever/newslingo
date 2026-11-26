@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-25",
+  "run": "ModernBERT-base-lr5e-05-e4",
+  "settings": {
+    "model": "answerdotai/ModernBERT-base",
+    "epochs": 4,
+    "learning_rate": 5e-05,
+    "batch_size": 32,
+    "max_length": 96,
+    "warmup": 0.06,
+    "weight_decay": 0.01,
+    "seed": 20261104,
+    "class_weight_alpha": null,
+    "select": "either",
+    "accumulate": 4
+  },
+  "pretrained": {
+    "model": "answerdotai/ModernBERT-base",
+    "revision": "8949b909ec900327062f0ebf497f51aef5e6f0c8"
+  },
+  "device": "mps",
+  "provenance": {
+    "commit": "03358cc1355e1926f69a5b105433ea9729928eb4",
+    "uncommitted_changes_in_ml": false,
+    "python": "3.13.5",
+    "packages": {
+      "numpy": "2.5.4",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1"
+    }
+  },
+  "packages": {
+    "torch": "2.15.0",
+    "transformers": "5.22.2"
+  },
+  "class_weights": null,
+  "epochs": [
+    {
+      "epoch": 1,
+      "train_loss": 1.072855027649359,
+      "seconds": 232.8,
+      "dev": {
+        "most likely": {
+          "either": 0.8559201141226819,
+          "exact": 0.48359486447931527,
+          "adjacent": 0.9814550641940085,
+          "mae": 0.5349500713266762,
+          "macro_f1": 0.4468207188427944,
+          "macro_f1_paper": 0.7007222616093584,
+          "qwk": 0.6773526714438043
+        },
+        "expected": {
+          "either": 0.8573466476462197,
+          "exact": 0.4950071326676177,
+          "adjacent": 0.9871611982881597,
+          "mae": 0.5178316690442225,
+          "macro_f1": 0.4550189246283571,
+          "macro_f1_paper": 0.7018580353256495,
+          "qwk": 0.6816329303893509
+        }
+      }
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.7877929503014172,
+      "seconds": 237.5,
+      "dev": {
+        "most likely": {
+          "either": 0.8402282453637661,
+          "exact": 0.5292439372325249,
+          "adjacent": 0.9771754636233951,
+          "mae": 0.49358059914407987,
+          "macro_f1": 0.4482190540962295,
+          "macro_f1_paper": 0.7229079742645929,
+          "qwk": 0.7187153672714612
+        },
+        "expected": {
+          "either": 0.8630527817403709,
+          "exact": 0.5463623395149786,
+          "adjacent": 0.9828815977175464,
+          "mae": 0.47075606276747506,
+          "macro_f1": 0.5100307906085727,
+          "macro_f1_paper": 0.7592430445371622,
+          "qwk": 0.7265791822298615
+        }
+      }
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.6302006707963641,
+      "seconds": 226.3,
+      "dev": {
+        "most likely": {
+          "either": 0.8502139800285307,
+          "exact": 0.48787446504992865,
+          "adjacent": 0.9686162624821684,
+          "mae": 0.543509272467903,
+          "macro_f1": 0.4732266103699774,
+          "macro_f1_paper": 0.7944695674701635,
+          "qwk": 0.6824676978761547
+        },
+        "expected": {
+          "either": 0.854493580599144,
+          "exact": 0.48359486447931527,
+          "adjacent": 0.9700427960057061,
+          "mae": 0.5463623395149786,
+          "macro_f1": 0.4582277805375594,
+          "macro_f1_paper": 0.7644102369005795,
+          "qwk": 0.6782900157332028
+        }
+      }
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.5119121941381782,
+      "seconds": 209.1,
+      "dev": {
+        "most likely": {
+          "either": 0.8716119828815977,
+          "exact": 0.5221112696148359,
+          "adjacent": 0.9871611982881597,
+          "mae": 0.49072753209700426,
+          "macro_f1": 0.4940277530140848,
+          "macro_f1_paper": 0.7989499313203096,
+          "qwk": 0.7134225944446704
+        },
+        "expected": {
+          "either": 0.8730385164051355,
+          "exact": 0.5249643366619116,
+          "adjacent": 0.9871611982881597,
+          "mae": 0.48787446504992865,
+          "macro_f1": 0.4958084433954202,
+          "macro_f1_paper": 0.8036972341739793,
+          "qwk": 0.7141005655452436
+        }
+      }
+    }
+  ],
+  "chosen": {
+    "epoch": 4,
+    "decision": "expected",
+    "select": "either",
+    "dev": {
+      "either": 0.8730385164051355,
+      "exact": 0.5249643366619116,
+      "adjacent": 0.9871611982881597,
+      "mae": 0.48787446504992865,
+      "macro_f1": 0.4958084433954202,
+      "macro_f1_paper": 0.8036972341739793,
+      "qwk": 0.7141005655452436
+    }
+  },
+  "checkpoint": "ml/checkpoints/ModernBERT-base-lr5e-05-e4"
+}
